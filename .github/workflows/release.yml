@@ -213,8 +213,14 @@ jobs:
     - name: Put the site together
       run: python tools/docs/assemble_site.py build/editions build/pages
     - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+    # Each attempt uploads under its own name: a re-run of this job finds
+    # the artifact of the attempt before it in the same run, and
+    # deploy-pages refuses to choose between two of one name.
     - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
       with:
         path: build/pages
+        name: github-pages-${{ github.run_attempt }}
     - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
       id: deploy
+      with:
+        artifact_name: github-pages-${{ github.run_attempt }}
