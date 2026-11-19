@@ -1,0 +1,39 @@
+# Licences a dependency may have, one per line, spelled as the package states
+# it. `make licenses` fails on any installed package whose licence is not
+# listed here, so a new dependency -- or an old one that changes its licence --
+# is looked at before it is merged.
+#
+# This project is AGPL-3.0-or-later (pyproject.toml), because the PDF library
+# it is built on is: PyMuPDF (installed as pymupdf-lite) states its licence as "Dual Licensed - GNU AFFERO
+# GPL 3.0 or Artifex Commercial License", and this project uses it under the
+# AGPL. So the permissive licences are allowed, and the AGPL
+# itself. Any other copyleft licence (GPL without "or later", LGPL, ...) is
+# not added without checking that it can be combined with the AGPL.
+#
+# Packages do not agree on spelling; add the spelling a package uses rather
+# than loosening the match.
+AGPL-3.0-or-later
+Dual Licensed - GNU AFFERO GPL 3.0 or Artifex Commercial License
+Apache-2.0
+Apache-2.0 OR BSD-2-Clause
+BSD-2-Clause
+BSD-3-Clause
+MIT
+MIT License
+MIT OR Apache-2.0
+Mozilla Public License 2.0 (MPL 2.0)
+PSF-2.0
+# Development tools only (the documentation site is built with Sphinx,
+# which renders with Jinja2): Jinja2 and several of Sphinx's parts are
+# BSD-3-Clause or BSD-2-Clause and state it as "BSD License"; requests is
+# Apache-2.0 and states it as below; roman-numerals offers the permissive
+# 0BSD or the public-domain dedication CC0-1.0. docutils names three licences
+# (public domain, BSD, and the GPL for single files) and passes on BSD.
+BSD License
+Apache Software License
+0BSD OR CC0-1.0
+# Development tools only (twine checks a built package before a release; on
+# Linux it brings a keyring with it): cffi is MIT-0 (MIT No Attribution),
+# cryptography offers Apache-2.0 or BSD-3-Clause.
+MIT-0
+Apache-2.0 OR BSD-3-Clause

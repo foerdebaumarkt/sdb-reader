@@ -1,0 +1,94 @@
+name: gitleaks
+
+# Secret scanning. A pull request or a push is checked for the commits it
+# adds; the weekly run and a manual run read the whole history of every
+# branch, which is where old findings show up.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request makes the older run pointless. Runs
+# on main are left to finish: each one is the record for its commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gitleaks:
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Choose the commits to scan
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request)
+              range="${PR_BASE}..${PR_HEAD}"
+              ;;
+            push)
+              if [[ "$PUSH_BEFORE" =~ ^0+$ ]] || ! git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+                # A new branch, or a force push whose old tip is gone: there
+                # is nothing to compare with, so read everything.
+                range="--all"
+              else
+                range="${PUSH_BEFORE}..${PUSH_AFTER}"
+              fi
+              ;;
+            *)
+              range="--all"
+              ;;
+          esac
+          echo "log-opts=${range}" >> "$GITHUB_OUTPUT"
+          echo "Scanned: \`${range}\` (${EVENT})" >> "$GITHUB_STEP_SUMMARY"
+
+      # The scanner's image, run directly: gitleaks-action needs a licence key
+      # for repositories owned by an organisation, the scanner itself needs
+      # none. .gitleaks.toml and .gitleaksignore at the repository root are
+      # picked up automatically. The version is the one of the gitleaks hook in
+      # .pre-commit-config.yaml; Dependabot does not see this line, so move
+      # both together.
+      - name: Scan
+        env:
+          LOG_OPTS: ${{ steps.range.outputs.log-opts }}
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0='*' \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git --no-banner --redact --verbose --log-opts="$LOG_OPTS" .
+
+      - name: Say what to do about a finding
+        if: failure() && steps.range.outcome == 'success'
+        run: |
+          {
+            echo ""
+            echo "**gitleaks found a secret.** The Scan step's log lists it (value redacted)."
+            echo ""
+            echo "1. If it is real: rotate it first. Deleting the commit does not help; the value stays in history and in clones."
+            echo "2. Then add the finding's fingerprint to \`.gitleaksignore\` with a line saying why, so the weekly full scan stops reporting the dead value."
+            echo "3. A false positive (a public key, a test fixture) goes into \`.gitleaksignore\` the same way."
+          } >> "$GITHUB_STEP_SUMMARY"

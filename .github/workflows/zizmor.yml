@@ -1,0 +1,94 @@
+name: zizmor
+
+# Fails when an action, a reusable workflow or a container image is used by a
+# reference that can move (a tag, a branch, latest) instead of a commit SHA or
+# digest, or when a known action is left on a tool's newest version. zizmor
+# (https://docs.zizmor.sh/) runs offline from its image with only those three
+# audits on, so the check fails for pins only.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # Pinned by version and digest. Dependabot does not see this line, so it is
+  # moved by hand.
+  ZIZMOR_IMAGE: ghcr.io/zizmorcore/zizmor:1.32.0@sha256:3014cc8f68f663935f69b3c3e0e41f5ce102b268d97db13db0f62208747f860d
+
+jobs:
+  zizmor:
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Inside .git so that it sits in the mounted workspace without being
+      # one of the files zizmor reads.
+      - name: Write the configuration
+        run: |
+          cat > .git/zizmor-pins.yml <<'EOF'
+          # Off: every audit except unpinned-uses, unpinned-images and
+          # unpinned-tools.
+          rules:
+            adhoc-packages: {disable: true}
+            anonymous-definition: {disable: true}
+            archived-uses: {disable: true}
+            artipacked: {disable: true}
+            bot-conditions: {disable: true}
+            cache-poisoning: {disable: true}
+            concurrency-limits: {disable: true}
+            dangerous-checkout: {disable: true}
+            dangerous-triggers: {disable: true}
+            dependabot-cooldown: {disable: true}
+            dependabot-execution: {disable: true}
+            excessive-permissions: {disable: true}
+            forbidden-uses: {disable: true}
+            github-app: {disable: true}
+            github-env: {disable: true}
+            hardcoded-container-credentials: {disable: true}
+            impostor-commit: {disable: true}
+            insecure-commands: {disable: true}
+            insecure-url-scheme: {disable: true}
+            known-vulnerable-actions: {disable: true}
+            misfeature: {disable: true}
+            obfuscation: {disable: true}
+            overprovisioned-secrets: {disable: true}
+            ref-confusion: {disable: true}
+            ref-version-mismatch: {disable: true}
+            secrets-inherit: {disable: true}
+            secrets-outside-env: {disable: true}
+            self-hosted-runner: {disable: true}
+            self-repository: {disable: true}
+            stale-action-refs: {disable: true}
+            superfluous-actions: {disable: true}
+            template-injection: {disable: true}
+            typosquat-uses: {disable: true}
+            undocumented-permissions: {disable: true}
+            unredacted-secrets: {disable: true}
+            unsound-condition: {disable: true}
+            unsound-contains: {disable: true}
+            unsound-ternary: {disable: true}
+            use-trusted-publishing: {disable: true}
+            # A full commit SHA for every action and reusable workflow.
+            unpinned-uses:
+              config:
+                policies:
+                  "*": hash-pin
+          EOF
+
+      # --offline: the three audits need no network, and no token reaches the
+      # container. --format github puts each finding on its line in the diff.
+      - name: Check the pins
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo:ro" \
+            -w /repo \
+            "$ZIZMOR_IMAGE" \
+            --offline --config .git/zizmor-pins.yml --format github .

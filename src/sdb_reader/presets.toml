@@ -1,0 +1,23 @@
+# What a model family needs in a request beyond the standard fields (SDW-31).
+#
+# One table per preset:
+#   description  one line, per language of the command
+#   request      fields merged into every request
+#   omit         fields of the standard request left out (only "temperature")
+#   tested_with  the model the preset was measured with by this command
+#   tested_on    the day of that measurement
+#
+# A service can change what it takes: a preset says what held on the day it
+# names, and a preset without that line was not measured with this command.
+
+[deepseek-no-reasoning]
+description = { de = "DeepSeek: das Nachdenken des Modells abschalten", en = "DeepSeek: switch the model's reasoning off" }
+request = { thinking = { type = "disabled" } }
+tested_with = "deepseek-flash"
+tested_on = 2026-11-18
+
+[ollama-no-reasoning]
+description = { de = "Ollama: das Nachdenken eines Modells abschalten, das nachdenkt", en = "Ollama: switch the reasoning of a reasoning model off" }
+request = { reasoning_effort = "none" }
+tested_with = "qwen3.8:27b-mlx"
+tested_on = 2026-11-18

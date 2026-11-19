@@ -1,0 +1,135 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sdb-reader"
+version = "0.9.0"
+description = "Reads German safety data sheets (Sicherheitsdatenblätter) under REACH and CLP, without a language model"
+readme = "README.md"
+authors = [{ name = "Förde-Baumarkt Holger Claussen GmbH & Co. KG", email = "service@foerde-baumarkt.de" }]
+# Every Python version still maintained upstream, from 3.12 on (BIB-16). The
+# classifiers name each one; the test matrix in .github/workflows/tests.yml
+# runs each, and tests/test_stability.py holds the three lists equal.
+requires-python = ">=3.12"
+keywords = [
+  "safety data sheet",
+  "Sicherheitsdatenblatt",
+  "SDS",
+  "SDB",
+  "REACH",
+  "CLP",
+  "GHS",
+  "hazard statements",
+  "PDF",
+]
+# No licence classifier: the licence is the SPDX expression under `license`
+# below, and the packaging standard (PEP 639) refuses both together.
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Natural Language :: German",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Chemistry",
+  "Topic :: Text Processing",
+  "Typing :: Typed",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+]
+dependencies = [
+  # Reads the PDF's text layer by position and renders pages for text
+  # recognition. The lean distribution of PyMuPDF: the same `pymupdf` module
+  # without the layout and Markdown packages (and their numpy and onnxruntime)
+  # that the full one installs since 2.0 and the reader does not use. Upper
+  # bound: the next major is a decision.
+  "pymupdf-lite>=2.1,<3.0.0",
+  "structlog>=26.1.0",
+]
+# AGPL because the PDF library the reader is built on, PyMuPDF, is AGPL: a
+# permissive licence here would promise what a user of the package does not
+# get.
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "NOTICE"]
+
+[project.urls]
+# The documentation site holds one edition per released version; this address
+# leads to the newest (BIB-22). tests/test_release.py holds it equal to the
+# address the spec and the pages name.
+Documentation = "https://foerdebaumarkt.github.io/sdb-reader/"
+Changelog = "https://github.com/foerdebaumarkt/sdb-reader/blob/main/CHANGELOG.md"
+Source = "https://github.com/foerdebaumarkt/sdb-reader"
+Issues = "https://github.com/foerdebaumarkt/sdb-reader/issues"
+
+[project.scripts]
+sdb-reader = "sdb_reader.cli:main"
+
+[dependency-groups]
+# Development tooling, locked in uv.lock and pinned exactly: with a range, CI
+# would install each new release on its own and a tool's breaking change would
+# fail an unrelated pull request. Dependabot proposes each release. ruff, mypy
+# and vulture carry the same versions as their hooks in
+# .pre-commit-config.yaml.
+dev = [
+  "ruff==0.17.5",
+  "mypy==2.4.1",
+  "vulture==2.16",
+  "pytest==9.2.0",
+  "pip-licenses==5.5.5",
+  "jsonschema==4.26.0",
+  # The uv that CI installs: setup-uv reads it from uv.lock (version-file),
+  # so Dependabot moves it like any other locked package.
+  "uv==0.13.8",
+  # The documentation site (make docs): Sphinx reads the Markdown pages
+  # through MyST, Furo is the theme. Development tools only; nothing of them
+  # is installed with the package. Sphinx 9.1, because 9.2 needs Python 3.13
+  # and the lock has to resolve for every supported version (BIB-16).
+  "sphinx==9.1.1",
+  "myst-parser==5.2.0",
+  "furo==2025.12.19",
+  # Checks before a release that the package index can render the built
+  # package's description (make dist; docs/contributing/releasing.md).
+  "twine==7.0.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# The wording of the CLP statements; without this line an installed package
+# has the code and not the file it reads. And py.typed, which tells a type
+# checker in a program that uses the package to read its annotations.
+sdb_reader = ["*.json", "py.typed", "presets.toml", "messages_data/*.toml"]
+
+[tool.vulture]
+# src/ and any scripts, deliberately without tests/: a function whose only
+# caller is its own test then has no caller at all and gets reported. With
+# tests/ in this list it would look used, which is how such code survives --
+# coverage counts a test as an execution, so it even reads as fully covered.
+# Add every other directory that holds callers (scripts/, utility/, ...), or
+# their code will be reported as dead.
+paths = ["src", "tools", "vulture_whitelist.py"]
+# 60, because that is where vulture reports an unused *function*. At 80 it
+# only states what it is certain of -- unused imports, unreachable code, dead
+# variables -- and ruff already catches most of that, so a gate at 80 lets an
+# uncalled function straight through. Tried and measured, not assumed.
+#
+# 60 also guesses. In a repo that starts here the guesses are few; in one that
+# adopts this later, run `vulture --make-whitelist` once and commit the result
+# as a baseline, so the gate speaks only about code written from then on.
+min_confidence = 60
+sort_by_size = true
+
+[tool.uv]
+# uv resolves only files that have been public for three days, so a hijacked
+# release is usually pulled before it can reach the lock. Dependabot waits the
+# same three days before it proposes an update (.github/dependabot.yml).
+exclude-newer = "3 days"

@@ -1,0 +1,44 @@
+name: licenses
+
+# Every dependency's licence against licenses-allowed.txt. A dependency with a
+# licence nobody has looked at fails here, whoever brings it in.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request makes the older run pointless. Runs
+# on main are left to finish: each one is the record for its commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  licenses:
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      with:
+        # The oldest supported Python (BIB-16): it installs every package a
+        # newer one does, and the backports only it needs.
+        python-version: '3.12'
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        # The uv locked in uv.lock (dev group), which Dependabot moves.
+        # Without it setup-uv fetches the newest uv on every run.
+        version-file: uv.lock
+    - name: Install from uv.lock
+      env:
+        UV_PYTHON: '3.12'
+      run: uv sync --locked
+    - name: Check the licences
+      run: make licenses

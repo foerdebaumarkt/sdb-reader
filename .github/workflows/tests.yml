@@ -1,0 +1,139 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# A newer push to the same pull request makes the older run pointless. Runs
+# on main are left to finish: each one is the record for its commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  suite:
+    # Once for every Python version the package supports (BIB-16): the same
+    # list as the classifiers in pyproject.toml, held equal by
+    # tests/test_stability.py.
+    name: suite (${{ matrix.python }})
+    strategy:
+      # One version failing says nothing about the others; let each finish.
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.13', '3.14', '3.15']
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    steps:
+    # Decided here, not with paths: on the trigger: a required check whose
+    # workflow never starts leaves a pull request pending for good. A change
+    # the test suite does not read reports green in seconds.
+    - name: Decide whether the suite needs to run
+      id: relevant
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # What the test suite reads: the package, the tests, and the
+        # dependencies and config that install and configure pytest. A
+        # project that adds specs/ with a spec check adds specs/ here, so a
+        # change that touches only a spec still runs that check.
+        PATTERN='^(src/|tests/|tools/|specs/|docs/|README[^/]*\.md|CONTRIBUTING\.md|CHANGELOG\.md|MANIFEST\.in|Makefile|pyproject\.toml|pytest\.ini|uv\.lock|\.github/workflows/)'
+        case "${{ github.event_name }}" in
+          pull_request)
+            FILES="$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+              --jq '.[] | .filename, .previous_filename // empty')" ;;
+          push)
+            # The compare API lists at most 300 files; a bigger push runs.
+            FILES="$(gh api \
+              "repos/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" \
+              --jq 'if (.files | length) < 300 then .files[] | .filename, .previous_filename // empty else "*" end')" ;;
+          *)
+            FILES='*' ;;
+        esac
+        # No grep -q: grep reads all its input, so nothing upstream dies of
+        # SIGPIPE, and the files that start the run land in the log.
+        if [ "$FILES" = '*' ] || printf '%s\n' "$FILES" | grep -E "$PATTERN"; then
+          echo "run=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Touches nothing the test suite reads; reporting green without running it."
+          echo "run=false" >> "$GITHUB_OUTPUT"
+        fi
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      if: steps.relevant.outputs.run == 'true'
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      if: steps.relevant.outputs.run == 'true'
+      with:
+        python-version: ${{ matrix.python }}
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      if: steps.relevant.outputs.run == 'true'
+      with:
+        # The uv locked in uv.lock (dev group), which Dependabot moves.
+        # Without it setup-uv fetches the newest uv on every run.
+        version-file: uv.lock
+    # Tests what is locked: --locked fails on a uv.lock that no longer matches
+    # pyproject.toml, instead of quietly resolving something else.
+    - name: Install from uv.lock
+      if: steps.relevant.outputs.run == 'true'
+      env:
+        # The interpreter set up above, not one uv would pick or download.
+        UV_PYTHON: ${{ matrix.python }}
+      run: uv sync --locked
+    # One test reads a scanned sheet with the real program (tests/test_ocr_real.py);
+    # all others stand in for it.
+    - name: Install tesseract with German language data
+      if: steps.relevant.outputs.run == 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends tesseract-ocr tesseract-ocr-deu
+    - name: Tests
+      if: steps.relevant.outputs.run == 'true'
+      run: .venv/bin/python -m pytest
+    # The tests run against the checkout. This builds the wheel, installs it
+    # by itself and checks that it brought its data files along.
+    - name: Installed package
+      if: steps.relevant.outputs.run == 'true'
+      run: make package-check
+    # What a release puts on the package index, checked the way the index
+    # checks it (make dist). Not published from here.
+    - name: Source distribution and wheel
+      if: steps.relevant.outputs.run == 'true'
+      run: make dist
+    # The documentation site with the reference of the exported names
+    # (make docs). Not published from here: a release does that
+    # (release.yml). A description Sphinx cannot render, an exported name
+    # the reference lacks, a link that leads nowhere on the site or a page
+    # the navigation does not name fails here.
+    - name: Documentation site
+      if: steps.relevant.outputs.run == 'true'
+      run: make docs
+    # For whoever reviews a change to the pages: the built site, for a week.
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: steps.relevant.outputs.run == 'true' && matrix.python == '3.14'
+      with:
+        name: site
+        path: build/site/
+        retention-days: 7
+        if-no-files-found: error
+
+  # The one check a branch rule requires. A matrix job reports under a name
+  # per version, and a rule that named each would have to change with every
+  # Python release; this job stands for all of them.
+  pytest:
+    needs: suite
+    if: always()
+    runs-on: ubuntu-26.04
+    steps:
+    - name: Every version passed
+      env:
+        RESULT: ${{ needs.suite.result }}
+      run: |
+        echo "suite: $RESULT"
+        test "$RESULT" = success

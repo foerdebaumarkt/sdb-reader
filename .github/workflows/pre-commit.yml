@@ -1,0 +1,36 @@
+name: pre-commit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request makes the older run pointless. Runs
+# on main are left to finish: each one is the record for its commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pre-commit:
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      with:
+        python-version: '3.14'
+    - name: Install pre-commit
+      run: python -m pip install pre-commit
+    # no-commit-to-branch guards local commits. A push to main is on main by
+    # definition, so in CI the hook would fail every such run.
+    - name: Run pre-commit on all files
+      env:
+        SKIP: no-commit-to-branch
+      run: pre-commit run --all-files --show-diff-on-failure --color always

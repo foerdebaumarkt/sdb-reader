@@ -1,0 +1,792 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/foerdebaumarkt/sdb-reader/blob/main/src/sdb_reader/read_record.schema.json",
+  "title": "One record of what `sdb-reader read` prints",
+  "description": "The command prints a JSON array with one such record per file. Every record has the same keys for its kind of file (SDW-19): file, verification and the lists warnings, errors and findings always; extraction where text could be read; sheet, statements, parser and sheets for a German safety data sheet and for no other file; parts where such a file holds several sheets (SDW-32). A file the parser broke on is named on stderr and has no record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "file",
+    "verification",
+    "warnings",
+    "errors",
+    "findings"
+  ],
+  "properties": {
+    "file": {
+      "$ref": "#/$defs/file"
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "extraction": {
+      "$ref": "#/$defs/extraction"
+    },
+    "sheet": {
+      "$ref": "#/$defs/sheet"
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warnings"
+      ],
+      "properties": {
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        }
+      },
+      "description": "What the parser noted while reading the sheet; the list is empty where it noted nothing. For a German safety data sheet."
+    },
+    "statements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/statement"
+      },
+      "description": "The label's H, P and EUH statements, each with the sheet's wording and the regulation's. Only for a German safety data sheet."
+    },
+    "sheet_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How many safety data sheets the file holds (SDB-2). Only for a German safety data sheet."
+    },
+    "cover_page": {
+      "type": "boolean",
+      "description": "Whether a cover page stands in front of the file's sheets (SDB-138). It is no sheet and nothing is read from it. Only for a German safety data sheet."
+    },
+    "display_term": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The word on the cover page that names a display, as printed, such as \"Mix-Display\"; null where there is no cover page or it names none (SDB-138). Only for a German safety data sheet."
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/part"
+      },
+      "description": "Only for a file that holds several sheets: each sheet read on its own, in the file's order (SDB-118). The keys sheet, statements, parser and findings beside it are the file's: its sheets united."
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      },
+      "description": "What is wrong with the sheet as a document: for a German safety data sheet, and one entry for a sheet in another language. Empty for every other file."
+    },
+    "embedded_data": {
+      "$ref": "#/$defs/embedded_data"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/message"
+      },
+      "description": "What the reading as a whole notes: that the file is no German sheet, or that its text could not be read. Empty for a sheet."
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/message"
+      },
+      "description": "Why no text could be read from the file. Empty where text was read."
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "path",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The absolute path of the file read."
+        },
+        "filename": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "errors",
+        "kind",
+        "prints_statement_codes",
+        "warnings"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "safety-data-sheet",
+            "safety-information",
+            "safety-data-sheet-other-language",
+            "document"
+          ],
+          "description": "What the file is; safety-data-sheet is a German safety data sheet, the only kind whose sheet is read."
+        },
+        "prints_statement_codes": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "For a file that is no safety data sheet and no safety information: whether it prints at least three different H, P or EUH codes. Otherwise null."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        }
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "extractor",
+        "pages_sampled",
+        "warnings",
+        "character_count"
+      ],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "description": "The reading stage the text comes from: the version of the stage and of the PDF library, as extraction_stage() names it. Two runs of different stages may differ because the text differs."
+        },
+        "extractor": {
+          "enum": [
+            "pymupdf",
+            "pymupdf+ocr"
+          ],
+          "description": "How the text was read: from the text layer, or with text recognition where the layer is missing."
+        },
+        "pages_sampled": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        },
+        "character_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "tesseract": {
+          "type": "string",
+          "description": "The version of the tesseract program that read the text. Only where text recognition read it, in whole or for single pages."
+        },
+        "raw_text": {
+          "type": "string",
+          "description": "The text before tidying. Only with --include-raw-text."
+        }
+      },
+      "description": "How the file's text was read. Missing for a file that could not be read."
+    },
+    "sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contact_info",
+        "content_hash",
+        "countries",
+        "hazard_statements",
+        "issue_date",
+        "language",
+        "product_identifier",
+        "revision_date",
+        "section_text",
+        "sheet_required",
+        "stated_classification",
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The sheet's own version, as printed."
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the text read, so that copies of one sheet under several names can be told."
+        },
+        "product_identifier": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "issue_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "revision_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "language": {
+          "type": "string"
+        },
+        "countries": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "DE",
+              "AT",
+              "CH"
+            ]
+          },
+          "description": "The countries the sheet is issued for; empty where it names none."
+        },
+        "stated_classification": {
+          "enum": [
+            "classified",
+            "classified-old-system",
+            "not-classified",
+            "not-stated"
+          ]
+        },
+        "stated_voluntary": {
+          "type": "boolean",
+          "description": "Whether the sheet says of itself that it is issued voluntarily or that no safety data sheet is prescribed for its product."
+        },
+        "stated_article": {
+          "type": "boolean",
+          "description": "Whether the sheet calls its product an article: beside the sentence that makes it voluntary, or by saying that as an article it is not subject to labelling."
+        },
+        "sheet_required": {
+          "type": "boolean",
+          "description": "Whether, by this sheet, its product needs a safety data sheet."
+        },
+        "hazard_statements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hazard_codes",
+            "hazard_text",
+            "pictograms",
+            "precautionary_codes",
+            "precautionary_text",
+            "signal_word",
+            "supplemental_codes",
+            "supplemental_text"
+          ],
+          "properties": {
+            "hazard_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "precautionary_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "supplemental_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "signal_word": {
+              "enum": [
+                "Gefahr",
+                "Achtung",
+                null
+              ]
+            },
+            "pictograms": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^GHS\\d{1,2}$"
+              }
+            },
+            "hazard_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "precautionary_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplemental_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "contact_info": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "emergency_phone",
+            "supplier_address",
+            "supplier_email",
+            "supplier_name",
+            "supplier_phone",
+            "supplier_website"
+          ],
+          "properties": {
+            "supplier_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_address": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_phone": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "emergency_phone": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_email": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_website": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "information_email": {
+              "description": "The address the sheet names for whoever answers for it: the competent person's, else an information office's. Null where no such label stands at an address. Not in records written before the field existed.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "section_text": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^section_(?:[1-9]|1[0-6])$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The text of each section the parser found, by its number."
+        }
+      },
+      "description": "What the sheet says. Only for a German safety data sheet."
+    },
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "regulation",
+        "sheet"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "sheet": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The wording as the sheet prints it."
+        },
+        "regulation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The wording of the CLP Regulation, where it has exactly one."
+        }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sheet",
+        "statements",
+        "warnings"
+      ],
+      "description": "One sheet of a file that holds several, read from its own text as a file holding only that sheet would be.",
+      "properties": {
+        "sheet": {
+          "$ref": "#/$defs/sheet"
+        },
+        "statements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          },
+          "description": "What the parser noted while reading this sheet."
+        }
+      }
+    },
+    "finding": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/message"
+        },
+        {
+          "properties": {
+            "code": {
+              "enum": [
+                "wording-deviates",
+                "undated",
+                "predates-annex-ii",
+                "revised-in-future",
+                "classification-undetermined",
+                "old-classification",
+                "old-format",
+                "classification-not-stated",
+                "classification-contradicts-label",
+                "different-products",
+                "country-editions-differ",
+                "euh-outside-label",
+                "not-german"
+              ]
+            }
+          }
+        }
+      ],
+      "description": "A message about what is wrong with the sheet as a document. Where it concerns one statement, params names it as statement."
+    },
+    "embedded_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "filename",
+        "compared",
+        "differences"
+      ],
+      "description": "The eSDScom file embedded in the PDF. Only where the PDF carries one.",
+      "properties": {
+        "format": {
+          "const": "eSDScom"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "compared": {
+          "type": "boolean",
+          "description": "Whether the embedded data were compared with the sheet as read: the embedded file could be read, and the PDF is a German safety data sheet."
+        },
+        "differences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "embedded",
+              "field",
+              "read"
+            ],
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "embedded": {
+                "type": [
+                  "string",
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "read": {
+                "type": [
+                  "string",
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "description": "Where the embedded data and the sheet as read differ. Empty where nothing was compared."
+        },
+        "unreadable": {
+          "$ref": "#/$defs/message",
+          "description": "Why the embedded file could not be read. Only then."
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The eSDScom version the file states. Only for a file that could be read."
+        },
+        "system": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The authoring system the file names. Only for a file that could be read."
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "params",
+        "message"
+      ],
+      "description": "Something the reader notes: a fixed code, the values it names, and a sentence in the language asked for (SDW-17). A program reads code and params; the sentence is for people.",
+      "properties": {
+        "code": {
+          "enum": [
+            "classification-contradicts-label",
+            "classification-not-stated",
+            "classification-undetermined",
+            "classified-before-clp",
+            "cli-embedded-not-handed-out",
+            "cli-file-broke",
+            "cli-file-failed",
+            "cli-no-embedded-file",
+            "cli-saved",
+            "cli-half-line-removed",
+            "cli-progress",
+            "cli-interrupted",
+            "cli-summary-read",
+            "cli-summary-ask",
+            "country-editions-differ",
+            "cover-only",
+            "different-products",
+            "diff-run",
+            "diff-files",
+            "diff-differing",
+            "diff-none",
+            "diff-field",
+            "diff-field-counted-only",
+            "diff-stages-differ",
+            "diff-models-differ",
+            "diff-questions-differ",
+            "show-kind-sheet",
+            "show-kind-other-language",
+            "show-kind-safety-information",
+            "show-kind-document",
+            "show-kind-unreadable",
+            "show-kind-broke",
+            "show-cover-page",
+            "show-cover-page-display",
+            "show-line-cover-page",
+            "show-line-cover-page-display",
+            "show-sheet-of",
+            "show-whole-file",
+            "show-label-product",
+            "show-label-supplier",
+            "show-label-contact",
+            "show-label-emergency",
+            "show-label-revised",
+            "show-label-issued",
+            "show-label-labelling",
+            "show-label-notes",
+            "show-date",
+            "show-information-email",
+            "show-product-dated",
+            "show-with-version",
+            "show-not-stated",
+            "show-no-labelling",
+            "show-no-signal-word",
+            "show-no-pictograms",
+            "show-no-statements",
+            "show-needs-sheet",
+            "show-needs-no-sheet",
+            "show-stated-voluntary",
+            "show-stated-article",
+            "show-no-notes",
+            "show-no-product",
+            "show-undated",
+            "show-notes",
+            "show-summary",
+            "show-interrupted",
+            "embedded-doctype",
+            "embedded-no-datasheet",
+            "embedded-not-xml",
+            "embedded-too-large",
+            "embedded-wrong-root",
+            "euh-outside-label",
+            "euh-wording-outside-label",
+            "label-undetermined",
+            "leaflet-title",
+            "model-answer-unreadable",
+            "model-http-error",
+            "model-not-asked",
+            "model-reply-empty",
+            "model-reply-not-json",
+            "model-reply-without-message",
+            "model-unreachable",
+            "no-emergency-phone",
+            "no-hazard-codes",
+            "no-hazard-codes-in-text",
+            "no-identification-section",
+            "no-label-section",
+            "no-precautionary-codes",
+            "no-regulation-reference",
+            "no-safety-data-sheet",
+            "no-section-marker",
+            "no-supplier-address",
+            "no-supplier-name",
+            "no-supplier-phone",
+            "no-text",
+            "no-text-layer",
+            "no-title-keywords",
+            "not-a-sheet",
+            "not-german",
+            "ocr-failed",
+            "ocr-timeout",
+            "ocr-unavailable",
+            "ocr-too-old",
+            "ocr-language-missing",
+            "old-classification",
+            "old-format",
+            "other-language",
+            "pages-read-by-ocr",
+            "pdf-not-found",
+            "pdf-too-large",
+            "pdf-unreadable",
+            "pictograms-derived",
+            "predates-annex-ii",
+            "read-by-ocr-no-text-layer",
+            "read-by-ocr-single-characters",
+            "revised-in-future",
+            "safety-information",
+            "several-sheets",
+            "short-sample",
+            "short-text",
+            "signal-word-derived",
+            "signal-word-not-taken",
+            "title-in-running-text",
+            "undated",
+            "unknown",
+            "unreadable",
+            "wording-deviates"
+          ],
+          "description": "What is noted. The same in every language."
+        },
+        "params": {
+          "type": "object",
+          "description": "The values the code names, such as the statement a finding is about."
+        },
+        "message": {
+          "type": "string",
+          "description": "The sentence, from the message catalog of the language chosen."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "kind": {
+                "const": "safety-data-sheet"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "extraction",
+          "sheet",
+          "statements",
+          "parser",
+          "sheet_count"
+        ]
+      },
+      "else": {
+        "properties": {
+          "sheet": false,
+          "statements": false,
+          "parser": false,
+          "sheet_count": false,
+          "cover_page": false,
+          "display_term": false,
+          "parts": false
+        }
+      }
+    }
+  ]
+}

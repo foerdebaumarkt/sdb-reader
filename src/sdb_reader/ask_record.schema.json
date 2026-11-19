@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/foerdebaumarkt/sdb-reader/blob/main/src/sdb_reader/ask_record.schema.json",
+  "title": "One record of what `sdb-reader ask` prints",
+  "description": "The command prints a JSON array with one such record per file, or writes one a line with --output (SDW-26). A record says whether a model was asked about the file; where it was, how many sheets the file holds, what was sent, what the model answered, and the answer in the form `read` gives a sheet, so that `diff` can set the two beside each other. A file the request failed for is named on stderr and has no record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "file",
+    "kind",
+    "asked"
+  ],
+  "properties": {
+    "file": {
+      "$ref": "#/$defs/file"
+    },
+    "kind": {
+      "enum": [
+        "safety-data-sheet",
+        "safety-information",
+        "safety-data-sheet-other-language",
+        "document"
+      ],
+      "description": "What the file is, by the reader's verdict. A model is asked only about a safety-data-sheet: a German one."
+    },
+    "asked": {
+      "type": "boolean",
+      "description": "Whether a model was asked about the file."
+    },
+    "reason": {
+      "$ref": "#/$defs/message",
+      "description": "Why no model was asked. Only where asked is false."
+    },
+    "model": {
+      "type": "string",
+      "description": "The model's name at the endpoint."
+    },
+    "sheet_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How many safety data sheets the file holds. Each is asked about with a request of its own."
+    },
+    "sent": {
+      "enum": [
+        "before-section-3",
+        "pages",
+        "sheet"
+      ],
+      "description": "Which part of the file's text was sent: from its beginning up to the heading of section 3, or the first pages where no such heading was found. For a file with several sheets, or with a cover page in front of its sheet: before-section-3 where every sheet went up to its own heading of section 3, sheet where at least one went whole. A cover page is never sent."
+    },
+    "stage": {
+      "type": "string",
+      "description": "The reading stage the text sent comes from, as extraction_stage() names it."
+    },
+    "question": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$",
+      "description": "A fingerprint of the instructions, which are the same for every file. Answers with another fingerprint are answers to another question."
+    },
+    "preset": {
+      "type": "string",
+      "description": "The preset the request's fields come from. Only where --preset named one."
+    },
+    "request": {
+      "type": "object",
+      "description": "The fields added to the request: those of the preset, with those of --request-json on top. Only where there were any."
+    },
+    "usage": {
+      "$ref": "#/$defs/usage",
+      "description": "What the requests cost in tokens, for a file with several sheets all of them together. Only where the endpoint says."
+    },
+    "reading": {
+      "$ref": "#/$defs/reading",
+      "description": "For a file with several sheets the sheets' readings united: the codes of all in the order they first appear, the statements one sheet after the other, each on its line, supplier and date of the first sheet."
+    },
+    "answer": {
+      "type": "object",
+      "description": "The model's answer as it gave it. Its keys are the model's; the instructions ask for supplier, hazard_statements, precautionary_statements, supplemental_phrases and revision_date. Only for a file that is one sheet; the answers about several sheets stand under parts."
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 2,
+      "description": "Only for a file with several sheets: what was sent and answered for each, in the file's order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sent",
+          "reading",
+          "answer"
+        ],
+        "properties": {
+          "sent": {
+            "enum": [
+              "before-section-3",
+              "sheet"
+            ],
+            "description": "The sheet's text up to its own heading of section 3, or the whole sheet where it has none."
+          },
+          "usage": {
+            "$ref": "#/$defs/usage",
+            "description": "What this sheet's request cost in tokens. Only where the endpoint says."
+          },
+          "reading": {
+            "$ref": "#/$defs/reading"
+          },
+          "answer": {
+            "type": "object",
+            "description": "The model's answer about this sheet as it gave it."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "filename",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The file's absolute path."
+        },
+        "filename": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "params",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "What is noted. The same in every language; the codes are those of `read`."
+        },
+        "params": {
+          "type": "object"
+        },
+        "message": {
+          "type": "string",
+          "description": "The sentence, from the message catalog of the language chosen."
+        }
+      }
+    },
+    "reading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision_date",
+        "revision_date_named",
+        "hazard_statements",
+        "contact_info"
+      ],
+      "description": "The model's answer under the names a `read` record's sheet has, as far as a model is asked.",
+      "properties": {
+        "revision_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "The date of revision the model named, where the string it named stands in the text sent and is a date; null otherwise."
+        },
+        "revision_date_named": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The string the model named as the date of revision, whether or not it held up."
+        },
+        "hazard_statements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hazard_codes",
+            "precautionary_codes",
+            "supplemental_codes",
+            "hazard_text",
+            "precautionary_text",
+            "supplemental_text"
+          ],
+          "properties": {
+            "hazard_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The codes of the H statements in the model's order; a joined code is one entry."
+            },
+            "precautionary_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The codes of the P statements; a joined code is one entry."
+            },
+            "supplemental_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The codes of the EUH statements, also of one the model listed among the H statements."
+            },
+            "hazard_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "precautionary_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplemental_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "contact_info": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "supplier_name",
+            "supplier_address",
+            "supplier_phone",
+            "supplier_email",
+            "supplier_website"
+          ],
+          "properties": {
+            "supplier_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_address": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_phone": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_email": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplier_website": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_tokens",
+        "completion_tokens"
+      ],
+      "properties": {
+        "prompt_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "completion_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "asked": {
+            "const": true
+          }
+        },
+        "required": [
+          "asked"
+        ]
+      },
+      "then": {
+        "required": [
+          "model",
+          "sheet_count",
+          "sent",
+          "stage",
+          "question",
+          "reading"
+        ],
+        "not": {
+          "required": [
+            "reason"
+          ]
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "sheet_count": {
+                "const": 1
+              }
+            },
+            "required": [
+              "answer"
+            ],
+            "not": {
+              "required": [
+                "parts"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "sheet_count": {
+                "minimum": 2
+              }
+            },
+            "required": [
+              "parts"
+            ],
+            "not": {
+              "required": [
+                "answer"
+              ]
+            }
+          }
+        ]
+      },
+      "else": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "model": false,
+          "sent": false,
+          "stage": false,
+          "question": false,
+          "request": false,
+          "usage": false,
+          "reading": false,
+          "answer": false,
+          "sheet_count": false,
+          "preset": false,
+          "parts": false
+        }
+      }
+    }
+  ]
+}

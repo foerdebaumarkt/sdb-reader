@@ -1,0 +1,68 @@
+line-length = 88
+indent-width = 4
+# The oldest Python the package supports (BIB-16): what it does not accept
+# is not written here.
+target-version = "py312"
+
+[lint]
+select = [
+  "E",  # pycodestyle errors
+  "F",  # pyflakes
+  "I",  # isort import order
+  "B",  # flake8-bugbear (core safety subset)
+  "Q",  # flake8-quotes (enforce double quotes below in format)
+  "RET",# return statements simplification
+  "DTZ",# naive datetimes -- a timestamp without a zone is a guess
+  # Fail fast: an `except Exception` must re-raise, log the traceback, or say
+  # in a noqa why swallowing it is the point; an `except ...: pass` /
+  # `continue` is never silent, typed or not.
+  "BLE001",
+  "S110",
+  "S112",
+  "SIM",# simplifications: one `with`, no needless bool, the builtin for the loop
+  "ARG",# arguments nothing reads (not in tests; see below)
+  "PT", # pytest style
+  "T20",# print: a library logs; only the command line prints
+  "RUF",# ruff's own rules; a noqa that suppresses nothing is a false claim (RUF100)
+  "UP", # syntax of the oldest Python the project supports (3.12): dict, X | None, ...
+  "C90",# complexity ceiling, see [lint.mccabe]
+]
+ignore = [
+  "E203", # whitespace before ':' (formatter compatibility)
+  "E501", # line length handled by the formatter
+  "Q000", # quote style is enforced by the formatter
+  # German text is written with en dashes, the multiplication sign and the
+  # like; RUF001-003 would call each a look-alike of an ASCII character.
+  "RUF001",
+  "RUF002",
+  "RUF003",
+]
+
+[lint.mccabe]
+# New code stays at or below 20. A function above it carries `# noqa: C901`;
+# RUF100 refuses the marker once the function is split below the ceiling, so
+# the list only shrinks.
+max-complexity = 20
+
+[lint.flake8-bandit]
+# S110/S112 also for `except SomeError: pass`: a typed swallow is still silent.
+check-typed-exception = true
+
+[lint.per-file-ignores]
+# The command line prints what it is asked for.
+"src/sdb_reader/cli.py" = ["T20"]
+# Tools run by hand print their report.
+"tools/**" = ["T20"]
+# Fixture timestamps: a test constructs the clock it wants to test against.
+# ARG: a fake takes the arguments of what it stands in for, used or not.
+# T20: a test may print what helps read its failure.
+"tests/**" = ["DTZ", "ARG", "T20"]
+# A vulture whitelist is a list of names written as bare expressions.
+"vulture_whitelist.py" = ["B018", "F821"]
+
+[format]
+quote-style = "double"
+
+[lint.isort]
+known-first-party = ["sdb_reader"]
+combine-as-imports = true

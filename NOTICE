@@ -1,0 +1,40 @@
+sdb-reader
+Copyright (C) 2026 Förde-Baumarkt Holger Claussen GmbH & Co. KG
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details. The full text is in the file LICENSE.
+
+
+Wording and tables of the CLP Regulation
+----------------------------------------
+
+The package carries the German wording of the hazard, precautionary and
+supplemental statements (src/sdb_reader/clp_statements_de.json) and the tables
+that give the pictograms and the signal word of a hazard statement
+(src/sdb_reader/pictograms.py).
+
+Source: Regulation (EC) No 1272/2008 of the European Parliament and of the
+Council of 16 December 2008 on classification, labelling and packaging of
+substances and mixtures (OJ L 353, 31.12.2008, p. 1), consolidated version of
+1 July 2026, German (CELEX 02008R1272-20260701), as published by the
+Publications Office of the European Union. The tools under tools/clp/ fetch
+that text, take the statements from it and check the tables against it.
+
+The consolidated text says of itself that it serves information only and has
+no legal effect; binding are the texts published in the Official Journal of
+the European Union.
+
+Reuse: Commission Decision 2011/833/EU of 12 December 2011 on the reuse of
+Commission documents (OJ L 330, 14.12.2011, p. 39; CELEX 32011D0833), which
+covers documents published by the Publications Office on the Commission's
+behalf, makes them "available for reuse ... for commercial or non-commercial
+purposes" (Article 4) and names as conditions "the obligation for the reuser
+to acknowledge the source of the documents" and "the obligation not to distort
+the original meaning or message of the documents" (Article 6(2)).

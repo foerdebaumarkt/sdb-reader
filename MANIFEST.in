@@ -1,0 +1,6 @@
+# What the source distribution holds beyond the package and the files the
+# build names itself (README.md, LICENSE, NOTICE, pyproject.toml): the
+# changelog. The tests stay out: they read the specs, the documentation and
+# the tools, which are in the repository and not in the distribution.
+include CHANGELOG.md
+prune tests

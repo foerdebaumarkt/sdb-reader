@@ -1,0 +1,997 @@
+{
+  "source": "CELEX_02008R1272-20260701_DE.pdf",
+  "statements": {
+    "EUH014": {
+      "text": "Reagiert heftig mit Wasser.",
+      "kind": "fixed"
+    },
+    "EUH018": {
+      "text": "Kann bei Verwendung explosionsfähige/entzündbare Dampf/Luft-Gemische bilden.",
+      "kind": "alternatives"
+    },
+    "EUH019": {
+      "text": "Kann explosionsfähige Peroxide bilden.",
+      "kind": "fixed"
+    },
+    "EUH029": {
+      "text": "Entwickelt bei Berührung mit Wasser giftige Gase.",
+      "kind": "fixed"
+    },
+    "EUH031": {
+      "text": "Entwickelt bei Berührung mit Säure giftige Gase.",
+      "kind": "fixed"
+    },
+    "EUH032": {
+      "text": "Entwickelt bei Berührung mit Säure sehr giftige Gase.",
+      "kind": "fixed"
+    },
+    "EUH044": {
+      "text": "Explosionsgefahr bei Erhitzen unter Einschluss.",
+      "kind": "fixed"
+    },
+    "EUH066": {
+      "text": "Wiederholter Kontakt kann zu spröder oder rissiger Haut führen.",
+      "kind": "fixed"
+    },
+    "EUH070": {
+      "text": "Giftig bei Berührung mit den Augen.",
+      "kind": "fixed"
+    },
+    "EUH071": {
+      "text": "Wirkt ätzend auf die Atemwege.",
+      "kind": "fixed"
+    },
+    "EUH201": {
+      "text": "Enthält Blei. Nicht für den Anstrich von Gegenständen verwenden, die von Kindern gekaut oder gelutscht werden könnten. Achtung! Enthält Blei.",
+      "kind": "alternatives"
+    },
+    "EUH202": {
+      "text": "Cyanacrylat. Gefahr. Klebt innerhalb von Sekunden Haut und Augenlider zusammen. Darf nicht in die Hände von Kindern gelangen.",
+      "kind": "fixed"
+    },
+    "EUH203": {
+      "text": "Enthält Chrom (VI). Kann allergische Reaktionen hervorrufen.",
+      "kind": "fixed"
+    },
+    "EUH204": {
+      "text": "Enthält Isocyanate. Kann allergische Reaktionen hervorrufen.",
+      "kind": "fixed"
+    },
+    "EUH205": {
+      "text": "Enthält epoxidhaltige Verbindungen. Kann allergische Reaktionen hervorrufen.",
+      "kind": "fixed"
+    },
+    "EUH206": {
+      "text": "Achtung! Nicht zusammen mit anderen Produkten verwenden, da gefährliche Gase (Chlor) freigesetzt werden können.",
+      "kind": "fixed"
+    },
+    "EUH207": {
+      "text": "Achtung! Enthält Cadmium. Bei der Verwendung entstehen gefährliche Dämpfe. Hinweise des Herstellers beachten. Sicherheitsanweisungen einhalten.",
+      "kind": "fixed"
+    },
+    "EUH208": {
+      "text": "Enthält <Name des sensibilisierenden Stoffes>. Kann allergische Reaktionen hervorrufen.",
+      "kind": "parameter"
+    },
+    "EUH209": {
+      "text": "Kann bei Verwendung leicht entzündbar werden. Kann bei Verwendung entzündbar werden.",
+      "kind": "alternatives"
+    },
+    "EUH210": {
+      "text": "Sicherheitsdatenblatt auf Anfrage erhältlich.",
+      "kind": "fixed"
+    },
+    "EUH211": {
+      "text": "Achtung! Beim Sprühen können gefährliche lungengängige Tröpfchen entstehen. Aerosol oder Nebel nicht einatmen.",
+      "kind": "fixed"
+    },
+    "EUH212": {
+      "text": "Achtung! Bei der Verwendung kann gefährlicher lungengängiger Staub entstehen. Staub nicht einatmen.",
+      "kind": "fixed"
+    },
+    "EUH380": {
+      "text": "Kann beim Menschen endokrine Störungen verursachen",
+      "kind": "fixed"
+    },
+    "EUH381": {
+      "text": "Steht in dem Verdacht, beim Menschen endokrine Störungen zu verursachen",
+      "kind": "fixed"
+    },
+    "EUH401": {
+      "text": "Zur Vermeidung von Risiken für Mensch und Umwelt die Gebrauchsanleitung einhalten.",
+      "kind": "fixed"
+    },
+    "EUH430": {
+      "text": "Kann endokrine Störungen in der Umwelt verursachen",
+      "kind": "fixed"
+    },
+    "EUH431": {
+      "text": "Steht in dem Verdacht, endokrine Störungen in der Umwelt zu verursachen",
+      "kind": "fixed"
+    },
+    "EUH440": {
+      "text": "Reichert sich in der Umwelt und in lebenden Organismen, einschließlich Menschen, an",
+      "kind": "fixed"
+    },
+    "EUH441": {
+      "text": "Reichert sich stark in der Umwelt und in lebenden Organismen, einschließlich Menschen, an",
+      "kind": "fixed"
+    },
+    "EUH450": {
+      "text": "Kann lang anhaltende und diffuse Verschmutzung von Wasserressourcen verursachen",
+      "kind": "fixed"
+    },
+    "EUH451": {
+      "text": "Kann sehr lang anhaltende und diffuse Verschmutzung von Wasserressourcen verursachen",
+      "kind": "fixed"
+    },
+    "H200": {
+      "text": "Instabil, explosiv.",
+      "kind": "fixed"
+    },
+    "H201": {
+      "text": "Explosiv, Gefahr der Massenexplosion.",
+      "kind": "fixed"
+    },
+    "H202": {
+      "text": "Explosiv; große Gefahr durch Splitter, Sprengund Wurfstücke.",
+      "kind": "fixed"
+    },
+    "H203": {
+      "text": "Explosiv; Gefahr durch Feuer, Luftdruck oder Splitter, Spreng- und Wurfstücke.",
+      "kind": "fixed"
+    },
+    "H204": {
+      "text": "Gefahr durch Feuer oder Splitter, Spreng- und Wurfstücke.",
+      "kind": "fixed"
+    },
+    "H205": {
+      "text": "Gefahr der Massenexplosion bei Feuer.",
+      "kind": "fixed"
+    },
+    "H206": {
+      "text": "Gefahr durch Feuer, Druckstoß oder Sprengstücke; erhöhte Explosionsgefahr, wenn das Desensibilisierungsmittel reduziert wird.",
+      "kind": "fixed"
+    },
+    "H207": {
+      "text": "Gefahr durch Feuer oder Sprengstücke; erhöhte Explosionsgefahr, wenn das Desensibilisierungsmittel reduziert wird.",
+      "kind": "fixed"
+    },
+    "H208": {
+      "text": "Gefahr durch Feuer; erhöhte Explosionsgefahr, wenn das Desensibilisierungsmittel reduziert wird.",
+      "kind": "fixed"
+    },
+    "H220": {
+      "text": "Extrem entzündbares Gas.",
+      "kind": "fixed"
+    },
+    "H221": {
+      "text": "Entzündbares Gas.",
+      "kind": "fixed"
+    },
+    "H222": {
+      "text": "Extrem entzündbares Aerosol.",
+      "kind": "fixed"
+    },
+    "H223": {
+      "text": "Entzündbares Aerosol.",
+      "kind": "fixed"
+    },
+    "H224": {
+      "text": "Flüssigkeit und Dampf extrem entzündbar.",
+      "kind": "fixed"
+    },
+    "H225": {
+      "text": "Flüssigkeit und Dampf leicht entzündbar.",
+      "kind": "fixed"
+    },
+    "H226": {
+      "text": "Flüssigkeit und Dampf entzündbar.",
+      "kind": "fixed"
+    },
+    "H228": {
+      "text": "Entzündbarer Feststoff.",
+      "kind": "fixed"
+    },
+    "H229": {
+      "text": "Behälter steht unter Druck: kann bei Erwärmung bersten.",
+      "kind": "disputed",
+      "quoted_as": "Behälter steht unter Druck: Kann bei Erwärmung bersten."
+    },
+    "H230": {
+      "text": "Kann auch in Abwesenheit von Luft explosionsartig reagieren.",
+      "kind": "fixed"
+    },
+    "H231": {
+      "text": "Kann auch in Abwesenheit von Luft bei erhöhtem Druck und/oder erhöhter Temperatur explosionsartig reagieren.",
+      "kind": "alternatives"
+    },
+    "H232": {
+      "text": "Kann sich bei Kontakt mit Luft spontan entzünden.",
+      "kind": "fixed"
+    },
+    "H240": {
+      "text": "Erwärmung kann Explosion verursachen.",
+      "kind": "fixed"
+    },
+    "H241": {
+      "text": "Erwärmung kann Brand oder Explosion verursachen.",
+      "kind": "fixed"
+    },
+    "H242": {
+      "text": "Erwärmung kann Brand verursachen.",
+      "kind": "fixed"
+    },
+    "H250": {
+      "text": "Entzündet sich in Berührung mit Luft von selbst.",
+      "kind": "fixed"
+    },
+    "H251": {
+      "text": "Selbsterhitzungsfähig; kann in Brand geraten.",
+      "kind": "fixed"
+    },
+    "H252": {
+      "text": "In großen Mengen selbsterhitzungsfähig; kann in Brand geraten.",
+      "kind": "fixed"
+    },
+    "H260": {
+      "text": "In Berührung mit Wasser entstehen entzündbare Gase, die sich spontan entzünden können.",
+      "kind": "fixed"
+    },
+    "H261": {
+      "text": "In Berührung mit Wasser entstehen entzündbare Gase.",
+      "kind": "fixed"
+    },
+    "H270": {
+      "text": "Kann Brand verursachen oder verstärken; Oxidationsmittel.",
+      "kind": "fixed"
+    },
+    "H271": {
+      "text": "Kann Brand oder Explosion verursachen; starkes Oxidationsmittel.",
+      "kind": "fixed"
+    },
+    "H272": {
+      "text": "Kann Brand verstärken; Oxidationsmittel.",
+      "kind": "fixed"
+    },
+    "H280": {
+      "text": "Enthält Gas unter Druck; kann bei Erwärmung explodieren.",
+      "kind": "fixed"
+    },
+    "H281": {
+      "text": "Enthält tiefgekühltes Gas; kann Kälteverbrennungen oder -verletzungen verursachen.",
+      "kind": "fixed"
+    },
+    "H290": {
+      "text": "Kann gegenüber Metallen korrosiv sein.",
+      "kind": "fixed"
+    },
+    "H300": {
+      "text": "Lebensgefahr bei Verschlucken.",
+      "kind": "fixed"
+    },
+    "H300+H310": {
+      "text": "Lebensgefahr bei Verschlucken oder Hautkontakt",
+      "kind": "fixed"
+    },
+    "H300+H310+H330": {
+      "text": "Lebensgefahr bei Verschlucken, Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H300+H330": {
+      "text": "Lebensgefahr bei Verschlucken oder Einatmen",
+      "kind": "fixed"
+    },
+    "H301": {
+      "text": "Giftig bei Verschlucken.",
+      "kind": "fixed"
+    },
+    "H301+H311": {
+      "text": "Giftig bei Verschlucken oder Hautkontakt",
+      "kind": "fixed"
+    },
+    "H301+H311+H331": {
+      "text": "Giftig bei Verschlucken, Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H301+H331": {
+      "text": "Giftig bei Verschlucken oder Einatmen",
+      "kind": "fixed"
+    },
+    "H302": {
+      "text": "Gesundheitsschädlich bei Verschlucken.",
+      "kind": "fixed"
+    },
+    "H302+H312": {
+      "text": "Gesundheitsschädlich bei Verschlucken oder Hautkontakt",
+      "kind": "fixed"
+    },
+    "H302+H312+H332": {
+      "text": "Gesundheitsschädlich bei Verschlucken, Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H302+H332": {
+      "text": "Gesundheitsschädlich bei Verschlucken oder Einatmen",
+      "kind": "fixed"
+    },
+    "H304": {
+      "text": "Kann bei Verschlucken und Eindringen in die Atemwege tödlich sein.",
+      "kind": "fixed"
+    },
+    "H310": {
+      "text": "Lebensgefahr bei Hautkontakt.",
+      "kind": "fixed"
+    },
+    "H310+H330": {
+      "text": "Lebensgefahr bei Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H311": {
+      "text": "Giftig bei Hautkontakt.",
+      "kind": "fixed"
+    },
+    "H311+H331": {
+      "text": "Giftig bei Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H312": {
+      "text": "Gesundheitsschädlich bei Hautkontakt.",
+      "kind": "fixed"
+    },
+    "H312+H332": {
+      "text": "Gesundheitsschädlich bei Hautkontakt oder Einatmen",
+      "kind": "fixed"
+    },
+    "H314": {
+      "text": "Verursacht schwere Verätzungen der Haut und schwere Augenschäden.",
+      "kind": "fixed"
+    },
+    "H315": {
+      "text": "Verursacht Hautreizungen.",
+      "kind": "fixed"
+    },
+    "H317": {
+      "text": "Kann allergische Hautreaktionen verursachen.",
+      "kind": "fixed"
+    },
+    "H318": {
+      "text": "Verursacht schwere Augenschäden.",
+      "kind": "fixed"
+    },
+    "H319": {
+      "text": "Verursacht schwere Augenreizung.",
+      "kind": "fixed"
+    },
+    "H330": {
+      "text": "Lebensgefahr bei Einatmen.",
+      "kind": "fixed"
+    },
+    "H331": {
+      "text": "Giftig bei Einatmen.",
+      "kind": "fixed"
+    },
+    "H332": {
+      "text": "Gesundheitsschädlich bei Einatmen.",
+      "kind": "fixed"
+    },
+    "H334": {
+      "text": "Kann bei Einatmen Allergie, asthmaartige Symptome oder Atembeschwerden verursachen.",
+      "kind": "fixed"
+    },
+    "H335": {
+      "text": "Kann die Atemwege reizen.",
+      "kind": "fixed"
+    },
+    "H336": {
+      "text": "Kann Schläfrigkeit und Benommenheit verursachen.",
+      "kind": "fixed"
+    },
+    "H340": {
+      "text": "Kann genetische Defekte verursachen <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann genetische Defekte verursachen (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H341": {
+      "text": "Kann vermutlich genetische Defekte verursachen <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann vermutlich genetische Defekte verursachen (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H350": {
+      "text": "Kann Krebs erzeugen <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann Krebs erzeugen (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H351": {
+      "text": "Kann vermutlich Krebs erzeugen <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann vermutlich Krebs erzeugen (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H360": {
+      "text": "Kann die Fruchtbarkeit beeinträchtigen oder das Kind im Mutterleib schädigen <konkrete Wirkung angeben, sofern bekannt> <Expositionsweg angeben, sofern schlüssig belegt ist, dass die Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann die Fruchtbarkeit beeinträchtigen oder das Kind im Mutterleib schädigen (sofern bekannt, konkrete Wirkung angeben) (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H361": {
+      "text": "Kann vermutlich die Fruchtbarkeit beeinträchtigen oder das Kind im Mutterleib schädigen < konkrete Wirkung angeben, sofern bekannt > <Expositionsweg angeben, sofern schlüssig belegt ist, dass die Gefahr bei keinem anderen Expositionsweg besteht>",
+      "kind": "parameter",
+      "quoted_as": "Kann vermutlich die Fruchtbarkeit beeinträchtigen oder das Kind im Mutterleib schädigen (sofern bekannt, konkrete Wirkung angeben) (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H362": {
+      "text": "Kann Säuglinge über die Muttermilch schädigen.",
+      "kind": "fixed"
+    },
+    "H370": {
+      "text": "Schädigt die Organe <oder alle betroffenen Organe nennen, sofern bekannt> <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Schädigt die Organe (oder alle betroffenen Organe nennen, sofern bekannt) (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H371": {
+      "text": "Kann die Organe schädigen <oder alle betroffenen Organe nennen, sofern bekann> <Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann die Organe schädigen (oder alle betroffenen Organe nennen, sofern bekannt) (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H372": {
+      "text": "Schädigt die Organe <alle betroffenen Organe nennen> bei längerer oder wiederholter Exposition <Expositionsweg angeben, wenn schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Schädigt die Organe (alle betroffenen Organe nennen, sofern bekannt) bei längerer oder wiederholter Exposition (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H373": {
+      "text": "Kann die Organe schädigen <alle betroffenen Organe nennen, sofern bekannt> bei längerer oder wiederholter Exposition <Expositionsweg angeben, wenn schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht>.",
+      "kind": "parameter",
+      "quoted_as": "Kann die Organe schädigen (alle betroffenen Organe nennen, sofern bekannt) bei längerer oder wiederholter Exposition (Expositionsweg angeben, sofern schlüssig belegt ist, dass diese Gefahr bei keinem anderen Expositionsweg besteht)"
+    },
+    "H400": {
+      "text": "Sehr giftig für Wasserorganismen.",
+      "kind": "fixed"
+    },
+    "H410": {
+      "text": "Sehr giftig für Wasserorganismen mit langfristiger Wirkung.",
+      "kind": "disputed",
+      "quoted_as": "Sehr giftig für Wasserorganismen, mit langfristiger Wirkung"
+    },
+    "H411": {
+      "text": "Giftig für Wasserorganismen, mit langfristiger Wirkung.",
+      "kind": "fixed"
+    },
+    "H412": {
+      "text": "Schädlich für Wasserorganismen, mit langfristiger Wirkung.",
+      "kind": "fixed"
+    },
+    "H413": {
+      "text": "Kann für Wasserorganismen schädlich sein, mit langfristiger Wirkung.",
+      "kind": "fixed"
+    },
+    "H420": {
+      "text": "Schädigt die öffentliche Gesundheit und die Umwelt durch Ozonabbau in der äußeren Atmosphäre",
+      "kind": "fixed"
+    },
+    "P101": {
+      "text": "Ist ärztlicher Rat erforderlich, Verpackung oder Kennzeichnungsetikett bereithalten.",
+      "kind": "fixed"
+    },
+    "P102": {
+      "text": "Darf nicht in die Hände von Kindern gelangen.",
+      "kind": "fixed"
+    },
+    "P103": {
+      "text": "Vor Gebrauch Kennzeichnungsetikett lesen.",
+      "kind": "disputed",
+      "quoted_as": "Lesen Sie sämtliche Anweisungen aufmerksam und befolgen Sie diese."
+    },
+    "P201": {
+      "text": "Vor Gebrauch besondere Anweisungen einholen.",
+      "kind": "fixed"
+    },
+    "P202": {
+      "text": "Vor Gebrauch alle Sicherheitshinweise lesen und verstehen.",
+      "kind": "fixed"
+    },
+    "P210": {
+      "text": "Von Hitze, heißen Oberflächen, Funken, offenen Flammen sowie anderen Zündquellenarten fernhalten. Nicht rauchen.",
+      "kind": "disputed",
+      "quoted_as": "Von Hitze, heißen Oberflächen, Funken, offenen Flammen und anderen Zündquellen fernhalten. Nicht rauchen."
+    },
+    "P211": {
+      "text": "Nicht gegen offene Flamme oder andere Zündquelle sprühen.",
+      "kind": "fixed"
+    },
+    "P212": {
+      "text": "Erhitzen unter Einschluss und Reduzierung des Desensibilisierungsmittels vermeiden.",
+      "kind": "fixed"
+    },
+    "P220": {
+      "text": "Von Kleidung und anderen brennbaren Materialien fernhalten.",
+      "kind": "fixed"
+    },
+    "P222": {
+      "text": "Keinen Kontakt mit Luft zulassen.",
+      "kind": "fixed"
+    },
+    "P223": {
+      "text": "Keinen Kontakt mit Wasser zulassen.",
+      "kind": "fixed"
+    },
+    "P230": {
+      "text": "Feucht halten mit …",
+      "kind": "parameter"
+    },
+    "P231": {
+      "text": "Inhalt unter inertem Gas/… handhaben und aufbewahren.",
+      "kind": "parameter"
+    },
+    "P231+P232": {
+      "text": "Inhalt unter inertem Gas/… handhaben und aufbewahren. Vor Feuchtigkeit schützen.",
+      "kind": "parameter"
+    },
+    "P232": {
+      "text": "Vor Feuchtigkeit schützen.",
+      "kind": "fixed"
+    },
+    "P233": {
+      "text": "Behälter dicht verschlossen halten.",
+      "kind": "fixed"
+    },
+    "P234": {
+      "text": "Nur in Originalverpackung aufbewahren.",
+      "kind": "fixed"
+    },
+    "P235": {
+      "text": "Kühl halten.",
+      "kind": "fixed"
+    },
+    "P240": {
+      "text": "Behälter und zu befüllende Anlage erden.",
+      "kind": "fixed"
+    },
+    "P241": {
+      "text": "Explosionsgeschützte [elektrische/Lüftungs-/Beleuchtungs-/…] Geräte verwenden.",
+      "kind": "parameter"
+    },
+    "P242": {
+      "text": "Funkenarmes Werkzeug verwenden.",
+      "kind": "fixed"
+    },
+    "P243": {
+      "text": "Maßnahmen gegen elektrostatische Entladungen treffen.",
+      "kind": "fixed"
+    },
+    "P244": {
+      "text": "Ventile und Ausrüstungsteile öl- und fettfrei halten.",
+      "kind": "fixed"
+    },
+    "P250": {
+      "text": "Nicht schleifen/stoßen/reiben/ …",
+      "kind": "parameter",
+      "quoted_as": "Nicht schleifen/stoßen/reiben/…"
+    },
+    "P251": {
+      "text": "Nicht durchstechen oder verbrennen, auch nicht nach Gebrauch.",
+      "kind": "fixed"
+    },
+    "P260": {
+      "text": "Staub/Rauch/Gas/Nebel/Dampf/Aerosol nicht einatmen.",
+      "kind": "alternatives"
+    },
+    "P261": {
+      "text": "Einatmen von Staub/Rauch/Gas/Nebel/Dampf/Aerosol vermeiden.",
+      "kind": "alternatives"
+    },
+    "P262": {
+      "text": "Nicht in die Augen, auf die Haut oder auf die Kleidung gelangen lassen.",
+      "kind": "fixed"
+    },
+    "P263": {
+      "text": "Berührung während Schwangerschaft und Stillzeit vermeiden.",
+      "kind": "fixed"
+    },
+    "P264": {
+      "text": "Nach Gebrauch … gründlich waschen.",
+      "kind": "parameter"
+    },
+    "P270": {
+      "text": "Bei Gebrauch nicht essen, trinken oder rauchen.",
+      "kind": "fixed"
+    },
+    "P271": {
+      "text": "Nur im Freien oder in gut belüfteten Räumen verwenden.",
+      "kind": "fixed"
+    },
+    "P272": {
+      "text": "Kontaminierte Arbeitskleidung nicht außerhalb des Arbeitsplatzes tragen.",
+      "kind": "fixed"
+    },
+    "P273": {
+      "text": "Freisetzung in die Umwelt vermeiden.",
+      "kind": "fixed"
+    },
+    "P280": {
+      "text": "Schutzhandschuhe/Schutzkleidung/Augenschutz/Gesichtsschutz tragen.",
+      "kind": "alternatives",
+      "quoted_as": "Schutzhandschuhe/Schutzkleidung/Augenschutz/Gesichtsschutz/Gehörschutz/ … tragen"
+    },
+    "P282": {
+      "text": "Schutzhandschuhe mit Kälteisolierung und zusätzlich Gesichtsschild oder Augenschutz tragen.",
+      "kind": "fixed"
+    },
+    "P283": {
+      "text": "Schwer entflammbare oder flammhemmende Kleidung tragen.",
+      "kind": "fixed"
+    },
+    "P284": {
+      "text": "[Bei unzureichender Belüftung] Atemschutz tragen.",
+      "kind": "fixed"
+    },
+    "P301": {
+      "text": "BEI VERSCHLUCKEN:",
+      "kind": "fixed"
+    },
+    "P301+P310": {
+      "text": "BEI VERSCHLUCKEN: Sofort GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter",
+      "quoted_as": "BEI VERSCHLUCKEN: Sofort GIFTINFORMATIONSZENTRUM/ Arzt/… anrufen."
+    },
+    "P301+P312": {
+      "text": "BEI VERSCHLUCKEN: Bei Unwohlsein GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter",
+      "quoted_as": "BEI VERSCHLUCKEN: Bei Unwohlsein GIFTINFORMATIONSZENTRUM/Arzt/… anrufen."
+    },
+    "P301+P330+P331": {
+      "text": "BEI VERSCHLUCKEN: Mund ausspülen. KEIN Erbrechen herbeiführen.",
+      "kind": "fixed"
+    },
+    "P302": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT:",
+      "kind": "fixed"
+    },
+    "P302+P334": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT: In kaltes Wasser tauchen oder nassen Verband anlegen.",
+      "kind": "fixed"
+    },
+    "P302+P335+P334": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT: Lose Partikel von der Haut abbürsten. In kaltes Wasser tauchen [oder nassen Verband anlegen].",
+      "kind": "fixed"
+    },
+    "P302+P352": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT: Mit viel Wasser/… waschen.",
+      "kind": "parameter"
+    },
+    "P303": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT (oder dem Haar):",
+      "kind": "fixed"
+    },
+    "P303+P361+P353": {
+      "text": "BEI BERÜHRUNG MIT DER HAUT (oder dem Haar): Alle kontaminierten Kleidungsstücke sofort ausziehen. Haut mit Wasser abwaschen [oder duschen].",
+      "kind": "fixed"
+    },
+    "P304": {
+      "text": "BEI EINATMEN:",
+      "kind": "fixed"
+    },
+    "P304+P340": {
+      "text": "BEI EINATMEN: Die Person an die frische Luft bringen und für ungehinderte Atmung sorgen.",
+      "kind": "fixed"
+    },
+    "P305": {
+      "text": "BEI KONTAKT MIT DEN AUGEN:",
+      "kind": "fixed"
+    },
+    "P305+P351+P338": {
+      "text": "BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser spülen. Eventuell vorhandene Kontaktlinsen nach Möglichkeit entfernen. Weiter spülen.",
+      "kind": "fixed"
+    },
+    "P306": {
+      "text": "BEI KONTAKT MIT DER KLEIDUNG:",
+      "kind": "fixed"
+    },
+    "P306+P360": {
+      "text": "BEI KONTAKT MIT DER KLEIDUNG: Kontaminierte Kleidung und Haut sofort mit viel Wasser abwaschen und danach Kleidung ausziehen.",
+      "kind": "fixed"
+    },
+    "P308": {
+      "text": "BEI Exposition oder falls betroffen",
+      "kind": "disputed",
+      "quoted_as": "BEI Exposition oder falls betroffen::"
+    },
+    "P308+P311": {
+      "text": "BEI Exposition oder falls betroffen: GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter",
+      "quoted_as": "BEI Exposition oder falls betroffen: GIFTINFORMATIONSZENTRUM/Arzt/… anrufen."
+    },
+    "P308+P313": {
+      "text": "BEI Exposition oder falls betroffen: Ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P310": {
+      "text": "Sofort GIFTINFORMATIONSZENTRUM/Arzt/… anrufen.",
+      "kind": "parameter",
+      "quoted_as": "Sofort GIFTINFORMATIONSZENTRUM/ Arzt/… anrufen."
+    },
+    "P311": {
+      "text": "GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter"
+    },
+    "P312": {
+      "text": "Bei Unwohlsein GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter",
+      "quoted_as": "Bei Unwohlsein GIFTINFORMATIONSZENTRUM/Arzt/… anrufen."
+    },
+    "P313": {
+      "text": "Ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P314": {
+      "text": "Bei Unwohlsein ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P315": {
+      "text": "Sofort ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P320": {
+      "text": "Besondere Behandlung dringend erforderlich (siehe … auf diesem Kennzeichnungsetikett).",
+      "kind": "parameter"
+    },
+    "P321": {
+      "text": "Besondere Behandlung (siehe … auf diesem Kennzeichnungsetikett).",
+      "kind": "parameter"
+    },
+    "P330": {
+      "text": "Mund ausspülen.",
+      "kind": "fixed"
+    },
+    "P331": {
+      "text": "KEIN Erbrechen herbeiführen.",
+      "kind": "fixed"
+    },
+    "P332": {
+      "text": "Bei Hautreizung:",
+      "kind": "fixed"
+    },
+    "P332+P313": {
+      "text": "Bei Hautreizung: Ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P333": {
+      "text": "Bei Hautreizung oder -ausschlag:",
+      "kind": "fixed"
+    },
+    "P333+P313": {
+      "text": "Bei Hautreizung oder -ausschlag: Ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P334": {
+      "text": "In kaltes Wasser tauchen [oder nassen Verband anlegen].",
+      "kind": "fixed"
+    },
+    "P335": {
+      "text": "Lose Partikel von der Haut abbürsten.",
+      "kind": "fixed"
+    },
+    "P336": {
+      "text": "Vereiste Bereiche mit lauwarmem Wasser auftauen. Betroffenen Bereich nicht reiben.",
+      "kind": "fixed"
+    },
+    "P336+P315": {
+      "text": "Vereiste Bereiche mit lauwarmem Wasser auftauen. Betroffenen Bereich nicht reiben. Sofort ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P337": {
+      "text": "Bei anhaltender Augenreizung:",
+      "kind": "fixed"
+    },
+    "P337+P313": {
+      "text": "Bei anhaltender Augenreizung: Ärztlichen Rat einholen/ärztliche Hilfe hinzuziehen.",
+      "kind": "alternatives"
+    },
+    "P338": {
+      "text": "Eventuell Vorhandene Kontaktlinsen nach Möglichkeit entfernen. Weiter ausspülen.",
+      "kind": "disputed",
+      "quoted_as": "Eventuell vorhandene Kontaktlinsen nach Möglichkeit entfernen. Weiter ausspülen."
+    },
+    "P340": {
+      "text": "Die Person an die frische Luft bringen und für ungehinderte Atmung sorgen.",
+      "kind": "fixed"
+    },
+    "P342": {
+      "text": "Bei Symptomen der Atemwege:",
+      "kind": "fixed"
+    },
+    "P342+P311": {
+      "text": "Bei Symptomen der Atemwege: GIFTINFORMATIONSZENTRUM/Arzt/ … anrufen.",
+      "kind": "parameter",
+      "quoted_as": "Bei Symptomen der Atemwege: GIFTINFORMATIONSZENTRUM/ Arzt/… anrufen."
+    },
+    "P351": {
+      "text": "Einige Minuten lang behutsam mit Wasser ausspülen.",
+      "kind": "fixed"
+    },
+    "P352": {
+      "text": "Mit viel Wasser/… waschen.",
+      "kind": "parameter"
+    },
+    "P353": {
+      "text": "Haut mit Wasser abwaschen [oder duschen].",
+      "kind": "fixed"
+    },
+    "P360": {
+      "text": "Kontaminierte Kleidung und Haut sofort mit viel Wasser abwaschen und danach Kleidung ausziehen.",
+      "kind": "fixed"
+    },
+    "P361": {
+      "text": "Alle kontaminierten Kleidungsstücke sofort ausziehen.",
+      "kind": "fixed"
+    },
+    "P361+P364": {
+      "text": "Alle kontaminierten Kleidungsstücke sofort ausziehen und vor erneutem Tragen waschen.",
+      "kind": "fixed"
+    },
+    "P362": {
+      "text": "Kontaminierte Kleidung ausziehen.",
+      "kind": "fixed"
+    },
+    "P362+P364": {
+      "text": "Kontaminierte Kleidung ausziehen und vor erneutem Tragen waschen.",
+      "kind": "fixed"
+    },
+    "P363": {
+      "text": "Kontaminierte Kleidung vor erneutem Tragen waschen.",
+      "kind": "fixed"
+    },
+    "P364": {
+      "text": "Und vor erneutem Tragen waschen.",
+      "kind": "fixed"
+    },
+    "P370": {
+      "text": "Bei Brand:",
+      "kind": "fixed"
+    },
+    "P370+P372+P380+P373": {
+      "text": "Bei Brand: Explosionsgefahr. Umgebung räumen. KEINE Brandbekämpfung, wenn das Feuer explosive Stoffe/Gemische/Erzeugnisse erreicht.",
+      "kind": "alternatives"
+    },
+    "P370+P376": {
+      "text": "Bei Brand: Undichtigkeit beseitigen, wenn gefahrlos möglich.",
+      "kind": "fixed"
+    },
+    "P370+P378": {
+      "text": "Bei Brand: … zum Löschen verwenden.",
+      "kind": "parameter",
+      "quoted_as": "Bei Brand: … zum Löschen … verwenden."
+    },
+    "P370+P380+P375": {
+      "text": "Bei Brand: Umgebung räumen. Wegen Explosionsgefahr Brand aus der Entfernung bekämpfen.",
+      "kind": "fixed"
+    },
+    "P371": {
+      "text": "Bei Großbrand und großen Mengen:",
+      "kind": "fixed"
+    },
+    "P371+P380+P375": {
+      "text": "Bei Großbrand und großen Mengen: Umgebung räumen. Wegen Explosionsgefahr Brand aus der Entfernung bekämpfen.",
+      "kind": "fixed"
+    },
+    "P372": {
+      "text": "Explosionsgefahr.",
+      "kind": "fixed"
+    },
+    "P373": {
+      "text": "KEINE Brandbekämpfung, wenn das Feuer explosive Stoffe/Gemische/Erzeugnisse erreicht.",
+      "kind": "alternatives"
+    },
+    "P375": {
+      "text": "Wegen Explosionsgefahr Brand aus der Entfernung bekämpfen.",
+      "kind": "fixed"
+    },
+    "P376": {
+      "text": "Undichtigkeit beseitigen, wenn gefahrlos möglich.",
+      "kind": "fixed"
+    },
+    "P377": {
+      "text": "Brand von ausströmendem Gas: Nicht löschen, bis Undichtigkeit gefahrlos beseitigt werden kann.",
+      "kind": "fixed"
+    },
+    "P378": {
+      "text": "… zum Löschen verwenden.",
+      "kind": "parameter",
+      "quoted_as": "… zum Löschen … verwenden."
+    },
+    "P380": {
+      "text": "Umgebung räumen.",
+      "kind": "fixed"
+    },
+    "P381": {
+      "text": "Bei Undichtigkeit alle Zündquellen entfernen.",
+      "kind": "fixed"
+    },
+    "P390": {
+      "text": "Verschüttete Mengen aufnehmen, um Materialschäden zu vermeiden.",
+      "kind": "fixed"
+    },
+    "P391": {
+      "text": "Verschüttete Mengen aufnehmen.",
+      "kind": "fixed"
+    },
+    "P401": {
+      "text": "Aufbewahren gemäß …",
+      "kind": "parameter"
+    },
+    "P402": {
+      "text": "An einem trockenen Ort aufbewahren.",
+      "kind": "fixed"
+    },
+    "P402+P404": {
+      "text": "An einem trockenen Ort aufbewahren. In einem geschlossenen Behälter aufbewahren.",
+      "kind": "fixed"
+    },
+    "P403": {
+      "text": "An einem gut belüfteten Ort aufbewahren.",
+      "kind": "fixed"
+    },
+    "P403+P233": {
+      "text": "An einem gut belüfteten Ort aufbewahren. Behälter dicht verschlossen halten.",
+      "kind": "fixed"
+    },
+    "P403+P235": {
+      "text": "An einem gut belüfteten Ort aufbewahren. Kühl halten.",
+      "kind": "fixed"
+    },
+    "P404": {
+      "text": "In einem geschlossenen Behälter aufbewahren.",
+      "kind": "fixed"
+    },
+    "P405": {
+      "text": "Unter Verschluss aufbewahren.",
+      "kind": "fixed"
+    },
+    "P406": {
+      "text": "In korrosionsbeständigem/ … Behälter mit korrosionsbeständiger Innenauskleidung aufbewahren.",
+      "kind": "parameter",
+      "quoted_as": "In korrosionsbeständigem/… Behälter mit korrosionsbeständiger Innenauskleidung aufbewahren."
+    },
+    "P407": {
+      "text": "Luftspalt zwischen Stapeln oder Paletten lassen.",
+      "kind": "fixed"
+    },
+    "P410": {
+      "text": "Vor Sonnenbestrahlung schützen.",
+      "kind": "fixed"
+    },
+    "P410+P403": {
+      "text": "Vor Sonnenbestrahlung schützen. An einem gut belüfteten Ort aufbewahren.",
+      "kind": "fixed"
+    },
+    "P410+P412": {
+      "text": "Vor Sonnenbestrahlung schützen und nicht Temperaturen über 50 o C/122 o F aussetzen.",
+      "kind": "alternatives",
+      "quoted_as": "Vor Sonnenbestrahlung schützen. Nicht Temperaturen über 50 °C/122 °F aussetzen."
+    },
+    "P411": {
+      "text": "Bei Temperaturen nicht über … o C/… o F aufbewahren.",
+      "kind": "parameter",
+      "quoted_as": "Bei Temperaturen nicht über … °C/…°F aufbewahren."
+    },
+    "P412": {
+      "text": "Nicht Temperaturen über 50 o C/122 o F aussetzen.",
+      "kind": "alternatives",
+      "quoted_as": "Nicht Temperaturen über 50 °C/122 °F aussetzen."
+    },
+    "P413": {
+      "text": "Schüttgut in Mengen von mehr als … kg/ … lbs bei Temperaturen nicht über … o C/… o F aufbewahren.",
+      "kind": "parameter",
+      "quoted_as": "Schüttgut in Mengen von mehr als … kg/… lbs bei Temperaturen nicht über … °C/…°F aufbewahren."
+    },
+    "P420": {
+      "text": "Getrennt aufbewahren.",
+      "kind": "fixed"
+    },
+    "P501": {
+      "text": "Inhalt/Behälter … zuführen.",
+      "kind": "parameter"
+    },
+    "P502": {
+      "text": "Informationen zur Wiederverwendung oder Wiederverwertung beim Hersteller oder Lieferanten erfragen.",
+      "kind": "disputed",
+      "quoted_as": "Informationen zur Wiederverwendung oder Wiederverwertung bei Hersteller oder Lieferant erfragen"
+    }
+  }
+}

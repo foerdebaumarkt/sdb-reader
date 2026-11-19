@@ -1,0 +1,220 @@
+name: release
+
+# A release is a tag v<version> on main (docs/contributing/releasing.md).
+# From it this workflow builds the package and the documentation, publishes
+# the package on the Python Package Index, creates the GitHub release and
+# deploys the documentation site.
+#
+# Nothing leaves the repository while it is private: the two jobs that
+# publish (pypi, pages) run only for a public repository. A private one gets
+# the GitHub release with the built files and nothing else.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+# Each job names what it needs; none inherits more.
+permissions: {}
+
+# One release at a time, and never cancelled halfway: a package once on the
+# index cannot be taken back.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and check
+    # GitHub-hosted only. A public repository must never run on a self-hosted
+    # runner: a pull request from a fork would execute its code there.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+      public: ${{ steps.visibility.outputs.public }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        # The whole history: the tag has to lie on main.
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        # The uv locked in uv.lock (dev group), which Dependabot moves.
+        version-file: uv.lock
+        # No cache: a release builds what it publishes from nothing a
+        # pull request could have left in a shared cache.
+        enable-cache: false
+    - name: Install from uv.lock
+      env:
+        UV_PYTHON: '3.14'
+      run: uv sync --locked
+    # Before anything is built: the tag is the package's version, not older
+    # than the first public one, and the changelog has its section
+    # (tools/release.py). A tag that fails here releases nothing.
+    - name: Check the tag
+      id: tag
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        .venv/bin/python tools/release.py check "$TAG"
+        if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+          echo "::error::not released: the tag $TAG is not on main"
+          exit 1
+        fi
+        echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+    # Asked of GitHub at the moment of the release, not taken from the
+    # event: the jobs that publish run on this answer.
+    - name: Ask whether the repository is public
+      id: visibility
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        private="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .private)"
+        if [ "$private" = "false" ]; then
+          echo "public=true" >> "$GITHUB_OUTPUT"
+          echo "The repository is public: the package and the site are published." >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "public=false" >> "$GITHUB_OUTPUT"
+          echo "The repository is private: only the GitHub release is created. Nothing goes to the package index or to GitHub Pages." >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: Install tesseract with German language data
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends tesseract-ocr tesseract-ocr-deu
+    - name: Tests
+      run: .venv/bin/python -m pytest
+    - name: Source distribution and wheel
+      run: make dist
+    - name: Installed package
+      run: make package-check
+    - name: Documentation site
+      env:
+        # Links from the pages into the repository lead to this tag.
+        SDB_READER_DOCS_REF: ${{ github.ref_name }}
+      run: make docs
+    - name: Pack what the release carries
+      env:
+        VERSION: ${{ steps.tag.outputs.version }}
+      run: |
+        set -euo pipefail
+        mkdir -p build/assets
+        tar -czf "build/assets/sdb-reader-${VERSION}-docs.tar.gz" -C build site
+        .venv/bin/python tools/release.py notes "$VERSION" > build/assets/notes.md
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: dist
+        path: build/release/
+        if-no-files-found: error
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: assets
+        path: build/assets/
+        if-no-files-found: error
+
+  pypi:
+    name: Publish on the Python Package Index
+    needs: build
+    # Both have to say public: GitHub's answer in the build job and the event
+    # that started the run.
+    if: needs.build.outputs.public == 'true' && github.event.repository.private == false
+    runs-on: ubuntu-26.04
+    # Trusted publishing: the index takes the package from this workflow in
+    # this environment of this repository, by a short-lived token GitHub
+    # signs. No password or API token is stored anywhere.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/sdb-reader/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: dist
+        path: dist
+    - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  release:
+    name: GitHub release
+    # After the index, so that a release never names a package that is not
+    # there; in a private repository the index is skipped and the release is
+    # created all the same.
+    needs: [build, pypi]
+    if: always() && needs.build.result == 'success' && (needs.pypi.result == 'success' || needs.pypi.result == 'skipped')
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: dist
+        path: dist
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: assets
+        path: assets
+    - name: Create the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+        VERSION: ${{ needs.build.outputs.version }}
+      run: |
+        set -euo pipefail
+        gh release create "$TAG" \
+          --repo "$GITHUB_REPOSITORY" \
+          --verify-tag \
+          --title "sdb-reader ${VERSION}" \
+          --notes-file assets/notes.md \
+          dist/* \
+          "assets/sdb-reader-${VERSION}-docs.tar.gz"
+
+  pages:
+    name: Deploy the documentation site
+    needs: [build, release]
+    if: always() && needs.release.result == 'success' && needs.build.outputs.public == 'true' && github.event.repository.private == false
+    runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.14'
+    # The site is every release's documentation as its release built it:
+    # nothing is built again, so an old edition never changes and never
+    # breaks a later release (tools/docs/assemble_site.py).
+    - name: Fetch the documentation of every release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        mkdir -p build/editions
+        gh release list --repo "$GITHUB_REPOSITORY" --limit 1000 \
+          --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName' |
+        while read -r tag; do
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'sdb-reader-*-docs.tar.gz' --dir build/editions ||
+            echo "::warning::release $tag carries no documentation; its edition is left out"
+        done
+    - name: Put the site together
+      run: python tools/docs/assemble_site.py build/editions build/pages
+    - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+    - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      with:
+        path: build/pages
+    - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      id: deploy

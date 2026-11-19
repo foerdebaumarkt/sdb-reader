@@ -1,0 +1,181 @@
+# Judging a sheet
+
+A reading says what the sheet prints. Three functions say what follows from
+it for the sheet as a document.
+
+## Findings
+
+`sheet_findings(sheet, parser_warnings)` lists what is wrong with a sheet as
+a document, as messages. It takes the sheet and the parser's warnings, which
+carry what the parser noticed.
+
+```python
+from sdb_reader import Message, sheet_findings
+
+findings = sheet_findings(sheet, reading.parser_result.warnings)
+assert findings == []
+```
+
+The example sheet is from 2024 and has nothing to report. The same sheet
+revised in 2019 would be reported:
+
+```python
+import dataclasses
+from datetime import date
+
+older = dataclasses.replace(sheet, revision_date=date(2019, 5, 2))
+[finding] = sheet_findings(older, reading.parser_result.warnings)
+
+assert finding == Message("predates-annex-ii", {"revised": "2019-05-02"})
+```
+
+A date in the future cannot be right, but the library reads no clock. Pass
+the day as `today`, and a revision date after it (without one: an issue
+date) is reported and no longer counts for the sheet's age: the sheet is
+judged by its issue date where that is possible, else like a sheet without a
+date. The sheet's fields stay as read. Without `today` no date is
+questioned. `reading_to_dict` takes the same argument, and the command
+`read` passes the machine's date.
+
+```python
+misprinted = dataclasses.replace(sheet, revision_date=date(2028, 11, 28))
+codes = [
+    finding.code
+    for finding in sheet_findings(
+        misprinted, reading.parser_result.warnings, today=date(2026, 11, 18)
+    )
+]
+
+assert codes[0] == "revised-in-future"
+assert "revised-in-future" not in [
+    finding.code
+    for finding in sheet_findings(misprinted, reading.parser_result.warnings)
+]
+```
+
+| Code | Values | The sheet |
+| --- | --- | --- |
+| `predates-annex-ii` | `revised` | was revised before 2021-01-01 and cannot meet Annex II of REACH as amended in 2020 |
+| `revised-in-future` | `revised`, `today` | names a revision date (without one: an issue date) after the day given as `today` |
+| `old-format` | `revised` | was revised since, needs to be a sheet by law, and still lacks what the 2020 version added |
+| `undated` | – | carries no revision or issue date that can be read |
+| `old-classification` | – | classifies under the directives before CLP and carries no CLP label |
+| `classification-undetermined` | – | says on its label that the classification was not determined |
+| `classification-not-stated` | – | states no classification in section 2 and carries an empty label |
+| `classification-contradicts-label` | – | says "not classified" in section 2 while the label carries an H statement, a signal word or a pictogram |
+| `euh-outside-label` | `statement`, `sentence` | prints an EUH statement only outside its label |
+| `different-products` | `products` | is a file of several sheets whose product names are not one product's; only with `parts` |
+| `country-editions-differ` | `fields` | is a file holding one product's sheets for different countries that differ in these fields; only with `parts` |
+| `wording-deviates` | `statement`, `sheet`, `regulation` | words a statement differently from the regulation |
+
+The checks behind two of them are exported for use on their own:
+`predates_annex_ii(revised)` and `contradicts_label(sheet)`.
+`predates_clp(revised)` says whether a
+sheet predates 2015-06-01, from when mixtures had to be classified under
+CLP; it is not among the findings. `euh_outside_label(parser_warnings)`
+gives the parser's messages about EUH statements outside the label.
+
+```python
+from sdb_reader import contradicts_label, predates_annex_ii, predates_clp
+
+assert predates_annex_ii(date(2020, 12, 31)) is True
+assert predates_annex_ii(date(2021, 1, 1)) is False
+assert predates_clp(date(2015, 5, 31)) is True
+assert contradicts_label(sheet) is False
+```
+
+A finding is an observation. What your program does about it is its own
+decision.
+
+## What the label states
+
+`classification(hazard_codes, signal_word, parser_warnings)` says what the
+label states, as a `Classification`:
+
+| Member | Value | The label |
+| --- | --- | --- |
+| `CLASSIFIED` | `classified` | carries an H statement or a signal word |
+| `NOT_CLASSIFIED` | `not-classified` | carries neither |
+| `UNDETERMINED` | `undetermined` | says that the classification was not determined |
+| `OLD_SYSTEM` | `classified-old-system` | is missing because section 2 classifies under the directives before CLP |
+
+```python
+from sdb_reader import Classification, classification
+
+label = sheet.hazard_statements
+stated = classification(
+    label.hazard_codes, label.signal_word, reading.parser_result.warnings
+)
+
+assert stated is Classification.CLASSIFIED
+```
+
+This is the label's answer. What section 2 itself says about the
+classification is `sheet.stated_classification`
+([A reading and its parts](reading.md#the-sheet)).
+
+## Whether the product needs a sheet
+
+`requires_sheet(sheet)` says whether a
+sheet is one its product needs by law: section 2 classifies the product, or
+the label carries an H or EUH statement, a signal word or a pictogram, or
+says that a safety data sheet is to be had on request (also in the old
+directive's words, which a label by the old directives prints without a
+code). P statements alone do not count.
+
+It weighs the sheet's own word as well. `sheet.stated_voluntary` says the
+sheet calls itself issued voluntarily or says that none is prescribed for
+its product. `sheet.stated_article` says it calls the product an article,
+beside that
+sentence or by saying that as an article it is not subject to labelling. An
+article needs no sheet, whatever its label prints and whether or not the
+sheet calls itself voluntary, and neither does a mixture that is not
+classified and whose sheet calls itself voluntary. A classified mixture that is
+not called an article still needs one: the regulation spares the supplier
+the sheet only towards the general public, and a distributor or downstream
+user who asks is owed it. EUH210 or the request sentence at the label
+outweigh the word in every case.
+
+```python
+from sdb_reader import HazardStatements, StatedClassification, requires_sheet
+
+assert requires_sheet(sheet) is True
+
+# The same label on a sheet that calls its product an article.
+as_article = dataclasses.replace(sheet, stated_article=True)
+assert requires_sheet(as_article) is False
+
+# Only P statements, and nothing said in section 2.
+advice = dataclasses.replace(
+    sheet,
+    hazard_statements=HazardStatements(precautionary_codes=["P102"]),
+    stated_classification=StatedClassification.NOT_STATED,
+)
+assert requires_sheet(advice) is False
+```
+
+`reading_to_dict` puts the answer into the record as `sheet.sheet_required`.
+
+### Judging a sheet you stored
+
+A sheet kept as JSON, the `sheet` part of a record, is read back with
+`sheet_from_dict` and judged like any other:
+
+```python
+from sdb_reader import sheet_from_dict, sheet_to_dict
+
+stored = sheet_to_dict(sheet, reading.extraction)
+kept = sheet_from_dict(stored)
+
+assert kept == sheet
+assert requires_sheet(kept) is stored["sheet_required"]
+```
+
+It reads what this version of the library writes. A record that lacks a key
+or holds a value of another kind was stored by another version; it is
+refused with `ValueError` and not guessed at. Compare `PARSER_VERSION` with
+the one you stored ([Keeping texts](stored-texts.md)), and make an outdated
+reading again from its text.
+
+Not read for this is section 2.3 (PBT and vPvB substances, the candidate
+list), which can also make a sheet obligatory.
