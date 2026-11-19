@@ -50,9 +50,15 @@ jobs:
               --jq '.[] | .filename, .previous_filename // empty')" ;;
           push)
             # The compare API lists at most 300 files; a bigger push runs.
-            FILES="$(gh api \
-              "repos/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" \
-              --jq 'if (.files | length) < 300 then .files[] | .filename, .previous_filename // empty else "*" end')" ;;
+            # A push that creates the branch has no commit before it (all
+            # zeros), and the compare API answers 404 for that: it runs.
+            if [ "${{ github.event.before }}" = 0000000000000000000000000000000000000000 ]; then
+              FILES='*'
+            else
+              FILES="$(gh api \
+                "repos/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" \
+                --jq 'if (.files | length) < 300 then .files[] | .filename, .previous_filename // empty else "*" end')"
+            fi ;;
           *)
             FILES='*' ;;
         esac
