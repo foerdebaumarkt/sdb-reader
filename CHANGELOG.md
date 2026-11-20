@@ -53,6 +53,15 @@ Versions follow the tags of this repository.
   code; the precautionary text keeps the sheet's sentence. "Leere Behälter
   können über den Hausmüll entsorgt werden." is no P501 (SDB-166).
 
+### Security
+
+- **Five patterns of the parser no longer slow down on long runs of blanks
+  or dashes.** The revision date's label, the version line with its
+  creation date, a classification given as a dash, a label without a signal
+  word, and the substances before EUH208 read each character one way now; a
+  crafted text of a few thousand blanks took them seconds before. The
+  readings are the same.
+
 ### Fixed
 
 Layouts and spellings from sheets outside the collection the reader was

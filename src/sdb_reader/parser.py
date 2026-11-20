@@ -296,13 +296,15 @@ _PAGE_MARKER = r"(?:\s*Seite\s*:?\s*\d{1,3}\s*(?:/|von)\s*\d{1,3})?"
 # Nr. 2 (22/11/2019)", "Rev. 14 – 19/12/2024". The version a sheet replaces
 # does too ("Ersetzt Fassung: GHS 7 (29.01.2024)"), and that date is not this
 # sheet's.
+# Optional parts carry their own blanks behind them ("(?::\s*)?"), so that a
+# run of blanks can be read only one way (no slow search on long blank runs).
 REVISION_DATE_PATTERN = re.compile(
     # "Überarbei tung": the word broken at the line's end (SDB-161).
     r"(?:überarbei[^\S\n]?t[a-zäöüß]*(?:\s+(?-i:[a-zäöüß]{2,})(?=\s*:))?(?:\s+am)?"
     r"|revisions?datum|änderungsdatum|bearbeitungsdatum|überprüfung"
     r"|(?<!ersetzt )fassung\s+vom|stand\s*:|sicherheitsdatenblatt\s+vom"
-    r"|(?:version|rev\.?)\s*(?:nr\.?)?\s*:?\s*\d+(?:[.,]\d+)*\s*vom"
-    r"|(?<!ersetzt )(?:version|fassung|revision|rev\.?)\s*:?\s*(?:nr\.?\s*)?(?:GHS\s*)?"
+    r"|(?:version|rev\.?)\s*(?:nr\.?\s*)?(?::\s*)?\d+(?:[.,]\d+)*\s*vom"
+    r"|(?<!ersetzt )(?:version|fassung|revision|rev\.?)\s*(?::\s*)?(?:nr\.?\s*)?(?:GHS\s*)?"
     r"\d+(?:[.,]\d+)*\.?\s*[(–—-]"
     # "Durchsicht Nr. 3" / "vom 11/10/2023" (SDB-102).
     r"|durchsicht\s+nr\.?\s*\d+\s+vom"
@@ -340,8 +342,11 @@ _VERSION_LABEL_START = re.compile(r"version|fassung|revision|rev\b", re.IGNORECA
 # version, so "Ersetzte Version: 2.0.0, erstellt am: 04.06.2019" below it is
 # not one.
 VERSION_CREATED_PATTERN = re.compile(
-    r"^[^\S\n]*(?:Aktuelle[^\S\n]+)?Version[^\S\n]*:?[^\S\n]*V?\d[^\n]*?"
-    r"(?:,[^\S\n]*|[^\S\n]+|[^\S\n]*\|?[^\S\n]*\n[^\S\n]*)"
+    r"^[^\S\n]*(?:Aktuelle[^\S\n]+)?Version[^\S\n]*(?::[^\S\n]*)?V?\d"
+    # The rest of the version's line up to a blank or a comma before
+    # "erstellt", or the whole line and then the next: one way to read each
+    # character, so that a long line cannot make the search slow.
+    r"(?:[^\n]*?(?<=[^\S\n]|,)|[^\n]*\n[^\S\n]*)"
     rf"erstellt[^\S\n]+am[^\S\n]*:?[^\S\n]*{_DATED}",
     re.IGNORECASE | re.MULTILINE,
 )
@@ -697,7 +702,8 @@ _NOT_CLASSIFIED = re.compile(
     # "GHS Einstufung:" / "N/A" -- not applicable (SDB-86).
     r"|(?m:(?:^|:)[^\w\n]*N\s?/\s?A\b[^\w\n]*$)"
     # A dash where the classification would stand.
-    r"|(?m:^[^\S\n]*[-\u2013\u2014]+[^\S\n]*$)",
+    # Each character of the line one way: dashes, then blanks to its end.
+    r"|(?m:^[^\S\n]*[-\u2013\u2014](?:[-\u2013\u2014]|[^\S\n](?=[^\S\n]|$))*$)",
     re.IGNORECASE,
 )
 
@@ -1000,13 +1006,13 @@ NO_SIGNAL_WORD_PATTERN = re.compile(
     #   Signalwort entfällt
     #   Signalwort (CLP) : -
     #   Signalwort nicht erforderlich
-    r"|\bSignalwort\b\s*(?:\([^)]{0,12}\))?\s*:?\s*"
+    r"|\bSignalwort\b\s*(?:\([^)]{0,12}\)\s*)?(?::\s*)?"
     r"(?:entfällt|nicht\s+erforderlich|nicht\s+anwendbar|[-\u2013\u2014](?!\w))"
     # The value in a form, behind the label or on the line below it, and
     # nothing after it on its line:
     #   Signalwort
     #   keine
-    r"|\bSignalwort\b[^\S\n]*(?:\([^)]{0,12}\))?[^\S\n]*:?[^\S\n]*\n?[^\S\n]*"
+    r"|\bSignalwort\b[^\S\n]*(?:\([^)]{0,12}\)[^\S\n]*)?(?::[^\S\n]*)?(?:\n[^\S\n]*)?"
     r"(?:kein(?:e[ns]?)?|ohne)[^\S\n]*(?=\n|$)",
     re.IGNORECASE,
 )
@@ -2286,7 +2292,10 @@ def unassigned_label_lines(
 # EUH208 Kann allergische Reaktionen hervorrufen.", or the code on a line of
 # its own between the two halves of the name.
 _SUBSTANCES_BEFORE_CODE = re.compile(
-    r"(Enthält\b[^\n]*?)[^\S\n]*\n?[^\S\n]*EUH208\b", re.IGNORECASE
+    # The names end on a character that is not a blank: the blanks before the
+    # code are the gap, never part of the names.
+    r"(Enthält\b[^\n]*?(?<![^\S\n]))[^\S\n]*(?:\n[^\S\n]*)?EUH208\b",
+    re.IGNORECASE,
 )
 _EUH208_WITHOUT_SUBSTANCES = re.compile(
     r"^EUH208\b(?![^\n]*\bEnth[äa]lt)[^\n]*\S[^\n]*$"
