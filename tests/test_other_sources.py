@@ -1,16 +1,24 @@
-"""Layouts and spellings from sheets outside the corpus (SDB-155 to SDB-162).
+"""Layouts and spellings from sheets outside the corpus (SDB-155 to SDB-163).
 
 Every text here is invented; it keeps only the shape that tripped the parser.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 import pytest
 
+from sdb_reader import statements
 from sdb_reader.extraction import ExtractionResult
-from sdb_reader.parser import SDSParser, _read_section_heading, read_signal_word
+from sdb_reader.messages import Message
+from sdb_reader.parser import (
+    ParsedSheet,
+    SDSParser,
+    _read_section_heading,
+    read_signal_word,
+)
 from sdb_reader.pictograms import get_signal_word, pictograms_for
 from sdb_reader.schema import SafetyDataSheet
 from sdb_reader.statements import canonical_text, lettered_code, with_effects_joined
@@ -32,6 +40,19 @@ def _sheet(
     supplier: str = SUPPLIER,
     label: str = LABEL,
 ) -> SafetyDataSheet:
+    return _parsed(
+        header=header, identifier=identifier, supplier=supplier, label=label
+    ).sheet
+
+
+def _parsed(
+    *,
+    header: str = "",
+    identifier: str = IDENTIFIER,
+    supplier: str = SUPPLIER,
+    label: str = LABEL,
+    rest: str = "",
+) -> ParsedSheet:
     text = (
         "Sicherheitsdatenblatt\n"
         f"{header}"
@@ -45,6 +66,7 @@ def _sheet(
         f"{label}"
         "2.3 Sonstige Gefahren\nKeine bekannt.\n"
         "ABSCHNITT 3: Zusammensetzung/Angaben zu Bestandteilen\nGemisch.\n"
+        f"{rest}"
     )
     extraction = ExtractionResult(
         text=text,
@@ -54,7 +76,7 @@ def _sheet(
         warnings=[],
         metadata={},
     )
-    return SDSParser(language="de").parse(extraction).sheet
+    return SDSParser(language="de").parse(extraction)
 
 
 class TestLetteredReproductionCodes:
@@ -270,3 +292,148 @@ def test_a_pictogram_code_behind_a_statement_is_not_its_wording() -> None:
     hazards = _sheet(label=label).hazard_statements
     assert hazards.hazard_text is not None
     assert "GHS07" not in hazards.hazard_text
+
+
+def _worded_label(*lines: str) -> str:
+    return "2.2 Kennzeichnungselemente\nSignalwort: Achtung\n" + "\n".join(lines) + "\n"
+
+
+class TestPrecautionaryStatementsInTheirAnnexForms:
+    """A label that prints its precautionary statements as sentences only (SDB-163)."""
+
+    @pytest.mark.spec("SDB-163")
+    def test_two_options_of_a_choice(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "Verursacht Hautreizungen.", "Schutzhandschuhe und Augenschutz tragen."
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == ["P280"]
+        assert (
+            hazards.precautionary_text
+            == "P280 Schutzhandschuhe und Augenschutz tragen."
+        )
+
+    @pytest.mark.spec("SDB-163")
+    def test_a_choice_joined_by_oder_is_the_longer_statement(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "Verursacht schwere Augenschäden.",
+                "Sofort GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == ["P310"]
+
+    @pytest.mark.spec("SDB-163")
+    def test_the_suppliers_detail_where_the_wording_has_dots(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "Verursacht Hautreizungen.",
+                "Inhalt/Behälter gemäß den örtlichen Vorschriften der Entsorgung zuführen.",
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == ["P501"]
+        assert hazards.precautionary_text == (
+            "P501 Inhalt/Behälter gemäß den örtlichen Vorschriften der Entsorgung "
+            "zuführen."
+        )
+
+    @pytest.mark.spec("SDB-163")
+    def test_a_detail_does_not_run_past_the_end_of_a_sentence(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "Verursacht Hautreizungen.",
+                "Inhalt ist wasserlöslich. Den Rest der Sammelstelle zuführen.",
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-163")
+    @pytest.mark.parametrize(
+        ("sentence", "code"),
+        [
+            ("Bei unzureichender Belüftung Atemschutz tragen.", "P284"),
+            ("Atemschutz tragen.", "P284"),
+            ("Haut mit Wasser abwaschen oder duschen.", "P353"),
+            ("Haut mit Wasser abwaschen.", "P353"),
+        ],
+    )
+    def test_a_part_in_brackets_may_stand_or_be_left_out(
+        self, sentence: str, code: str
+    ) -> None:
+        hazards = _sheet(
+            label=_worded_label("Verursacht Hautreizungen.", sentence)
+        ).hazard_statements
+        assert hazards.precautionary_codes == [code]
+
+    @pytest.mark.spec("SDB-163")
+    def test_running_text_outside_the_label_is_not_read(self) -> None:
+        rest = (
+            "ABSCHNITT 8: Begrenzung und Überwachung der Exposition\n"
+            "8.2 Begrenzung und Überwachung der Exposition\n"
+            "Schutzhandschuhe und Augenschutz tragen. Staub nicht einatmen.\n"
+        )
+        parsed = _parsed(label=_worded_label("Verursacht Hautreizungen."), rest=rest)
+        assert parsed.sheet.hazard_statements.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-163")
+    def test_a_printed_code_keeps_the_wording_out(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "H315 Verursacht Hautreizungen.",
+                "P280 Schutzhandschuhe tragen.",
+                "Sofort Arzt anrufen.",
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == ["P280"]
+
+    @pytest.mark.spec("SDB-163")
+    def test_an_euh_statement_holding_the_words_is_not_p260(self) -> None:
+        hazards = _sheet(
+            label=_worded_label(
+                "Verursacht Hautreizungen.",
+                "Achtung! Bei der Verwendung kann gefährlicher lungengängiger Staub "
+                "entstehen. Staub nicht einatmen.",
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-163")
+    def test_a_label_without_a_hazard_statement_takes_none(self) -> None:
+        hazards = _sheet(
+            label=(
+                "2.2 Kennzeichnungselemente\nEUH211\n"
+                "Achtung! Beim Sprühen können gefährliche lungengängige Tröpfchen "
+                "entstehen. Aerosole und Nebel nicht einatmen.\n"
+            )
+        ).hazard_statements
+        assert hazards.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-163")
+    def test_a_sentence_on_a_line_with_a_code_is_that_codes(self) -> None:
+        hazards = _sheet(
+            label=_worded_label("H315 Verursacht Hautreizungen. Staub nicht einatmen.")
+        ).hazard_statements
+        assert hazards.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-163")
+    def test_two_statements_alike_on_the_same_words_take_neither(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # No two statements of the regulation share a form; two invented ones do.
+        alike = re.compile(r"(?<!\w)deckel fest verschliessen(?!\w)")
+        monkeypatch.setattr(
+            statements,
+            "_variant_patterns",
+            lambda: (("P901", alike), ("P902", alike)),
+        )
+        parsed = _parsed(
+            label=_worded_label(
+                "Verursacht Hautreizungen.", "Deckel fest verschließen."
+            )
+        )
+        assert parsed.sheet.hazard_statements.precautionary_codes == []
+        assert (
+            Message("precautionary-wording-unclear", {"codes": ["P901", "P902"]})
+            in parsed.warnings
+        )

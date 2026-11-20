@@ -15,6 +15,16 @@ Versions follow the tags of this repository.
   prints no code, two effects together are the joined code, and the
   regulation's wording of a lettered code is the one of Annex VI. Pictogram
   and signal word do not change (SDB-155).
+- **Precautionary statements printed as sentences only are read in the
+  forms Annex IV of the CLP Regulation allows.** Where the label prints no P
+  code and carries a hazard statement, a sentence that selects from a choice
+  ("Schutzhandschuhe und Augenschutz tragen." is P280), fills in the
+  supplier's detail for "…" or leaves out a part in brackets gives its code;
+  before, only the regulation's exact wording did. Where two statements cover
+  the same words, the longer one counts, H and EUH statements included; where
+  two cover them alike, neither does, and the new message
+  `precautionary-wording-unclear` names them. Never outside the label
+  (SDB-163).
 - **`PARSER_VERSION` is 17** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
   stored texts are read again as they are; readings kept from before should
   be made again from them.

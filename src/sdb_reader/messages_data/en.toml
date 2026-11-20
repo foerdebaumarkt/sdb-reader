@@ -42,6 +42,7 @@
 "euh-wording-outside-label" = "{statement} is printed only outside the label: {sentence}"
 "signal-word-not-taken" = "The signal word '{signal_word}' was not taken: section 2 says the product is not classified, and the label prints no H statement."
 "pictograms-derived" = "Pictograms derived from the H statements, the sheet names none: {pictograms}"
+"precautionary-wording-unclear" = "A precautionary statement without its code fits {codes} alike; none of them was taken."
 "signal-word-derived" = "Signal word derived from the statements; the label states none."
 "no-identification-section" = "Section 1 was not found; the supplier cannot be read."
 "no-supplier-name" = "No supplier name was found in section 1."

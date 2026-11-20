@@ -30,6 +30,8 @@ from .statements import (
     holds_a_wording_of,
     lettered_code,
     open_end,
+    precautionary_by_variants,
+    variant_wordings_in_print_order,
     with_effects_joined,
     wording_bounds,
     wordings_apart,
@@ -1977,7 +1979,7 @@ def _parse_hazard_statements(
     if hazard_statements.precautionary_text is None and precautionary_codes:
         hazard_statements.precautionary_text = _in_print_order(
             precautionary_codes, codeless
-        )
+        ) or _in_print_order(precautionary_codes, codeless, variants=True)
     supplemental_text = _extract_statements_from_sections(
         sections,
         allowed_sections={Section.HAZARDS},
@@ -2091,8 +2093,11 @@ def _without_pictogram(text: str | None) -> str | None:
     return _TRAILING_PICTOGRAM.sub("", text) if text else text
 
 
-def _in_print_order(codes: list[str], passages: list[str]) -> str | None:
-    statements = wordings_in_print_order(codes, passages)
+def _in_print_order(
+    codes: list[str], passages: list[str], *, variants: bool = False
+) -> str | None:
+    read = variant_wordings_in_print_order if variants else wordings_in_print_order
+    statements = read(codes, passages)
     return "\n".join(statements) if statements else None
 
 
@@ -2257,7 +2262,21 @@ def _read_label(
             # statements are somebody else's list entirely.
             hazard_codes = sorted(c for c in by_wording if c.startswith("H"))
         if not precautionary_codes:
-            precautionary_codes = sorted(c for c in by_wording if c.startswith("P"))
+            by_variants: set[str] = set()
+            # And in the forms Annex IV allows for its choices, details and
+            # optional parts (SDB-163) -- on a label with a hazard statement
+            # only: precautionary statements come with a hazard class, and
+            # "Aerosol und Nebel nicht einatmen." on a label with EUH211 alone
+            # is that statement's own sentence, not P260.
+            if hazard_codes:
+                by_variants, unclear = precautionary_by_variants(hazard_section_text)
+                warnings.extend(
+                    Message("precautionary-wording-unclear", {"codes": codes})
+                    for codes in unclear
+                )
+            precautionary_codes = sorted(
+                {c for c in by_wording if c.startswith("P")} | by_variants
+            )
     supplemental = sorted(
         set(
             code.upper()

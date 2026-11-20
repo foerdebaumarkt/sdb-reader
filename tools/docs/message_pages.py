@@ -78,6 +78,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "euh-wording-outside-label",
             "signal-word-not-taken",
             "pictograms-derived",
+            "precautionary-wording-unclear",
             "signal-word-derived",
             "no-identification-section",
             "no-supplier-name",
