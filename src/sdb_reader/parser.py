@@ -2121,8 +2121,10 @@ _LABEL_FIELD = re.compile(
 # What may stand behind such a name without labelling anything.
 _NOTHING_TO_LABEL = re.compile(
     r"^[\s:;,.()\-–/]*(?:"
-    r"(?:(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
-    r"|\((?:EU|CLP|GHS)\))(?:\b|(?<=\)))[\s:;,]*)+"
+    r"(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
+    r"|\((?:EU|CLP|GHS)\))"
+    r"(?:[\s:;,]+(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung"
+    r"|Allgemein\w*|\((?:EU|CLP|GHS)\)))*[\s:;,]*"
     r"|[^\n]{0,40}(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]{0,60}"
     r"|\**|gem[äa](?:ß|ss)|nach|UFI\s*:?"
     r"|(?:nach|gem[äa](?:ß|ss)|entsprechend|laut|according\s+to)\b[^\n]*"
