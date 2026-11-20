@@ -502,8 +502,13 @@ LABEL_SECTION_MAX_CHARS = 3500
 # a label carrying H410 may omit H400, and one carrying H314 may omit H318, so
 # reading the classification puts statements on a product that its label
 # deliberately leaves off.
+#
+# Only the class's last word is matched ("Corr. 1, H314" of "Skin Corr. 1,
+# H314"): the words before it hold no code, so dropping them changed nothing
+# the label's codes are read from, and taking them made a long run of
+# capitalised words cost a search from every word in it.
 CLASSIFICATION_ENTRY = re.compile(
-    r"\b[A-Z][A-Za-z]*\.?(?:\s+[A-Z][A-Za-z]*\.?)*\s+\d[A-F]?\s*[,\-–]\s*H\d{3}(?!\d)"
+    r"\b[A-Z][A-Za-z]*\.?\s+\d[A-F]?\s*[,\-–]\s*H\d{3}(?!\d)"
 )
 
 HAZARD_CODE_PATTERN = re.compile(r"\bH\d{3}(?!\d)")
