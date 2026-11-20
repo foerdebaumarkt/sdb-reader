@@ -45,6 +45,14 @@ Versions follow the tags of this repository.
   no substance in the list that determines the label, no page furniture. It
   changes no reading; it shows where rules are missing (SDB-165).
 
+- **P501 from its disposal sentence, also beside other P codes.**
+  "Inhalt/Behälter gemäß lokalen/regionalen/nationalen/internationalen
+  Vorschriften entsorgen." and the like (content and container, the
+  supplier's detail, then "entsorgen" or "zuführen") are read as P501
+  inside the label, where it carries a hazard statement and prints no P501
+  code; the precautionary text keeps the sheet's sentence. "Leere Behälter
+  können über den Hausmüll entsorgt werden." is no P501 (SDB-166).
+
 ### Fixed
 
 Layouts and spellings from sheets outside the collection the reader was

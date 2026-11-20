@@ -155,7 +155,8 @@ def test_a_printed_p501_is_not_read_twice() -> None:
     )
     codes, text = _codes_and_text(parsed)
     assert codes.count("P501") == 1
-    assert text is not None and text.count("P501") == 1
+    assert text is not None
+    assert text.count("P501") == 1
 
 
 @pytest.mark.spec("SDB-166")

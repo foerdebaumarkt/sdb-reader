@@ -2025,21 +2025,12 @@ def _parse_hazard_statements(
     codeless = _passages(sections.get(Section.HAZARDS, "").split("\n"), furniture)
     if hazard_statements.hazard_text is None and hazard_codes:
         hazard_statements.hazard_text = _in_print_order(hazard_codes, codeless)
-    # P501 read off its sentence (SDB-166) takes the sheet's own words below;
-    # the other codes find theirs as before.
-    disposal = next((r.disposal for r in readings if r.disposal), None)
-    worded_codes = [
-        code for code in precautionary_codes if disposal is None or code != "P501"
-    ]
-    if hazard_statements.precautionary_text is None and worded_codes:
-        hazard_statements.precautionary_text = _in_print_order(
-            worded_codes, codeless
-        ) or _in_print_order(worded_codes, codeless, variants=True)
-    precautionary_text = hazard_statements.precautionary_text or ""
-    if disposal is not None and not re.search(r"\bP501\b", precautionary_text):
-        hazard_statements.precautionary_text = "\n".join(
-            filter(None, [precautionary_text, f"P501 {disposal}"])
-        )
+    hazard_statements.precautionary_text = _precautionary_text(
+        hazard_statements.precautionary_text,
+        precautionary_codes,
+        codeless,
+        next((r.disposal for r in readings if r.disposal), None),
+    )
     supplemental_text = _extract_statements_from_sections(
         sections,
         allowed_sections={Section.HAZARDS},
@@ -2345,6 +2336,23 @@ def _without_trailing_pictograms(hazards: HazardStatements) -> None:
 
 def _without_pictogram(text: str | None) -> str | None:
     return _TRAILING_PICTOGRAM.sub("", text) if text else text
+
+
+def _precautionary_text(
+    text: str | None, codes: list[str], codeless: list[str], disposal: str | None
+) -> str | None:
+    """The label's precautionary text: *text* as cut by code, else the codes'
+    sentences in print order (SDB-6, SDB-163); P501 read off its *disposal*
+    sentence (SDB-166) adds the sheet's own words, the other codes find
+    theirs as before."""
+    worded = [code for code in codes if disposal is None or code != "P501"]
+    if text is None and worded:
+        text = _in_print_order(worded, codeless) or _in_print_order(
+            worded, codeless, variants=True
+        )
+    if disposal is not None and not re.search(r"\bP501\b", text or ""):
+        text = "\n".join(filter(None, [text, f"P501 {disposal}"]))
+    return text
 
 
 def _in_print_order(
