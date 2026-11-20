@@ -27,10 +27,12 @@ from .statements import (
     base_code,
     codes_from_wording,
     euh_statements_by_wording,
+    first_word_of,
     holds_a_wording_of,
     lettered_code,
     open_end,
     precautionary_by_variants,
+    statement_codes,
     variant_wordings_in_print_order,
     with_effects_joined,
     wording_bounds,
@@ -1817,13 +1819,47 @@ _BROKEN_CODE = re.compile(
 )
 
 
-# "EUH 208" for EUH208 (SDB-121). Not H and P: "P 750" can be a product's name.
+# "EUH 208" for EUH208 (SDB-121).
 _SPACED_EUH_CODE = re.compile(r"\bEUH[^\S\n](?=\d{3}\b)")
+
+# "H 315", "P 305 + P 351", "H 360 D" for the codes (SDB-164), where they can
+# be nothing else. A product's "P 750", a height "H 330 mm" and a table's
+# "NOAEL P 250 mg/kg" are not: the number is no statement of the regulation,
+# or a word stands before the letter, or neither a separator nor the
+# statement's first word follows it.
+_SPACED_HP_CODE = re.compile(
+    r"(?m)(^[^\S\n]*(?:[•·*\-–][^\S\n]*)?|[+:;,][^\S\n]*)"
+    r"([HP])[^\S\n]+(\d{3})(?:[^\S\n]?([FfDd]{1,2}))?(?!\w)"
+)
+_AFTER_SPACED_CODE = re.compile(r"[^\S\n]*(?:$|[:+,;\-–])", re.MULTILINE)
+_FIRST_WORD = re.compile(r"[^\S\n]*([^\W\d_]+)")
+
+
+def _join_spaced_codes(text: str) -> str:
+    """*text* with H and P codes printed with a space written as codes (SDB-164)."""
+    known = statement_codes()
+
+    def joined(match: re.Match[str]) -> str:
+        before, letter, number, effect = match.groups()
+        code = letter + number
+        if code not in known:
+            return match.group(0)
+        if effect and code not in ("H360", "H361"):
+            return match.group(0)
+        in_combination = before.strip() == "+"
+        if not in_combination and not _AFTER_SPACED_CODE.match(text, match.end()):
+            word = _FIRST_WORD.match(text, match.end())
+            if word is None or word.group(1).lower() != first_word_of(code):
+                return match.group(0)
+        return f"{before}{code}{effect or ''}"
+
+    return _SPACED_HP_CODE.sub(joined, text)
 
 
 def _mend_codes(text: str) -> str:
-    """*text* with its statement codes as the regulation writes them (SDB-121):
-    a code whole that broke inside its last number, EUH and its number joined."""
+    """*text* with its statement codes as the regulation writes them (SDB-121,
+    SDB-164): a code whole that broke inside its last number, EUH, H and P
+    joined to their numbers."""
 
     def whole(match: re.Match[str]) -> str:
         head, begun, rest, end = match.groups()
@@ -1831,7 +1867,7 @@ def _mend_codes(text: str) -> str:
             return match.group(0)
         return f"{head}{begun}{end}{rest}"
 
-    return _SPACED_EUH_CODE.sub("EUH", _BROKEN_CODE.sub(whole, text))
+    return _join_spaced_codes(_SPACED_EUH_CODE.sub("EUH", _BROKEN_CODE.sub(whole, text)))
 
 
 def _without_the_old_directives_phrase(text: str) -> tuple[str, list[str]]:

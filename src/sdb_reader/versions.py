@@ -19,7 +19,7 @@ EXTRACTION_VERSION = 2
 # Raise when the same text can give another reading: the verdict, the parser,
 # the statements and their tables, the findings, the message codes, the JSON
 # form. The sentences of the catalogs are no part of a reading.
-PARSER_VERSION = 17
+PARSER_VERSION = 18
 
 
 def extraction_stage() -> str:

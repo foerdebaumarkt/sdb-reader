@@ -360,6 +360,24 @@ def _catalogue() -> dict[str, str]:
     }
 
 
+@lru_cache(maxsize=1)
+def statement_codes() -> frozenset[str]:
+    """Every single H, P and EUH code of the regulation, a combination's parts
+    counted on their own: what a number has to be to be read as a code
+    printed with a space (SDB-164)."""
+    return frozenset(part for code in _catalogue() for part in code.split("+"))
+
+
+def first_word_of(code: str) -> str | None:
+    """The first word of *code*'s wording in the regulation, lower case, or
+    None where the regulation has none (SDB-164)."""
+    wording = _catalogue().get(code)
+    if not wording:
+        return None
+    match = re.search(r"[^\W\d_]+", wording)
+    return match.group(0).lower() if match else None
+
+
 # How many words of a wording identify it when it is not printed whole: a
 # menu's first choice, the part before a hole.
 _OPENING_WORDS = 3

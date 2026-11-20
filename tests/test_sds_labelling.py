@@ -241,6 +241,73 @@ class TestCodesAsTheSheetWritesThem:
         assert label.precautionary_codes == []
 
 
+class TestCodesPrintedWithASpace:
+    @pytest.mark.spec("SDB-164")
+    def test_spaced_codes_with_their_sentences_are_the_codes(self) -> None:
+        label = read(
+            CLASSIFIED
+            + "2.2 Kennzeichnungselemente\n"
+            + "Signalwort: Gefahr\n"
+            + "Gefahrenhinweise\n"
+            + "H 315: Verursacht Hautreizungen.\n"
+            + "H 318\nVerursacht schwere Augenschäden.\n"
+            + "Sicherheitshinweise\n"
+            + "P 102 Darf nicht in die Hände von Kindern gelangen.\n"
+            + "P 280 Schutzhandschuhe/Augenschutz tragen.\n"
+            + "P 305 + P 351 + P 338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang "
+            + "behutsam mit Wasser spülen. Eventuell vorhandene Kontaktlinsen nach "
+            + "Möglichkeit entfernen. Weiter spülen.\n"
+            + "2.3 Sonstige Gefahren\nKeine.\n"
+        )
+
+        assert label.hazard_codes == ["H315", "H318"]
+        assert label.precautionary_codes == ["P102", "P280", "P305", "P338", "P351"]
+        assert "P305 + P351 + P338 BEI KONTAKT" in label.precautionary_text
+
+    @pytest.mark.spec("SDB-164")
+    def test_the_letters_of_an_effect_belong_to_a_spaced_code(self) -> None:
+        label = read(
+            "2.1 Einstufung des Stoffs oder Gemischs\n"
+            + "Repr. 1B\nH360D\nKann das Kind im Mutterleib schädigen.\n"
+            + "2.2 Kennzeichnungselemente\n"
+            + "Signalwort: Gefahr\n"
+            + "Gefahrenhinweise\n"
+            + "H 360 D Kann das Kind im Mutterleib schädigen.\n"
+            + "2.3 Sonstige Gefahren\nKeine.\n"
+        )
+
+        assert label.hazard_codes == ["H360D"]
+
+    @pytest.mark.spec("SDB-164")
+    def test_a_measure_a_value_or_a_name_is_no_code(self) -> None:
+        label = read(
+            UNCLASSIFIED
+            + "2.2 Kennzeichnungselemente\n"
+            + "Handelsname: Musterbehälter H 330 mm\n"
+            + "Abmessungen: H 229 x 113 x 38 cm\n"
+            + "Prüfdruck P 100 bar, Ausführung P 135 L\n"
+            + "Keine Kennzeichnung erforderlich.\n"
+            + "2.3 Sonstige Gefahren\nKeine.\n"
+        )
+
+        assert label.hazard_codes == []
+        assert label.precautionary_codes == []
+
+    @pytest.mark.spec("SDB-164")
+    def test_a_spaced_number_in_running_text_outside_the_label_is_no_code(
+        self,
+    ) -> None:
+        label = read(
+            UNCLASSIFIED
+            + "2.2 Kennzeichnungselemente\nKeine Kennzeichnung erforderlich.\n"
+            + "2.3 Sonstige Gefahren\nKeine.\n",
+            "Prüfwert P 250 mg/kg, Messpunkt H 2,5 m.\nH 315\nP 280\n",
+        )
+
+        assert label.hazard_codes == []
+        assert label.precautionary_codes == []
+
+
 @pytest.mark.spec("SDB-122")
 def test_the_words_of_a_condition_alone_are_no_precautionary_statement() -> None:
     label = read(
