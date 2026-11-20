@@ -108,7 +108,7 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 
 | Feld | Bedeutung |
 | --- | --- |
-| `hazard_codes` | die Codes der Gefahrenhinweise (H) |
+| `hazard_codes` | die Codes der Gefahrenhinweise (H); H360 und H361 mit den Buchstaben ihrer Wirkung, wie Anhang VI der CLP-Verordnung sie setzt (`H360D`, `H361fd`) |
 | `precautionary_codes` | die Codes der Sicherheitshinweise (P) |
 | `supplemental_codes` | die Codes der ergänzenden Gefahrenmerkmale (EUH) |
 | `signal_word` | `Gefahr` oder `Achtung`, oder nichts |

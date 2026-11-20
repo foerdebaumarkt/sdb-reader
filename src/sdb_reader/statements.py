@@ -86,7 +86,8 @@ def canonical_text(code: str) -> str | None:
     >>> canonical_text("P280") is None
     True
     """
-    return _fixed_statements().get(re.sub(r"\s*\+\s*", "+", code.strip()))
+    code = re.sub(r"\s*\+\s*", "+", code.strip())
+    return LETTERED_WORDINGS.get(code) or _fixed_statements().get(code)
 
 
 # Cache compiled regex patterns for statement normalization
@@ -436,7 +437,7 @@ def wording_bounds(code: str) -> WordingBounds | None:
     "BEI EINATMEN: Bei Unwohlsein … anrufen."). None for a code the regulation
     does not word.
     """
-    joined = re.sub(r"\s*\+\s*", "+", code.strip())
+    joined = base_code(re.sub(r"\s*\+\s*", "+", code.strip()))
     if joined in _EFFECT_OPENINGS:
         return WordingBounds(_EFFECT_OPENINGS[joined], None)
     catalogue = _catalogue()
@@ -480,7 +481,7 @@ def open_end(code: str) -> re.Pattern[str] | None:
         for part in _HOLE.split(_OPTIONAL.sub("", wording or ""))
         if (words := _WORD.findall(part))
     ]
-    if not fixed or code.strip() in _EFFECT_OPENINGS:
+    if not fixed or base_code(code.strip()) in _EFFECT_OPENINGS:
         # H360 and H361 are printed with one effect or both: any sentence.
         return re.compile(_SENTENCE_TAIL)
     tail = r"[\W_]+".join(map(re.escape, fixed[-1][-_CLOSING_WORDS:]))
@@ -731,22 +732,129 @@ def _wordings() -> tuple[tuple[str, str], ...]:
 # its sentence and a letter behind the code (Annex VI, 1.1.2.1.2): H360D "Kann
 # das Kind im Mutterleib schädigen.", H361f "Kann vermutlich die Fruchtbarkeit
 # beeinträchtigen.". The catalogue holds the two codes with their holes, which
-# no label prints; these are the sentences labels do print.
+# no label prints; these are the sentences labels do print. A sentence that
+# names one effect is that effect's lettered code (SDB-155); the sentence with
+# "oder" names none, and stays the bare code.
 _EFFECT_WORDINGS: tuple[tuple[str, str], ...] = (
     (
         "Kann die Fruchtbarkeit beeinträchtigen oder das Kind im Mutterleib schädigen",
         "H360",
     ),
-    ("Kann die Fruchtbarkeit beeinträchtigen", "H360"),
-    ("Kann das Kind im Mutterleib schädigen", "H360"),
+    ("Kann die Fruchtbarkeit beeinträchtigen", "H360F"),
+    ("Kann das Kind im Mutterleib schädigen", "H360D"),
     (
         "Kann vermutlich die Fruchtbarkeit beeinträchtigen oder das Kind im "
         "Mutterleib schädigen",
         "H361",
     ),
-    ("Kann vermutlich die Fruchtbarkeit beeinträchtigen", "H361"),
-    ("Kann vermutlich das Kind im Mutterleib schädigen", "H361"),
+    ("Kann vermutlich die Fruchtbarkeit beeinträchtigen", "H361f"),
+    ("Kann vermutlich das Kind im Mutterleib schädigen", "H361d"),
 )
+
+# The codes of Annex VI, 1.1.2.1.2, with their wording there (SDB-155). A
+# capital letter is an effect shown (category 1), a small one an effect
+# suspected (category 2); H361 has small letters only.
+LETTERED_WORDINGS: dict[str, str] = {
+    "H360F": "Kann die Fruchtbarkeit beeinträchtigen.",
+    "H360D": "Kann das Kind im Mutterleib schädigen.",
+    "H361f": "Kann vermutlich die Fruchtbarkeit beeinträchtigen.",
+    "H361d": "Kann vermutlich das Kind im Mutterleib schädigen.",
+    "H360FD": (
+        "Kann die Fruchtbarkeit beeinträchtigen. Kann das Kind im Mutterleib schädigen."
+    ),
+    "H361fd": (
+        "Kann vermutlich die Fruchtbarkeit beeinträchtigen. "
+        "Kann vermutlich das Kind im Mutterleib schädigen."
+    ),
+    "H360Fd": (
+        "Kann die Fruchtbarkeit beeinträchtigen. "
+        "Kann vermutlich das Kind im Mutterleib schädigen."
+    ),
+    "H360Df": (
+        "Kann das Kind im Mutterleib schädigen. "
+        "Kann vermutlich die Fruchtbarkeit beeinträchtigen."
+    ),
+}
+
+_LETTERED = re.compile(r"^(H36[01])([A-Za-z]{1,2})$")
+
+
+def lettered_code(code: str) -> str:
+    """The code of Annex VI that *code* stands for, letters as the regulation sets them.
+
+    The letters a sheet prints are read as the regulation means them: for H360 a
+    capital is an effect shown and a small one an effect suspected, in either
+    order; H361 has only suspected effects, so its letters count whatever their
+    case. Letters that name no code of the Annex (a small letter alone behind
+    H360, a letter that is no effect) leave the bare code (SDB-155).
+
+    >>> lettered_code("H360DF"), lettered_code("H361FD"), lettered_code("H360dF")
+    ('H360FD', 'H361fd', 'H360Fd')
+    >>> lettered_code("H360d"), lettered_code("H315")
+    ('H360', 'H315')
+    """
+    match = _LETTERED.match(code)
+    if match is None:
+        return code
+    base, letters = match.groups()
+    if base == "H361":
+        effects = {letter.lower() for letter in letters}
+        if not effects <= {"f", "d"} or len(effects) != len(letters):
+            return base
+        return base + "".join(letter for letter in "fd" if letter in effects)
+    chosen = set(letters)
+    if len(chosen) != len(letters) or not chosen <= set("FDfd"):
+        return base
+    for candidate in ("F", "D", "FD", "Fd", "Df"):
+        if set(candidate) == chosen:
+            return base + candidate
+    return base
+
+
+def base_code(code: str) -> str:
+    """*code* without the letters of an effect: "H360FD" is H360."""
+    match = _LETTERED.match(code)
+    return match.group(1) if match else code
+
+
+def with_effects_joined(codes: Collection[str]) -> set[str]:
+    """*codes* with the effects of H360 and H361 joined into the Annex's code (SDB-155).
+
+    A label that names both effects in two sentences, "Kann die Fruchtbarkeit
+    beeinträchtigen. Kann das Kind im Mutterleib schädigen.", carries H360FD,
+    not H360F beside H360D. The bare code goes where a lettered one names the
+    effect.
+
+    >>> sorted(with_effects_joined({"H360F", "H360D", "H315"}))
+    ['H315', 'H360FD']
+    >>> sorted(with_effects_joined({"H360F", "H361d"}))
+    ['H360Fd']
+    >>> sorted(with_effects_joined({"H360", "H360D"}))
+    ['H360D']
+    """
+    shown = {
+        base + letter
+        for base, letter in (("H360", "F"), ("H360", "D"))
+        if base + letter in codes
+    }
+    suspected = {code for code in ("H361f", "H361d") if code in codes}
+    joined = set(codes)
+    target = None
+    if shown == {"H360F", "H360D"}:
+        target = "H360FD"
+    elif shown == {"H360F"} and suspected == {"H361d"}:
+        target = "H360Fd"
+    elif shown == {"H360D"} and suspected == {"H361f"}:
+        target = "H360Df"
+    elif not shown and suspected == {"H361f", "H361d"}:
+        target = "H361fd"
+    if target is not None:
+        joined -= shown | suspected
+        joined.add(target)
+    for base in ("H360", "H361"):
+        if base in joined and any(base_code(c) == base and c != base for c in joined):
+            joined.discard(base)
+    return joined
 
 
 def codes_from_wording(text: str) -> set[str]:

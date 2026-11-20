@@ -24,10 +24,13 @@ from .schema import (
 )
 from .statements import (
     OLD_REQUEST_SENTENCE,
+    base_code,
     codes_from_wording,
     euh_statements_by_wording,
     holds_a_wording_of,
+    lettered_code,
     open_end,
+    with_effects_joined,
     wording_bounds,
     wordings_apart,
     wordings_in_print_order,
@@ -244,7 +247,9 @@ _DATE_FRAGMENT = (
 )
 # "Überarbeitet am: 2024-08-26": the same date, year first. Only behind a label,
 # and only with its dashes: a CAS number or an article number is built alike.
-_DATED = rf"(?:{_DATE_FRAGMENT}|(?<!\d)(\d{{4}})-(\d{{2}})-(\d{{2}})(?!\d))"
+# A weekday may stand in front: "Mittwoch, 13. Mai 2015" (SDB-161).
+_WEEKDAY = r"(?:(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag),?\s+)?"
+_DATED = rf"(?:{_WEEKDAY}{_DATE_FRAGMENT}|(?<!\d)(\d{{4}})-(\d{{2}})-(\d{{2}})(?!\d))"
 # A page marker may sit between a date's label and its value. Suppliers put both
 # in the page footer, and flattening the layout interleaves them:
 #
@@ -287,7 +292,8 @@ _PAGE_MARKER = r"(?:\s*Seite\s*:?\s*\d{1,3}\s*(?:/|von)\s*\d{1,3})?"
 # does too ("Ersetzt Fassung: GHS 7 (29.01.2024)"), and that date is not this
 # sheet's.
 REVISION_DATE_PATTERN = re.compile(
-    r"(?:überarbeit[a-zäöüß]*(?:\s+(?-i:[a-zäöüß]{2,})(?=\s*:))?(?:\s+am)?"
+    # "Überarbei tung": the word broken at the line's end (SDB-161).
+    r"(?:überarbei[^\S\n]?t[a-zäöüß]*(?:\s+(?-i:[a-zäöüß]{2,})(?=\s*:))?(?:\s+am)?"
     r"|revisions?datum|änderungsdatum|bearbeitungsdatum|überprüfung"
     r"|(?<!ersetzt )fassung\s+vom|stand\s*:|sicherheitsdatenblatt\s+vom"
     r"|(?:version|rev\.?)\s*(?:nr\.?)?\s*:?\s*\d+(?:[.,]\d+)*\s*vom"
@@ -365,6 +371,8 @@ ISSUE_DATE_PATTERN = re.compile(
     r"|datum\s+der\s+erstellung|datum\s+ausgestellt|(?<![a-zäöüß])erstellung"
     # "Datum der Ausstellung: 5/05/2022" (SDB-96), "Ausgestellt am" (SDB-101).
     r"|datum\s+der\s+ausstellung|ausgestellt\s+am"
+    # "Datum der Ausgabe: 06.01.2021" (SDB-161); not "Datum der letzten Ausgabe".
+    r"|datum\s+der\s+ausgabe"
     r"|^[^\S\n]*ausgabe)"
     rf"\s*:?{_PAGE_MARKER}\s*{_DATED}",
     re.IGNORECASE | re.MULTILINE,
@@ -489,6 +497,9 @@ CLASSIFICATION_ENTRY = re.compile(
 )
 
 HAZARD_CODE_PATTERN = re.compile(r"\bH\d{3}(?!\d)")
+# A label's H-codes as printed, with the letters of an effect behind H360 and
+# H361 ("H360FD", "H361d"), which belong to the code (SDB-155).
+LABEL_HAZARD_CODE = re.compile(r"\bH(?:36[01][A-Za-z]{1,2}(?![^\W\d_])|\d{3})(?!\d)")
 PRECAUTION_CODE_PATTERN = re.compile(r"\bP\d{3}(?!\d)")
 SUPPLEMENTAL_CODE_PATTERN = re.compile(r"\bEUH\d{3}\b", re.IGNORECASE)
 PICTOGRAM_PATTERN = re.compile(r"\bGHS\d{1,2}\b", re.IGNORECASE)
@@ -511,6 +522,10 @@ PICTOGRAM_PATTERN = re.compile(r"\bGHS\d{1,2}\b", re.IGNORECASE)
 # the signal word without punctuation, which makes the "!" diagnostic: it never
 # belongs to the label element, only to the sentence that quotes it.
 SIGNAL_WORD_PATTERN = re.compile(r"\b(Gefahr|Achtung)\b(?!\s*!)", re.IGNORECASE)
+# The word behind its own label: "Signalwort: Achtung" (SDB-157).
+_SIGNAL_WORD_NAMED = re.compile(
+    r"\bSignalwort[^\S\n]*[:\-–]?\s*(Gefahr|Achtung)\b(?!\s*!)", re.IGNORECASE
+)
 
 # How a sheet classifies under Directive 67/548/EEC or 1999/45/EC, the rules
 # before CLP (SDB-73): an R phrase with its number, or a hazard symbol with its
@@ -1089,8 +1104,14 @@ _CLASSIFICATION_LINE = re.compile(
     r"|Ozone|Desen\.\s*Expl|ED\s*(?:HH|ENV)|PBT|vPvB|PMT|vPvM)\b\.?\s*\d?[A-F]?$"
     r"|\bKategorie\s+\d"
 )
+# A pictogram's code at a statement's end (SDB-162).
+_TRAILING_PICTOGRAM = re.compile(
+    r"(?m)(?<=[.!])[^\S\n]+GHS\d{2}(?:[\s,]+GHS\d{2})*[^\S\n]*$"
+)
 _PAGE_NUMBER = re.compile(
-    r"^(?:Seite\s*:?\s*)?\d{1,3}\s*(?:/|von)\s*\d{1,3}$"
+    # "Page n. 1 von 9" (SDB-162).
+    r"^(?:Page\s+(?:n\.|no\.|nr\.)?\s*)?\d{1,3}\s*(?:/|von|of)\s*\d{1,3}$"
+    r"|^(?:Seite\s*:?\s*)?\d{1,3}\s*(?:/|von)\s*\d{1,3}$"
     r"|^Seite\s*:?\s*\d{1,3}(?:\s*(?:/|von)\s*\d{1,3}|\s*\(\d{1,3}\))?$",
     re.IGNORECASE,
 )
@@ -1355,6 +1376,10 @@ def _read_section_heading(line: str) -> tuple[int, str | None, bool] | None:
         # A sentence that wraps before the word: "… ist der volle Wortlaut in"
         # / "Abschnitt 16 zu finden." is a reference, whatever its number.
         return None
+    if not titled and re.match(r"[.,]\s?\d", remainder):
+        # A subsection's number with no title: "Abschnitt 7.3 angegeben",
+        # the end of a sentence that refers to it (SDB-160).
+        return None
     return number, remainder, titled
 
 
@@ -1474,9 +1499,26 @@ def _label_section_end(rest: str) -> re.Match[str] | None:
     """
     for end in LABEL_SECTION_END_PATTERN.finditer(rest):
         preceding = rest[: end.start()].rstrip().rpartition("\n")[2]
-        if not VERSION_KEY_PATTERN.fullmatch(preceding.strip()):
-            return end
+        if VERSION_KEY_PATTERN.fullmatch(preceding.strip()):
+            continue
+        if _BARE_2_3.match(end.group(0)) and _LABEL_ELEMENT_TITLE.match(
+            rest[end.end() :].lstrip()
+        ):
+            continue
+        return end
     return None
+
+
+# "2.3" as the number of a label element, not of "Sonstige Gefahren" (SDB-156):
+# a sheet numbers its label's parts on, "2.2 Kennzeichnungselemente", "2.3
+# Gefahrbestimmende Komponenten …", "2.4 Gefahrenhinweise", "2.5
+# Sicherheitshinweise", and the label ended before its statements.
+_BARE_2_3 = re.compile(r"[ \t]*(?:[·•∙][ \t]*)?2\s*\.\s*3\b")
+_LABEL_ELEMENT_TITLE = re.compile(
+    r"(?:Gefahrbestimmende\s+Komponente|Gefahrenhinweis|Sicherheitshinweis"
+    r"|Signalwort|Gefahrenpiktogramm|Piktogramm|Ergänzende|Besondere\s+Kennzeichnung)",
+    re.IGNORECASE,
+)
 
 
 def _parts_with_labels(text: str) -> list[tuple[str, str | None]]:
@@ -1738,9 +1780,18 @@ def read_signal_word(label_text: str) -> tuple[str | None, bool]:
     Shared with the service layer so that "the label has settled this" means one
     thing in both places rather than two regexes drifting apart.
     """
-    if NO_SIGNAL_WORD_PATTERN.search(label_text) or UNLABELLED_PATTERN.search(
-        label_text
-    ):
+    negations = [
+        found.start()
+        for pattern in (NO_SIGNAL_WORD_PATTERN, UNLABELLED_PATTERN)
+        if (found := pattern.search(label_text))
+    ]
+    # A word set behind its own label before any negation is the label's
+    # (SDB-157): "Signalwort: Achtung" for the product as sold, and further
+    # down "kein Signalwort … erforderlich" for it diluted for use.
+    named = _SIGNAL_WORD_NAMED.search(label_text)
+    if named and (not negations or named.start() < min(negations)):
+        return named.group(1).capitalize(), True
+    if negations:
         return None, True
 
     match = SIGNAL_WORD_PATTERN.search(label_text)
@@ -1970,6 +2021,7 @@ def _parse_hazard_statements(
         )
         or None
     )
+    _without_trailing_pictograms(hazard_statements)
     if labels:
         warnings.extend(
             _euh_wordings_outside(
@@ -2023,6 +2075,20 @@ _PASSAGE_END = re.compile(
     r"^\s*[·.]?\s*\d{1,2}\.\d{1,2}\.?(?:[^\S\n]+[A-ZÄÖÜ]|[^\S\n]*$)", re.MULTILINE
 )
 _PASSAGE_LIMIT = 800
+
+
+def _without_trailing_pictograms(hazards: HazardStatements) -> None:
+    """A pictogram's code behind a statement is the label's next element (SDB-162).
+
+    Not the statement's wording: "H335: Kann die Atemwege reizen. GHS07".
+    """
+    hazards.hazard_text = _without_pictogram(hazards.hazard_text)
+    hazards.precautionary_text = _without_pictogram(hazards.precautionary_text)
+    hazards.supplemental_text = _without_pictogram(hazards.supplemental_text)
+
+
+def _without_pictogram(text: str | None) -> str | None:
+    return _TRAILING_PICTOGRAM.sub("", text) if text else text
 
 
 def _in_print_order(codes: list[str], passages: list[str]) -> str | None:
@@ -2121,7 +2187,10 @@ def printed_hazard_codes(label_text: str) -> set[str]:
     A combination is split into its codes: "H300+H310+H330" is H300, H310 and
     H330. Codes read off the wording (SDB-6) are not printed ones.
     """
-    return set(HAZARD_CODE_PATTERN.findall(CLASSIFICATION_ENTRY.sub(" ", label_text)))
+    return {
+        lettered_code(code)
+        for code in LABEL_HAZARD_CODE.findall(CLASSIFICATION_ENTRY.sub(" ", label_text))
+    }
 
 
 # A label that prints R or S phrases (SDB-120): their heading, or a phrase's
@@ -2158,7 +2227,9 @@ def _read_label(
 
     hazard_codes = sorted(printed_hazard_codes(hazard_section_text))
     if not hazard_codes and classification is not None:
-        hazard_codes = sorted(set(HAZARD_CODE_PATTERN.findall(classification)))
+        hazard_codes = sorted(
+            {lettered_code(code) for code in LABEL_HAZARD_CODE.findall(classification)}
+        )
     precautionary_codes = sorted(
         set(PRECAUTION_CODE_PATTERN.findall(hazard_section_text))
     )
@@ -2210,7 +2281,8 @@ def _read_label(
         set(code.upper() for code in PICTOGRAM_PATTERN.findall(hazard_section_text))
     )
 
-    h_code_set = set(hazard_codes)
+    # Two sentences of one effect each are the Annex's joined code (SDB-155).
+    h_code_set = with_effects_joined(set(hazard_codes))
 
     # Fallback: derive pictograms from H-codes when not found in PDF text
     if not pictograms and h_code_set:
@@ -3041,7 +3113,7 @@ def _statements_within(text: str | None, codes: set[str]) -> str | None:
     kept = [
         statement
         for statement in text.split("\n")
-        if set(HAZARD_CODE_PATTERN.findall(statement)) <= codes
+        if set(HAZARD_CODE_PATTERN.findall(statement)) <= {base_code(c) for c in codes}
     ]
     return "\n".join(kept) or None
 
@@ -3209,7 +3281,8 @@ _NUMBER_BEFORE_SUPPLIER_LABEL = re.compile(
 _SUPPLIER_TITLE = re.compile(
     r"^(?:Einzelheiten\b|der\s+das\b|das\s+Sicherheitsdatenblatt\b"
     r"|Sicherheitsdatenblatt(?:\s+bereitstellt|\s*$)|bereitstellt\b"
-    r"|zum\s+Lieferanten\b|Lieferanten,\s+der\s+das\b)",
+    r"|zum\s+Lieferanten\b|Lieferanten,\s+der\s+das\b"
+    r"|Details\s+of\s+the\s+supplier\b)",
     re.IGNORECASE,
 )
 # The label a supplier's name stands under or beside. "Anschrift" and
@@ -3219,16 +3292,27 @@ _SUPPLIER_TITLE = re.compile(
 # "Angaben zum Hersteller:", "Angaben zum Lieferanten:" are the same labels
 # in a sheet without numbered subsections.
 _SUPPLIER_LABEL = re.compile(
-    r"^(?:Angaben\s+zu[mr]\s+)?(?:Herstellers?|Lieferant(?:en)?|Firma|Firmenname"
+    r"^(?:(?:Angaben|Informationen)\s+zu[mr]?\s+)?(?:Herstellers?|Herstellerin"
+    r"|Lieferant(?:en)?|Firma|Firmenname"
     r"|Firmenbezeichnung|Firmenidentifikation|Unternehmen|Inverkehrbringer|Händler"
-    r"|Fabrik|Bezeichnung\s+des\s+Unternehmens)\b",
+    r"|Fabrik|Bezeichnung\s+des\s+Unternehmens|Company|Firmendetails)\b",
     re.IGNORECASE,
 )
 # A label that heads the name's line and says nothing more: "Name" over the
 # company in a table of the block.
-_BARE_NAME_LABEL = re.compile(r"^Name\s*:?$", re.IGNORECASE)
+_BARE_NAME_LABEL = re.compile(
+    # "Name oder Handelsname" over the company (SDB-159).
+    r"^Name(?:\s+oder\s+Handelsname)?\s*:?$",
+    re.IGNORECASE,
+)
 # The same label with the company behind it (SDB-151): "Name: Musterchemie GmbH".
-_NAME_LABEL_WITH_VALUE = re.compile(r"^Name\s*:\s*(?=\S)", re.IGNORECASE)
+_NAME_LABEL_WITH_VALUE = re.compile(
+    r"^Name(?:\s+(?:der\s+Firma|des\s+(?:Hersteller)?[Uu]nternehmens))?\s*:\s*(?=\S)",
+    re.IGNORECASE,
+)
+# A label's value that points elsewhere (SDB-159): "Hersteller/Lieferant:
+# siehe Kapitel 16 (Ansprechpartner)". Nobody's name.
+_POINTS_ELSEWHERE = re.compile(r"^siehe\b", re.IGNORECASE)
 # "1.3 Verwendung des Produkts": a sheet that numbers section 1 its own way
 # has something else under 1.3 (SDB-132).
 _OTHER_TITLE_UNDER_1_3 = re.compile(
@@ -3238,7 +3322,8 @@ _OTHER_TITLE_UNDER_1_3 = re.compile(
 _ADDRESS_HEADING = re.compile(r"^(?:Anschrift|Adresse)\b", re.IGNORECASE)
 # The words of such a label, alone or joined by slashes: "Hersteller/Lieferant".
 _LABEL_WORDS = re.compile(
-    r"^(?:Angaben\s+zu[mr]\s+)?(?:Herstellers?|Lieferant(?:en)?|Firma|Firmenname"
+    r"^(?:(?:Angaben|Informationen)\s+zu[mr]?\s+)?(?:Herstellers?|Herstellerin"
+    r"|Lieferant(?:en)?|Firma|Firmenname"
     r"|Firmenbezeichnung|Unternehmen|Inverkehrbringer|Händler|Anschrift|Adresse)"
     r"(?:\s*/\s*(?:Hersteller|Lieferant|Firma|Importeur|Vertrieb|Händler))*\b",
     re.IGNORECASE,
@@ -3349,7 +3434,7 @@ _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _WEBSITE = re.compile(r"\b(?:https?://|www\.)[^\s,;]+", re.IGNORECASE)
 # A company's legal form: a name without one may go on on the next line.
 _LEGAL_FORM = re.compile(
-    r"\b(?:GmbH|AG|KG|KGaA|mbH|SE|OHG|GbR|e\.\s?K|e\.\s?V|B\.\s?V|N\.\s?V|S\.\s?A|S\.\s?p\.\s?A"
+    r"\b(?:GmbH|AG|KG|KGaA|mbH|SE|OHG|GbR|e\.\s?K|e\.\s?V|B\.\s?V|N\.\s?V|BV|NV|SA|S\.\s?A|S\.\s?p\.\s?A"
     r"|S\.\s?r\.\s?l|[Ss]rl|SRL|SAS|Ltd|Inc|LLC|plc|A/S|AB|Oy|Co)\b\.?",
 )
 
@@ -3392,6 +3477,16 @@ def _read_supplier_of(section_text: str, furniture: frozenset[str]) -> ContactIn
         starts = [*labels[:1], heading + 1, *labels[1:]]
     else:
         starts = [*([heading + 1] if heading is not None else []), *labels]
+    if heading is not None:
+        # The company behind the heading's colon, the title running on below
+        # (SDB-159): "1.3 Einzelheiten zum: Musterwerk GmbH" / "Lieferanten,
+        # der das" / "Sicherheitsdatenblatt bereitstellt".
+        _, colon, behind = lines[heading].partition(":")
+        if colon and _LEGAL_FORM.search(behind):
+            at = heading + 1
+            while at < len(lines) and _SUPPLIER_TITLE.match(lines[at]):
+                at += 1
+            lines = [*lines[:at], behind.strip(), *lines[at:]]
     first: ContactInfo | None = None
     for start in starts:
         supplier = _german_supplier(_supplier_block(lines, start))
@@ -3482,7 +3577,9 @@ def _supplier_lines(line: str) -> list[str]:
     "GERMANY | Tel. +49 2054 4048-70, Fax. +49 2054 4048-790".
     """
     parts: list[str] = []
-    for part in line.split(" | "):
+    # Or with stars: "Musterchemie KGaA * 12345 Musterstadt * Tel: …" (SDB-159).
+    separator = " * " if line.count(" * ") >= 2 else " | "
+    for part in line.split(separator):
         stripped = part.strip().lstrip("·•*-–. ").strip()
         stripped = _SUPPLIER_SUBSECTION.sub("", stripped).strip()
         stripped = _NUMBER_BEFORE_SUPPLIER_LABEL.sub("", stripped)
@@ -3610,8 +3707,9 @@ def _read_supplier(block: list[str]) -> ContactInfo:
         if stage == "name":
             labelled, value = _label_and_value(line)
             if labelled:
-                if not value or value.endswith(":"):
-                    # No value, or another label where one would stand.
+                if not value or value.endswith(":") or _POINTS_ELSEWHERE.match(value):
+                    # No value, another label where one would stand, or a
+                    # pointer to another part of the sheet (SDB-159).
                     continue
                 stage = "after name"
                 line = value
@@ -3637,7 +3735,7 @@ def _read_supplier(block: list[str]) -> ContactInfo:
                 stage = "address"
             elif stage == "after name":
                 first, rest = _name_and_address(_COUNTRY_TAG.sub("", line))
-                name = [_first_company(first)]
+                name = [_without_column_beside(_first_company(first))]
                 named_at = index
                 address.extend(_places_beside_a_name(rest, phones))
                 continue
@@ -3881,6 +3979,13 @@ def _continues_name(name: str, line: str) -> bool:
     )
 
 
+# A street with its number right behind a legal form (SDB-159).
+_STREET_BEHIND_NAME = re.compile(
+    r"\b(?:GmbH|AG|KG|KGaA|mbH|SE|OHG)(\s+)(?=[A-ZÄÖÜ][\wäöüß.-]*[\s-]?"
+    r"(?i:str\.|straße|strasse|weg|platz|allee|ring|damm)\s*\d)",
+)
+
+
 def _name_and_address(line: str) -> tuple[str, list[str]]:
     """A name line that carries the address too, split into the two.
 
@@ -3891,6 +3996,11 @@ def _name_and_address(line: str) -> tuple[str, list[str]]:
     if ";" in line:
         head, *parts = (part.strip() for part in line.split(";"))
         return head, [part for part in parts if part]
+    glued = _STREET_BEHIND_NAME.search(line)
+    if glued:
+        # "Mustermann GmbH Hafenstr. 40 12345 Musterstadt": the street behind
+        # the legal form, no separator between (SDB-159).
+        return line[: glued.start(1)].strip(), [line[glued.end(1) :].strip()]
     for separator in (" – ", ", ", " . ", " - "):
         head, found, tail = line.partition(separator)
         if found and _LEGAL_FORM.search(head) and any(c.isdigit() for c in tail):
@@ -3909,6 +4019,23 @@ _LEGAL_FORM_RUN = re.compile(
 _ENDS_IN_ABBREVIATION = re.compile(
     r"(?:\b(?:Co|Inc|Ltd|Corp|Cie)|\b(?:[A-Za-z]\.\s?)+[A-Za-z])\.$"
 )
+
+
+def _without_column_beside(name: str) -> str:
+    """*name* up to its legal form where the next column runs on behind it (SDB-159).
+
+    Two columns set side by side reach the text as one line: "Musterlack
+    GmbH Notrufnummer (mit Bedienungszeiten)", "Musterlack GmbH Germany: +49
+    …". What follows the legal form is no part of the name where it holds a
+    colon, a digit or the emergency line's word.
+    """
+    form = _LEGAL_FORM_RUN.search(name)
+    if form is None:
+        return name
+    behind = name[form.end() :]
+    if re.search(r"[:\d]|Notruf|Emergency", behind):
+        return name[: form.end()].strip()
+    return name
 
 
 def _first_company(name: str) -> str:
@@ -3990,7 +4117,10 @@ _TRADE_NAME_PART = re.compile(
 # A label that names the product in other words: its trade name goes first.
 _OTHER_NAME_PART = re.compile(
     r"^(?:(?:die )?(?:name|bezeichnung)"
-    r"(?: de[sr] (?:produkte?s|gemischs?|stoffe?s|artikels|zubereitung))?"
+    r"(?: de[sr] (?:produkte?s|gemisch(?:e?s)?|stoff(?:e?s)?|artikels|zubereitung))?"
+    # The half behind "oder" (SDB-158): "Bezeichnung des Stoffes oder des
+    # Gemisches".
+    r"|de[sr] (?:gemisch(?:e?s)?|stoff(?:e?s)?|zubereitung)"
     r"|der zubereitung|produkt|stoffname|substanzname)$"
 )
 # What stands in front of a label: a bullet, the subsection's number.
@@ -4020,6 +4150,9 @@ _OTHER_LABEL = re.compile(
     r"|(?:REACH[-\s]?)?Registrier(?:ungs)?[-\s]?(?:nummer|nr\.?)\b.*"
     r"|Eindeutiger\s+Rezepturidentifikator.*"
     r"|Tele(?:fon|fax)|Fax|E-?Mail(?:-Adresse)?"
+    # An article number's label, with its value or without (SDB-158):
+    # "Artikelnr. (Hersteller/Lieferant): 12-345".
+    r"|Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b.*"
     # The title of section 1 in another language, where its heading left it.
     r"|Identification\s+of\s+the\s+(?:substance|mixture|product)\b.*)$",
     re.IGNORECASE,
@@ -4103,10 +4236,26 @@ def _name_value(value: str) -> str:
 _REFERENCE = re.compile(r"^siehe\s+oben\.?$", re.IGNORECASE)
 
 
+# What a product is, not what it is called (SDB-158): "Produktform" above
+# "Gemisch".
+_KIND_OF_PRODUCT = re.compile(
+    r"^(?:Gemisch|Stoff|Mischung|Zubereitung|Erzeugnis|Mixture|Substance)\.?$",
+    re.IGNORECASE,
+)
+# A label block's first value where an article number's label stands above
+# the name's label (SDB-158): "Artikelnr." / "Handelsname" / "12345" /
+# "Musterlack". One word with a digit is the number.
+_ARTICLE_NUMBER_LABEL = re.compile(
+    r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b[^:]*$", re.IGNORECASE
+)
+_NUMBER_VALUE = re.compile(r"^\S*\d\S*$")
+
+
 def _is_no_name(line: str) -> bool:
     """Whether *line* under a name's label is something other than the name."""
     return bool(
-        _REFERENCE.match(_BULLET.sub("", line).strip())
+        _KIND_OF_PRODUCT.match(_BULLET.sub("", line).strip())
+        or _REFERENCE.match(_BULLET.sub("", line).strip())
         or _OTHER_LABEL.match(_BULLET.sub("", line))
         or _LABELLED_VALUE.match(_BULLET.sub("", line))
         or _is_name_label(line.rstrip(": "))
@@ -4147,8 +4296,14 @@ def _extract_product_identifier(section_text: str) -> str | None:
             _BULLET.sub("", line)
         ):
             continue
+        number_first = False
         for later in first[index:]:
             bare = _BULLET.sub("", later)
+            if _ARTICLE_NUMBER_LABEL.match(bare):
+                number_first = True
+            if number_first and _NUMBER_VALUE.match(bare):
+                number_first = False
+                continue
             joined = _LABEL_THEN_NAME.match(bare)
             if joined and not _is_name_label(bare.rstrip(": ")):
                 # "Produktbezeichnung Musterreiniger": label and name, no colon.

@@ -164,7 +164,8 @@ Only a German safety data sheet goes on to the parser.
   SDB-79).
 - **Statements for output.** Each statement is listed with the sheet's
   wording and the regulation's (SDW-5); statement texts can be brought into
-  one form (SDB-17, SDB-18, SDB-30, SDB-47, SDB-126).
+  one form (SDB-17, SDB-18, SDB-30, SDB-47, SDB-126); H360 and H361 keep
+  the letters of their effect (SDB-155).
 
 The wording of the statements and the signal words are copies of the CLP
 Regulation, kept in line with it by tools in the repository
