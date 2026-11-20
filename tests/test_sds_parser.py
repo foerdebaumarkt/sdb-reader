@@ -1766,7 +1766,7 @@ class TestClassificationEntriesAreNotLabelElements:
         """H410 assigned lets the label omit H400."""
         text = "Asp. Tox. 1, H304 Aquatic Acute 1, H400 Aquatic Chronic 1, H410"
 
-        assert CLASSIFICATION_ENTRY.sub(" ", text).strip() == ""
+        assert HAZARD_CODE_PATTERN.findall(CLASSIFICATION_ENTRY.sub(" ", text)) == []
 
     def test_a_statement_is_not_mistaken_for_a_classification(self) -> None:
         """Only class-category-code is dropped, never a wording."""

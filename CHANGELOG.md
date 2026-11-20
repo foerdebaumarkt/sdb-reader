@@ -73,6 +73,11 @@ Versions follow the tags of this repository.
   run of their characters starts, or ask for the digit ahead; before, a run
   of some ten thousand letters or digits took seconds. The readings are the
   same.
+- **A long run of capitalised words in a label no longer slows the reading
+  down.** A classification entry in the label ("Skin Corr. 1, H314") is
+  found by the last word of its class only; before, every capitalised word
+  in front of it was tried, and a run of some twenty thousand characters
+  took seconds. The codes read from the label are the same.
 
 ### Fixed
 
