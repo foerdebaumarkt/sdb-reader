@@ -1117,3 +1117,221 @@ def deviates_from_regulation(code: str, wording: str) -> bool:
     if printed[:_OPENING_WORDS] != official[:_OPENING_WORDS]:
         return False
     return printed[: len(official)] != official
+
+
+# Precautionary statements printed as wording only, in the forms Annex IV of
+# the CLP Regulation itself allows (SDB-163). Its introduction says what a
+# statement's signs mean: a slash separates texts to choose from, three dots
+# mark details the supplier gives, square brackets a part that applies only
+# under conditions. From each statement's wording those signs give a pattern,
+# compiled once per statement, never per combination of its choices.
+_JOINER = r"\s*(?:/|,|\bund\b|\boder\b)\s*"
+# What "…" holds: a short stretch of the same sentence.
+_FILL = r"[^.!?:\n]{1,60}?"
+# Between two words of the regulation's wording: spaces and punctuation, a
+# sentence's end included, as the wording itself may hold one ("… fernhalten.
+# Nicht rauchen.").
+_GAP = r"[^\w]{0,4}"
+# At most this many choices in one slash group are spelt out as their ordered
+# selections; P260 and P261 have six, the most in the Annex.
+_MOST_CHOICES = 6
+
+
+def _normalised(text: str) -> str:
+    """Case, ß and the degree sign the way both sides are compared (SDB-163)."""
+    return _normalised_at(text)[0]
+
+
+def _normalised_at(text: str) -> tuple[str, list[int]]:
+    """*text* normalised, and for each of its characters the place it came from.
+
+    >>> _normalised_at("Über  50 °C")
+    ('über 50°c', [0, 1, 2, 3, 4, 6, 7, 9, 10])
+    """
+    characters: list[str] = []
+    places: list[int] = []
+    for place, character in enumerate(text):
+        if character.isspace() and character != "\n":
+            if characters and characters[-1] in " °":
+                continue
+            character = " "
+        elif character == "°" and characters and characters[-1] == " ":
+            characters.pop()
+            places.pop()
+        for folded in character.casefold().replace("ß", "ss"):
+            characters.append(folded)
+            places.append(place)
+    return "".join(characters), places
+
+
+def _piece(text: str) -> str:
+    """A word or a choice, "…" in it a fill: "…°c" is any value in degrees."""
+    parts = [re.escape(part) for part in text.split("…")]
+    return _FILL.join(parts) if len(parts) > 1 else parts[0]
+
+
+def _choices(token: str) -> str:
+    """A slash group as its ordered, non-empty selections (SDB-163).
+
+    "staub/rauch/gas" admits "staub", "staub/gas", "rauch und gas" and the
+    other selections in the regulation's order, joined by a slash, a comma,
+    "und" or "oder". A choice that is only "…" is the supplier's own detail;
+    a selection of it alone does not identify the statement.
+    """
+    options = [option for option in token.split("/") if option]
+    named = [index for index, option in enumerate(options) if option != "…"]
+    if len(options) > _MOST_CHOICES:
+        alternative = "|".join(_piece(option) for option in options)
+        return rf"(?:{alternative})(?:{_JOINER}(?:{alternative}))*"
+    selections = []
+    for mask in range(1, 2 ** len(options)):
+        chosen = [index for index in range(len(options)) if mask >> index & 1]
+        if named and not set(chosen) & set(named):
+            continue
+        selections.append(_JOINER.join(_piece(options[index]) for index in chosen))
+    selections.sort(key=len, reverse=True)
+    return "(?:" + "|".join(selections) + ")"
+
+
+def _variant_pattern(wording: str) -> re.Pattern[str] | None:
+    """The forms Annex IV allows for *wording*, or None where they say too little."""
+    text = _normalised(wording)
+    text = re.sub(r"(\d+|…) o ([cf])\b", r"\1°\2", text)
+    text = re.sub(r"\s*/\s*", "/", text)
+    parts: list[str] = []
+    fixed_words = 0
+    for optional, segment in re.findall(r"(\[)?([^\[\]]+)\]?", text):
+        tokens = [token.strip(".,:;()") for token in segment.split()]
+        pieces = []
+        for token in filter(None, tokens):
+            if "/" in token:
+                pieces.append(_choices(token))
+                fixed_words += any(
+                    option not in ("", "…") for option in token.split("/")
+                )
+            elif token == "…":
+                pieces.append(_FILL)
+            else:
+                pieces.append(_piece(token))
+                fixed_words += "…" not in token
+        if not pieces:
+            continue
+        joined = _GAP.join(pieces)
+        parts.append(f"(?:{_GAP}{joined})?" if optional else _GAP + joined)
+    if fixed_words < 2:
+        return None
+    body = "".join(parts)
+    return re.compile(rf"(?<!\w){body.removeprefix(_GAP)}(?!\w)")
+
+
+@lru_cache(maxsize=1)
+def _variant_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
+    """A pattern for every statement of its own (SDB-163).
+
+    H and EUH statements too: their wording can hold a precautionary one's
+    ("EUH212 … Staub nicht einatmen.", "EUH211 … Aerosol oder Nebel nicht
+    einatmen."), and the longer statement is the one printed.
+    """
+    patterns = []
+    for code, wording in _catalogue().items():
+        if "+" in code:
+            continue
+        pattern = _variant_pattern(wording)
+        if pattern is not None:
+            patterns.append((code, pattern))
+    return tuple(patterns)
+
+
+# A line that begins with a statement's code, behind a bullet or not.
+_CODE_FIRST = re.compile(r"[^\w\n]*(?:euh|h|p)\s?\d{3}")
+
+
+def variant_wordings_in_print_order(
+    codes: Collection[str], passages: Sequence[str]
+) -> list[str] | None:
+    """The sheet's sentence for each of *codes* read in an Annex IV form (SDB-163).
+
+    Like wordings_in_print_order, for codes whose sentences only a form the
+    regulation allows matched: each takes the words its form covers, in the
+    order the sheet prints them, and None unless every code is found.
+
+    >>> variant_wordings_in_print_order(
+    ...     ["P280", "P310"], ["Sofort Arzt anrufen. Schutzhandschuhe und Augenschutz tragen."]
+    ... )
+    ['P310 Sofort Arzt anrufen.', 'P280 Schutzhandschuhe und Augenschutz tragen.']
+    """
+    patterns = dict(_variant_patterns())
+    texts = [re.sub(r"\s+", " ", passage).strip() for passage in passages]
+    normalised = [_normalised_at(text) for text in texts]
+    places: list[tuple[int, int, str, str]] = []
+    for code in codes:
+        pattern = patterns.get(code)
+        match = next(
+            (
+                (index, found)
+                for index, (haystack, _) in enumerate(normalised)
+                for found in ([pattern.search(haystack)] if pattern else [])
+                if found
+            ),
+            None,
+        )
+        if match is None:
+            return None
+        index, found = match
+        at = normalised[index][1]
+        start, end = at[found.start()], at[found.end() - 1] + 1
+        if texts[index][end : end + 1] in (".", "!", ":"):
+            end += 1
+        places.append((index, start, code, texts[index][start:end].strip()))
+    return [f"{code} {sentence}" for *_, code, sentence in sorted(places)]
+
+
+def precautionary_by_variants(text: str) -> tuple[set[str], list[list[str]]]:
+    """The precautionary codes whose wording *text* holds in a form Annex IV allows.
+
+    Used only on a label that prints no precautionary code (SDB-6, SDB-163).
+    Where two statements' forms cover the same words, the longer one is the
+    statement ("Schutzhandschuhe mit Kälteisolierung … tragen" is P282, not
+    P280); where they cover them alike, neither is taken, and the codes come
+    back as an ambiguity.
+
+    >>> codes, unclear = precautionary_by_variants(
+    ...     "Schutzhandschuhe und Augenschutz tragen. Sofort Arzt anrufen."
+    ... )
+    >>> sorted(codes), unclear
+    (['P280', 'P310'], [])
+    """
+    haystack = _normalised(text)
+    found = [
+        (match.start(), match.end(), code)
+        for code, pattern in _variant_patterns()
+        for match in pattern.finditer(haystack)
+    ]
+    found.sort(key=lambda hit: (-(hit[1] - hit[0]), hit[0]))
+    taken: list[tuple[int, int, str]] = []
+    unclear: list[list[str]] = []
+    dropped: set[tuple[int, int]] = set()
+    for start, end, code in found:
+        overlapping = [hit for hit in taken if hit[0] < end and start < hit[1]]
+        if not overlapping:
+            if (start, end) not in dropped:
+                taken.append((start, end, code))
+            continue
+        alike = [hit for hit in overlapping if (hit[0], hit[1]) == (start, end)]
+        if alike and any(hit[2] != code for hit in alike):
+            taken = [hit for hit in taken if (hit[0], hit[1]) != (start, end)]
+            dropped.add((start, end))
+            unclear.append(sorted({code, *(hit[2] for hit in alike)}))
+    codes = {
+        code
+        for start, _, code in taken
+        if code.startswith("P")
+        # A sentence on a line that begins with a code is that code's.
+        and not _CODE_FIRST.match(haystack, haystack.rfind("\n", 0, start) + 1)
+    }
+    unclear = [codes for codes in unclear if any(c.startswith("P") for c in codes)]
+    # A condition alone ("BEI EINATMEN:") says nothing among a sentence's words
+    # (SDB-122).
+    if codes <= _conditions():
+        codes = set()
+    return codes, unclear

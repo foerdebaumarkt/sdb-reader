@@ -64,6 +64,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "euh-wording-outside-label": ("statement", "sentence"),
     "signal-word-not-taken": ("signal_word",),
     "pictograms-derived": ("pictograms",),
+    "precautionary-wording-unclear": ("codes",),
     "signal-word-derived": (),
     "no-identification-section": (),
     "no-supplier-name": (),

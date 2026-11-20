@@ -60,6 +60,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `euh-wording-outside-label` | `statement`, `sentence` | {statement} steht nur außerhalb der Kennzeichnung: {sentence} |
 | `signal-word-not-taken` | `signal_word` | Das Signalwort „{signal_word}“ wurde nicht übernommen: Abschnitt 2 nennt das Produkt nicht eingestuft, und die Kennzeichnung druckt keinen H-Satz. |
 | `pictograms-derived` | `pictograms` | Piktogramme aus den H-Sätzen abgeleitet, das Blatt nennt keine: {pictograms} |
+| `precautionary-wording-unclear` | `codes` | Ein Sicherheitshinweis ohne Code passt gleich gut zu {codes}; keiner davon wurde übernommen. |
 | `signal-word-derived` | – | Signalwort aus den Gefahrenhinweisen abgeleitet; die Kennzeichnung nennt keines. |
 | `no-identification-section` | – | Abschnitt 1 wurde nicht gefunden; der Lieferant lässt sich nicht lesen. |
 | `no-supplier-name` | – | In Abschnitt 1 wurde kein Name des Lieferanten gefunden. |
