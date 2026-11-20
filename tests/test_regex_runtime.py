@@ -54,6 +54,8 @@ def test_the_new_forms_still_find_what_they_found() -> None:
     assert not parser._NOT_CLASSIFIED.search("Einstufung:\n– –\n")
     assert parser.NO_SIGNAL_WORD_PATTERN.search("Signalwort (CLP) : -")
     assert parser.NO_SIGNAL_WORD_PATTERN.search("Signalwort\nkeine\n")
-    found = parser._SUBSTANCES_BEFORE_CODE.search("Enthält: Musterol.   \n  EUH208 Kann …")
+    found = parser._SUBSTANCES_BEFORE_CODE.search(
+        "Enthält: Musterol.   \n  EUH208 Kann …"
+    )
     assert found is not None
     assert found.group(1) == "Enthält: Musterol."
