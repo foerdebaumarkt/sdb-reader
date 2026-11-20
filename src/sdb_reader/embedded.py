@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pymupdf
+from defusedxml import DefusedXmlException, ElementTree as SafeET
 
 from .messages import Message
 from .schema import SafetyDataSheet
@@ -23,10 +24,6 @@ from .schema import SafetyDataSheet
 # The root element of an eSDScom file, with or without the standard's namespace:
 # CHEMDOX writes none.
 _ROOT = "DatasheetFeed"
-
-# A document type declaration is how an XML file defines entities, and an
-# entity is how a small file expands into a huge one. eSDScom has none.
-_DOCTYPE = re.compile(rb"<!\s*(?:DOCTYPE|ENTITY)", re.IGNORECASE)
 
 # Larger than any export seen (160 kB); an attachment beyond it is something
 # else or an attempt.
@@ -109,10 +106,15 @@ def parse_embedded(name: str, content: bytes) -> EmbeddedData:
         return EmbeddedData(
             name, unreadable=Message("embedded-too-large", {"limit_bytes": _MAX_BYTES})
         )
-    if _DOCTYPE.search(content):
-        return EmbeddedData(name, unreadable=Message("embedded-doctype"))
     try:
-        root = ET.fromstring(content)
+        # No document type, no entity, no external reference, whatever the
+        # file's encoding (SDW-11): the standard library's parser expands
+        # internal entities, and a check of the bytes misses them in UTF-16.
+        root = SafeET.fromstring(
+            content, forbid_dtd=True, forbid_entities=True, forbid_external=True
+        )
+    except DefusedXmlException:
+        return EmbeddedData(name, unreadable=Message("embedded-doctype"))
     except ET.ParseError as exc:
         return EmbeddedData(
             name, unreadable=Message("embedded-not-xml", {"detail": str(exc)})

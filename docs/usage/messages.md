@@ -61,6 +61,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `signal-word-not-taken` | `signal_word` | The signal word '{signal_word}' was not taken: section 2 says the product is not classified, and the label prints no H statement. |
 | `pictograms-derived` | `pictograms` | Pictograms derived from the H statements, the sheet names none: {pictograms} |
 | `precautionary-wording-unclear` | `codes` | A precautionary statement without its code fits {codes} alike; none of them was taken. |
+| `label-line-unassigned` | `line` | A line of the label was assigned to nothing: {line} |
 | `signal-word-derived` | – | Signal word derived from the statements; the label states none. |
 | `no-identification-section` | – | Section 1 was not found; the supplier cannot be read. |
 | `no-supplier-name` | – | No supplier name was found in section 1. |

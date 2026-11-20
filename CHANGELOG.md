@@ -33,9 +33,46 @@ Versions follow the tags of this repository.
   follows. Measures, table values and names ("H 330 mm", "NOAEL P 250",
   "P 750") stay as they are. Before, only "EUH 208" was read this way
   (SDB-164).
-- **`PARSER_VERSION` is 18** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
+- **`PARSER_VERSION` is 19** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
   stored texts are read again as they are; readings kept from before should
   be made again from them.
+
+### Added
+
+- **The message `label-line-unassigned`** names each line of a label that the
+  parser assigned to nothing: no code, no signal word, no pictogram, no
+  statement it read, no field name, no statement about the classification,
+  no substance in the list that determines the label, no page furniture. It
+  changes no reading; it shows where rules are missing (SDB-165).
+
+- **P501 from its disposal sentence, also beside other P codes.**
+  "Inhalt/Behälter gemäß lokalen/regionalen/nationalen/internationalen
+  Vorschriften entsorgen." and the like (content and container, the
+  supplier's detail, then "entsorgen" or "zuführen") are read as P501
+  inside the label, where it carries a hazard statement and prints no P501
+  code; the precautionary text keeps the sheet's sentence. "Leere Behälter
+  können über den Hausmüll entsorgt werden." is no P501 (SDB-166).
+
+### Security
+
+- **The embedded eSDScom file is read with `defusedxml`.** A document type,
+  an entity or an external reference makes it unreadable
+  (`embedded-doctype`), in any encoding. Before, the bytes were searched
+  for "<!DOCTYPE" and "<!ENTITY", which a file in UTF-16 got past, and the
+  standard library's parser expanded its entities. New dependency:
+  `defusedxml` (Python Software Foundation License) (SDW-11).
+- **Five patterns of the parser no longer slow down on long runs of blanks
+  or dashes.** The revision date's label, the version line with its
+  creation date, a classification given as a dash, a label without a signal
+  word, and the substances before EUH208 read each character one way now; a
+  crafted text of a few thousand blanks took them seconds before. The
+  readings are the same.
+- **Four more patterns no longer slow down on one long word.** The e-mail
+  address, a display named on a cover page, an article number in front of a
+  product's name and the addition at the end of a name start only where a
+  run of their characters starts, or ask for the digit ahead; before, a run
+  of some ten thousand letters or digits took seconds. The readings are the
+  same.
 
 ### Fixed
 

@@ -23,6 +23,8 @@ MIT License
 MIT OR Apache-2.0
 Mozilla Public License 2.0 (MPL 2.0)
 PSF-2.0
+# defusedxml states the same licence by its long name.
+Python Software Foundation License
 # Development tools only (the documentation site is built with Sphinx,
 # which renders with Jinja2): Jinja2 and several of Sphinx's parts are
 # BSD-3-Clause or BSD-2-Clause and state it as "BSD License"; requests is

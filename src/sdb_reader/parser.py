@@ -47,6 +47,7 @@ logger = structlog.stdlib.get_logger(__name__)
 # outside the label (SDB-28), and a section 2 that classifies by the rules
 # before CLP (SDB-73).
 LABEL_UNDETERMINED = "label-undetermined"
+LABEL_LINE_UNASSIGNED = "label-line-unassigned"
 EUH_WORDING_OUTSIDE_LABEL = "euh-wording-outside-label"
 CLASSIFIED_BEFORE_CLP = "classified-before-clp"
 
@@ -295,13 +296,15 @@ _PAGE_MARKER = r"(?:\s*Seite\s*:?\s*\d{1,3}\s*(?:/|von)\s*\d{1,3})?"
 # Nr. 2 (22/11/2019)", "Rev. 14 – 19/12/2024". The version a sheet replaces
 # does too ("Ersetzt Fassung: GHS 7 (29.01.2024)"), and that date is not this
 # sheet's.
+# Optional parts carry their own blanks behind them ("(?::\s*)?"), so that a
+# run of blanks can be read only one way (no slow search on long blank runs).
 REVISION_DATE_PATTERN = re.compile(
     # "Überarbei tung": the word broken at the line's end (SDB-161).
     r"(?:überarbei[^\S\n]?t[a-zäöüß]*(?:\s+(?-i:[a-zäöüß]{2,})(?=\s*:))?(?:\s+am)?"
     r"|revisions?datum|änderungsdatum|bearbeitungsdatum|überprüfung"
     r"|(?<!ersetzt )fassung\s+vom|stand\s*:|sicherheitsdatenblatt\s+vom"
-    r"|(?:version|rev\.?)\s*(?:nr\.?)?\s*:?\s*\d+(?:[.,]\d+)*\s*vom"
-    r"|(?<!ersetzt )(?:version|fassung|revision|rev\.?)\s*:?\s*(?:nr\.?\s*)?(?:GHS\s*)?"
+    r"|(?:version|rev\.?)\s*(?:nr\.?\s*)?(?::\s*)?\d+(?:[.,]\d+)*\s*vom"
+    r"|(?<!ersetzt )(?:version|fassung|revision|rev\.?)\s*(?::\s*)?(?:nr\.?\s*)?(?:GHS\s*)?"
     r"\d+(?:[.,]\d+)*\.?\s*[(–—-]"
     # "Durchsicht Nr. 3" / "vom 11/10/2023" (SDB-102).
     r"|durchsicht\s+nr\.?\s*\d+\s+vom"
@@ -339,8 +342,11 @@ _VERSION_LABEL_START = re.compile(r"version|fassung|revision|rev\b", re.IGNORECA
 # version, so "Ersetzte Version: 2.0.0, erstellt am: 04.06.2019" below it is
 # not one.
 VERSION_CREATED_PATTERN = re.compile(
-    r"^[^\S\n]*(?:Aktuelle[^\S\n]+)?Version[^\S\n]*:?[^\S\n]*V?\d[^\n]*?"
-    r"(?:,[^\S\n]*|[^\S\n]+|[^\S\n]*\|?[^\S\n]*\n[^\S\n]*)"
+    r"^[^\S\n]*(?:Aktuelle[^\S\n]+)?Version[^\S\n]*(?::[^\S\n]*)?V?\d"
+    # The rest of the version's line up to a blank or a comma before
+    # "erstellt", or the whole line and then the next: one way to read each
+    # character, so that a long line cannot make the search slow.
+    r"(?:[^\n]*?(?<=[^\S\n]|,)|[^\n]*\n[^\S\n]*)"
     rf"erstellt[^\S\n]+am[^\S\n]*:?[^\S\n]*{_DATED}",
     re.IGNORECASE | re.MULTILINE,
 )
@@ -696,7 +702,8 @@ _NOT_CLASSIFIED = re.compile(
     # "GHS Einstufung:" / "N/A" -- not applicable (SDB-86).
     r"|(?m:(?:^|:)[^\w\n]*N\s?/\s?A\b[^\w\n]*$)"
     # A dash where the classification would stand.
-    r"|(?m:^[^\S\n]*[-\u2013\u2014]+[^\S\n]*$)",
+    # Each character of the line one way: dashes, then blanks to its end.
+    r"|(?m:^[^\S\n]*[-\u2013\u2014](?:[-\u2013\u2014]|[^\S\n](?=[^\S\n]|$))*$)",
     re.IGNORECASE,
 )
 
@@ -999,13 +1006,13 @@ NO_SIGNAL_WORD_PATTERN = re.compile(
     #   Signalwort entfällt
     #   Signalwort (CLP) : -
     #   Signalwort nicht erforderlich
-    r"|\bSignalwort\b\s*(?:\([^)]{0,12}\))?\s*:?\s*"
+    r"|\bSignalwort\b\s*(?:\([^)]{0,12}\)\s*)?(?::\s*)?"
     r"(?:entfällt|nicht\s+erforderlich|nicht\s+anwendbar|[-\u2013\u2014](?!\w))"
     # The value in a form, behind the label or on the line below it, and
     # nothing after it on its line:
     #   Signalwort
     #   keine
-    r"|\bSignalwort\b[^\S\n]*(?:\([^)]{0,12}\))?[^\S\n]*:?[^\S\n]*\n?[^\S\n]*"
+    r"|\bSignalwort\b[^\S\n]*(?:\([^)]{0,12}\)[^\S\n]*)?(?::[^\S\n]*)?(?:\n[^\S\n]*)?"
     r"(?:kein(?:e[ns]?)?|ohne)[^\S\n]*(?=\n|$)",
     re.IGNORECASE,
 )
@@ -1617,8 +1624,9 @@ _COVER_TITLE = re.compile(
     re.IGNORECASE,
 )
 # A word that names a display, the unit a supplier ships to be set up in a
-# shop: "Mix-Display", "Mixdisplay".
-_DISPLAY_TERM = re.compile(r"[\w-]*display[\w-]*", re.IGNORECASE)
+# shop: "Mix-Display", "Mixdisplay". Starting only where a word starts finds
+# the same word and reads a long one once (see _EMAIL).
+_DISPLAY_TERM = re.compile(r"(?<![\w-])[\w-]*display[\w-]*", re.IGNORECASE)
 
 
 def split_cover_page(text: str) -> tuple[str, str]:
@@ -2024,10 +2032,12 @@ def _parse_hazard_statements(
     codeless = _passages(sections.get(Section.HAZARDS, "").split("\n"), furniture)
     if hazard_statements.hazard_text is None and hazard_codes:
         hazard_statements.hazard_text = _in_print_order(hazard_codes, codeless)
-    if hazard_statements.precautionary_text is None and precautionary_codes:
-        hazard_statements.precautionary_text = _in_print_order(
-            precautionary_codes, codeless
-        ) or _in_print_order(precautionary_codes, codeless, variants=True)
+    hazard_statements.precautionary_text = _precautionary_text(
+        hazard_statements.precautionary_text,
+        precautionary_codes,
+        codeless,
+        next((r.disposal for r in readings if r.disposal), None),
+    )
     supplemental_text = _extract_statements_from_sections(
         sections,
         allowed_sections={Section.HAZARDS},
@@ -2072,6 +2082,12 @@ def _parse_hazard_statements(
         or None
     )
     _without_trailing_pictograms(hazard_statements)
+    # What the label holds that nothing above read (SDB-165): a measure of
+    # where rules are missing, never a reading.
+    warnings.extend(
+        Message(LABEL_LINE_UNASSIGNED, {"line": line})
+        for line in unassigned_label_lines(labels, hazard_statements, furniture)
+    )
     if labels:
         warnings.extend(
             _euh_wordings_outside(
@@ -2083,11 +2099,204 @@ def _parse_hazard_statements(
     return hazard_statements, warnings
 
 
+# What a label's line may be besides a statement (SDB-165). A field's own
+# name, with nothing behind it that labels: "Gefahrenhinweise:", "Signalwort",
+# "Kennzeichnung gemäß Verordnung (EG) Nr. 1272/2008", "Tastbarer Warnhinweis:
+# Nicht anwendbar.".
+_LABEL_FIELD = re.compile(
+    r"^[^\w]*(?:\d(?:\.\d){1,2}\.?\s*)?"
+    r"(?:Kennzeichnungselemente|Kennzeichnung|Etikettierung|Etikett"
+    r"|Gefahren-?\s*[Pp]iktogramm\w*(?:\(e\))?(?:\s+und\s+Signalwort)?|Piktogramm\w*(?:\s+und\s+Signalwort)?"
+    r"|Gefahrensymbol\w*|Symbol\w*|UFI|\(?\s*R\s*-\s*S\s*\)?"
+    r"|Kennzeichnung\s+von\s+Verpackungen\b[^\n]*"
+    r"|Signalw[oö]rt\w*|Gefahrenhinweis\w*|Gefahrenbezeichnung\w*|[HPR]\s*-\s*S[äa]tze"
+    r"|Bestandteil\w*(?:\(e\))?"
+    r"|Sicherheitshinweis\w*|P-S[äa]tze|EUH-S[äa]tze"
+    r"|(?:Erg[äa]nzende|Zus[äa]tzliche|Besondere|Weitere|Sonstige)\s+\w+(?:\s+\w+){0,6}"
+    r"|Gefahr(?:en)?bestimmende\s+Komponente\w*(?:\s+\w+){0,4}"
+    r"|Komponente\w*\s+zur\s+Etikettierung"
+    r"|Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
+    r"|Spezielle\s+Verpackungsanforderungen|Verpackungen?"
+    r"|(?:Mit\s+)?kindergesicherte\w*(?:\s+\w+){0,3}|Tastbare\w*\s+Warnhinweis\w*"
+    r"|Verschl[üu]ss\w*(?:\s+\w+){0,3}|Beh[äa]lter\s*:?"
+    r"|Enth[äa]lt|Gefahrenkategorie\w*|Gefahrenklasse\w*|Einstufung\w*"
+    r"|Abschnitt\s*\d{1,2}(?:\.\d)?\s*:?(?:\s*Mögliche\s+Gefahren)?|Mögliche\s+Gefahren"
+    r"|Hinweis\w*\s+zur\s+Kennzeichnung|Bemerkung\w*)"
+    r"\b(?P<rest>[^\n]*)$",
+    re.IGNORECASE,
+)
+# What may stand behind such a name without labelling anything.
+_NOTHING_TO_LABEL = re.compile(
+    r"^[\s:;,.()\-–/]*(?:"
+    r"(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
+    r"|\((?:EU|CLP|GHS)\))"
+    r"(?:[\s:;,]+(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung"
+    r"|Allgemein\w*|\((?:EU|CLP|GHS)\)))*[\s:;,]*"
+    r"|[^\n]{0,40}(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]{0,60}"
+    r"|\**|gem[äa](?:ß|ss)|nach|UFI\s*:?"
+    r"|(?:nach|gem[äa](?:ß|ss)|entsprechend|laut|according\s+to)\b[^\n]*"
+    r"(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]*"
+    r"|(?:nicht\s+(?:anwendbar|erforderlich|zutreffend|relevant|vorgeschrieben|"
+    r"kennzeichnungspflichtig|bekannt|vorhanden)|keine?\w*|entf[äa]llt|n\.\s*a\.?|-+)"
+    r"[\s.:;,()-]*[^\n]{0,40}"
+    r"|\(?\s*CLP\s*\)?"
+    r")?[\s.:;,()\-–]*$",
+    re.IGNORECASE,
+)
+# The signal word's own line, and what the pictograms are called in words.
+_SIGNAL_OR_PICTOGRAM_WORDS = re.compile(
+    r"^[\s·•\-–]*(?:Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?[\s,;:/·•\-–]*"
+    r"(?:(?:Gefahr|Achtung|kein(?:e|es)?|Danger|Warning|Flamme(?:\s+über\s+einem\s+Kreis)?"
+    r"|Totenkopf(?:\s+mit\s+gekreuzten\s+Knochen)?|Ausrufezeichen|Ätzwirkung|Gasflasche"
+    r"|Umwelt|Gesundheitsgefahr|explodierende\s+Bombe|GHS\s*\d{1,2}|Piktogramm\w*)"
+    r"\b[\s,;:/·•\-–.!]*)+$",
+    re.IGNORECASE,
+)
+# A substance's name in a list of the components that determine the label:
+# no sentence, at most a short line, often a CAS or EC number.
+_SUBSTANCE_LIST_HEAD = re.compile(
+    r"Gefahr(?:en)?bestimmende|zur\s+Etikettierung|zur\s+Kennzeichnung|^[^\w]*Enth[äa]lt\b|"
+    r"Gef[äa]hrliche\s+(?:Bestandteile|Inhaltsstoffe|Komponenten)|"
+    r"Komponenten?\s+f[üu]r\s+die\s+Etikettierung",
+    re.IGNORECASE,
+)
+# What a sheet says about its label instead of labelling (SDB-165): the
+# classification stated in words, or a regulation cited on a line of its own.
+_LABEL_DECLARATION = re.compile(
+    r"\b(?:eingestuft|gekennzeichnet|kennzeichnungspflichtig|einstufungspflichtig"
+    r"|Kennzeichnung\s+(?:ist\s+)?(?:nicht\s+)?erforderlich|keine\s+Kennzeichnung"
+    r"|nicht\s+(?:gef[äa]hrlich|relevant|erforderlich|anwendbar|zutreffend)"
+    r"|kein(?:e|en)?\s+gef[äa]hrlich\w*\s+(?:Stoff|Gemisch|Substanz|Mischung)"
+    r"|keine\s+besonderen\b|keine\s+(?:Wirkungen|Gefahren)\s+bekannt"
+    r"|keine\s+[HPR]-?S[äa]tze|nach\s+EG-Richtlinien|nationalen\s+Gesetzen"
+    r"|kein\s+Gefahrenpiktogramm|entf[äa]llt|Etikettierung\s+gem[äa])",
+    re.IGNORECASE,
+)
+_ONLY_A_REGULATION = re.compile(
+    r"^[\s(\[]*(?:(?:EG|EU|EWG)\s*-?\s*)?(?:Verordnung|Richtlinie|VO)\b[^\n]{0,60}$"
+    r"|^[\s(\[]*\d{3,4}/\d{4}[\s)\]:.]*$"
+    r"|^[\s(\[]*(?:CLP|GHS|REACH)[\s)\]/:]*(?:CLP|GHS)?[\s)\]]*$",
+    re.IGNORECASE,
+)
+# A page's running head that changes from page to page (its page number), and
+# a line without a word: neither is the label's.
+_RUNNING_HEAD = re.compile(
+    r"Sicherheitsdatenblatt\b[^\n]*(?:Seite|Page|1907/2006)|^[\w.-]+\.(?:de|com|at|ch|eu)$",
+    re.IGNORECASE,
+)
+_A_WORD = re.compile(r"[^\W\d_]{4,}")
+_CAS_OR_EC = re.compile(r"\b\d{2,7}-\d{2}-\d\b|\b\d{3}-\d{3}-\d\b")
+
+
+def _comparable_words(text: str) -> str:
+    """*text* as lower-case words, for finding one text inside another."""
+    return " ".join(re.findall(r"[^\W_]+", text.lower()))
+
+
+def _read_already(line: str, read: str) -> bool:
+    """Whether every sentence of *line* stands in the statements' text *read*."""
+    pieces = [
+        words
+        for piece in re.split(r"[.!;:]\s+|[.!;:]$", line)
+        if (words := _comparable_words(piece))
+    ]
+    return bool(pieces) and all(f" {piece} " in f" {read} " for piece in pieces)
+
+
+def _holds_a_statement(line: str) -> bool:
+    """Whether *line* carries a statement's wording, in any form the parser reads."""
+    return bool(
+        codes_from_wording(line)
+        or euh_statements_by_wording(line)
+        or precautionary_by_variants(line)[0]
+    )
+
+
+def _looks_like_substance(line: str) -> bool:
+    """Whether *line* reads as a substance's name rather than a sentence."""
+    if _CAS_OR_EC.search(line):
+        return True
+    words = line.split()
+    return len(words) <= 8 and not line.rstrip().endswith((".", "!"))
+
+
+def unassigned_label_lines(
+    labels: Sequence[str], hazards: HazardStatements, furniture: frozenset[str]
+) -> list[str]:
+    """The lines of *labels* that nothing in *hazards* accounts for (SDB-165).
+
+    A line is accounted for when it holds a code or a pictogram's code, is the
+    signal word or a pictogram named in words, belongs to a statement the
+    reading took (its words stand in that statement's text, or it holds a
+    statement's wording), is a field's own name with nothing behind it that
+    labels, a name in the list of components that determine the label, page
+    furniture, or empty. What is left the parser did not read.
+    """
+    read = _comparable_words(
+        "\n".join(
+            filter(
+                None,
+                [
+                    hazards.hazard_text,
+                    hazards.precautionary_text,
+                    hazards.supplemental_text,
+                ],
+            )
+        )
+    )
+    left: list[str] = []
+    for label in labels:
+        in_substances = False
+        for raw in join_broken_words(label).split("\n"):
+            line = raw.strip()
+            words = _comparable_words(line)
+            if (
+                not words
+                or not _A_WORD.search(line)
+                or _RUNNING_HEAD.search(line)
+                or line in furniture
+                or _PAGE_NUMBER.match(line)
+                or _CONTINUED.fullmatch(line)
+            ):
+                continue
+            if _SUBSTANCE_LIST_HEAD.search(line):
+                in_substances = True
+                continue
+            if (
+                LABEL_HAZARD_CODE.search(line)
+                or PRECAUTION_CODE_PATTERN.search(line)
+                or SUPPLEMENTAL_CODE_PATTERN.search(line)
+                or PICTOGRAM_PATTERN.search(line)
+                or _SIGNAL_OR_PICTOGRAM_WORDS.match(line)
+            ):
+                in_substances = False
+                continue
+            field_name = _LABEL_FIELD.match(line)
+            content = field_name.group("rest") if field_name else line
+            if (
+                _read_already(content, read)
+                or _holds_a_statement(content)
+                or _LABEL_DECLARATION.search(line)
+                or _ONLY_A_REGULATION.match(line)
+                or (field_name and _NOTHING_TO_LABEL.match(content))
+            ):
+                in_substances = False
+                continue
+            if in_substances and _looks_like_substance(line):
+                continue
+            in_substances = False
+            left.append(line)
+    return left
+
+
 # EUH208 printed with its code inside the sentence (SDB-125): "Enthält: A, B.
 # EUH208 Kann allergische Reaktionen hervorrufen.", or the code on a line of
 # its own between the two halves of the name.
 _SUBSTANCES_BEFORE_CODE = re.compile(
-    r"(Enthält\b[^\n]*?)[^\S\n]*\n?[^\S\n]*EUH208\b", re.IGNORECASE
+    # The names end on a character that is not a blank: the blanks before the
+    # code are the gap, never part of the names.
+    r"(Enthält\b[^\n]*?(?<![^\S\n]))[^\S\n]*(?:\n[^\S\n]*)?EUH208\b",
+    re.IGNORECASE,
 )
 _EUH208_WITHOUT_SUBSTANCES = re.compile(
     r"^EUH208\b(?![^\n]*\bEnth[äa]lt)[^\n]*\S[^\n]*$"
@@ -2139,6 +2348,23 @@ def _without_trailing_pictograms(hazards: HazardStatements) -> None:
 
 def _without_pictogram(text: str | None) -> str | None:
     return _TRAILING_PICTOGRAM.sub("", text) if text else text
+
+
+def _precautionary_text(
+    text: str | None, codes: list[str], codeless: list[str], disposal: str | None
+) -> str | None:
+    """The label's precautionary text: *text* as cut by code, else the codes'
+    sentences in print order (SDB-6, SDB-163); P501 read off its *disposal*
+    sentence (SDB-166) adds the sheet's own words, the other codes find
+    theirs as before."""
+    worded = [code for code in codes if disposal is None or code != "P501"]
+    if text is None and worded:
+        text = _in_print_order(worded, codeless) or _in_print_order(
+            worded, codeless, variants=True
+        )
+    if disposal is not None and not re.search(r"\bP501\b", text or ""):
+        text = "\n".join(filter(None, [text, f"P501 {disposal}"]))
+    return text
 
 
 def _in_print_order(
@@ -2217,6 +2443,9 @@ class _LabelReading:
     signal_word: str | None
     pictograms: set[str]
     warnings: list[Message]
+    # The sheet's sentence read as P501 by SDB-166, where the label prints no
+    # P501 code.
+    disposal: str | None = None
 
 
 def _strongest_signal_word(words: Iterable[str | None]) -> str | None:
@@ -2267,6 +2496,23 @@ def _classification_referred_to(part: str, label: str) -> str | None:
         return None
     hazards = split_sections(part).get(Section.HAZARDS, "")
     return "\n".join(_classification_parts(hazards))
+
+
+# The sentence that sends content and container to disposal (SDB-166):
+# "Inhalt/Behälter gemäß lokalen/regionalen/nationalen/internationalen
+# Vorschriften entsorgen." -- the supplier's detail, then "entsorgen" or the
+# regulation's "zuführen", within one sentence.
+_DISPOSAL = re.compile(
+    r"\bInhalt\s*(?:/|\bund\b|\boder\b|\bbzw\.?)\s*(?:den\s+|die\s+)?Beh[äa]lter\b"
+    r"[^.!?:]{0,160}?\b(?:zu\s+)?(?:entsorgen|zuf[üu]hren)\b\.?",
+    re.IGNORECASE,
+)
+
+
+def _disposal_sentence(label_text: str) -> str | None:
+    """The label's disposal sentence without its code, as printed (SDB-166)."""
+    found = _DISPOSAL.search(join_broken_words(_before_next_subsection(label_text)))
+    return " ".join(found.group(0).split()) if found else None
 
 
 def _read_label(
@@ -2325,6 +2571,20 @@ def _read_label(
             precautionary_codes = sorted(
                 {c for c in by_wording if c.startswith("P")} | by_variants
             )
+    # P501 by the words many suppliers use for it, also beside other P codes
+    # (SDB-166); never on a label by the rules before CLP (SDB-120).
+    disposal = None
+    if (
+        hazard_codes
+        and "P501" not in precautionary_codes
+        and not (
+            _OLD_PHRASES_PRINTED.search(hazard_section_text)
+            or old_classification(hazard_section_text) is not None
+        )
+    ):
+        disposal = _disposal_sentence(hazard_section_text)
+        if disposal is not None:
+            precautionary_codes = sorted({*precautionary_codes, "P501"})
     supplemental = sorted(
         set(
             code.upper()
@@ -2384,6 +2644,7 @@ def _read_label(
         signal_word=signal_word,
         pictograms=set(pictograms),
         warnings=warnings,
+        disposal=disposal,
     )
 
 
@@ -3497,7 +3758,10 @@ _REGISTER_LABEL = re.compile(r"^(?:Id-?Nr|USt-?Id-?Nr|Ust\.?-?Id)\b", re.IGNOREC
 # The second half of a legal form at the start of the address line: "…
 # GmbH" / "KG . Haselring 4 . 81602 Neufeld".
 _LEGAL_FORM_BEFORE_ADDRESS = re.compile(r"^(KG|KGaA|OHG)\s*[.,]\s*(?=\S)")
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# It starts only where a run of its characters starts: the same address as
+# without the lookbehind (only search() reads it), but a long run without an
+# "@" is read once instead of once from every character in it.
+_EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _WEBSITE = re.compile(r"\b(?:https?://|www\.)[^\s,;]+", re.IGNORECASE)
 # A company's legal form: a name without one may go on on the next line.
 _LEGAL_FORM = re.compile(
@@ -4231,9 +4495,11 @@ _LABELLED_VALUE = re.compile(
     r"^(?:[^:\d()]{2,40}|(?:REACH[-\s]?)?Registrier[^:]{2,80}):\s*\S", re.IGNORECASE
 )
 # An article number with its label in front of the name on the name's line
-# (SDB-148): "Art.-Nr. 12.345 Musterdünger".
+# (SDB-148): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
+# its characters, with a digit in it: asked for ahead, so that a long run
+# is not tried once for every digit in it.
 _ARTICLE_NUMBER_FIRST = re.compile(
-    r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*[\w./-]*\d[\w./-]*\s+(?=\S)",
+    r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*(?=[\w./-]*\d)[\w./-]*\s+(?=\S)",
     re.IGNORECASE,
 )
 # Or its label behind the name, the number on the next line (SDB-148):
