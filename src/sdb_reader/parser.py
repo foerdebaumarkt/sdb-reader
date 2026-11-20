@@ -47,6 +47,7 @@ logger = structlog.stdlib.get_logger(__name__)
 # outside the label (SDB-28), and a section 2 that classifies by the rules
 # before CLP (SDB-73).
 LABEL_UNDETERMINED = "label-undetermined"
+LABEL_LINE_UNASSIGNED = "label-line-unassigned"
 EUH_WORDING_OUTSIDE_LABEL = "euh-wording-outside-label"
 CLASSIFIED_BEFORE_CLP = "classified-before-clp"
 
@@ -2072,6 +2073,12 @@ def _parse_hazard_statements(
         or None
     )
     _without_trailing_pictograms(hazard_statements)
+    # What the label holds that nothing above read (SDB-165): a measure of
+    # where rules are missing, never a reading.
+    warnings.extend(
+        Message(LABEL_LINE_UNASSIGNED, {"line": line})
+        for line in unassigned_label_lines(labels, hazard_statements, furniture)
+    )
     if labels:
         warnings.extend(
             _euh_wordings_outside(
@@ -2081,6 +2088,194 @@ def _parse_hazard_statements(
             )
         )
     return hazard_statements, warnings
+
+
+# What a label's line may be besides a statement (SDB-165). A field's own
+# name, with nothing behind it that labels: "Gefahrenhinweise:", "Signalwort",
+# "Kennzeichnung gemäß Verordnung (EG) Nr. 1272/2008", "Tastbarer Warnhinweis:
+# Nicht anwendbar.".
+_LABEL_FIELD = re.compile(
+    r"^[^\w]*(?:\d(?:\.\d){1,2}\.?\s*)?"
+    r"(?:Kennzeichnungselemente|Kennzeichnung|Etikettierung|Etikett"
+    r"|Gefahren-?\s*[Pp]iktogramm\w*(?:\(e\))?(?:\s+und\s+Signalwort)?|Piktogramm\w*(?:\s+und\s+Signalwort)?"
+    r"|Gefahrensymbol\w*|Symbol\w*|UFI|\(?\s*R\s*-\s*S\s*\)?"
+    r"|Kennzeichnung\s+von\s+Verpackungen\b[^\n]*"
+    r"|Signalw[oö]rt\w*|Gefahrenhinweis\w*|Gefahrenbezeichnung\w*|[HPR]\s*-\s*S[äa]tze"
+    r"|Bestandteil\w*(?:\(e\))?"
+    r"|Sicherheitshinweis\w*|P-S[äa]tze|EUH-S[äa]tze"
+    r"|(?:Erg[äa]nzende|Zus[äa]tzliche|Besondere|Weitere|Sonstige)\s+\w+(?:\s+\w+){0,6}"
+    r"|Gefahr(?:en)?bestimmende\s+Komponente\w*(?:\s+\w+){0,4}"
+    r"|Komponente\w*\s+zur\s+Etikettierung"
+    r"|Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
+    r"|Spezielle\s+Verpackungsanforderungen|Verpackungen?"
+    r"|(?:Mit\s+)?kindergesicherte\w*(?:\s+\w+){0,3}|Tastbare\w*\s+Warnhinweis\w*"
+    r"|Verschl[üu]ss\w*(?:\s+\w+){0,3}|Beh[äa]lter\s*:?"
+    r"|Enth[äa]lt|Gefahrenkategorie\w*|Gefahrenklasse\w*|Einstufung\w*"
+    r"|Abschnitt\s*\d{1,2}(?:\.\d)?\s*:?(?:\s*Mögliche\s+Gefahren)?|Mögliche\s+Gefahren"
+    r"|Hinweis\w*\s+zur\s+Kennzeichnung|Bemerkung\w*)"
+    r"\b(?P<rest>[^\n]*)$",
+    re.IGNORECASE,
+)
+# What may stand behind such a name without labelling anything.
+_NOTHING_TO_LABEL = re.compile(
+    r"^[\s:;,.()\-–/]*(?:"
+    r"(?:(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
+    r"|\((?:EU|CLP|GHS)\))[\s:;,]*)+"
+    r"|[^\n]{0,40}(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]{0,60}"
+    r"|\**|gem[äa](?:ß|ss)|nach|UFI\s*:?"
+    r"|(?:nach|gem[äa](?:ß|ss)|entsprechend|laut|according\s+to)\b[^\n]*"
+    r"(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]*"
+    r"|(?:nicht\s+(?:anwendbar|erforderlich|zutreffend|relevant|vorgeschrieben|"
+    r"kennzeichnungspflichtig|bekannt|vorhanden)|keine?\w*|entf[äa]llt|n\.\s*a\.?|-+)"
+    r"[\s.:;,()-]*[^\n]{0,40}"
+    r"|\(?\s*CLP\s*\)?"
+    r")?[\s.:;,()\-–]*$",
+    re.IGNORECASE,
+)
+# The signal word's own line, and what the pictograms are called in words.
+_SIGNAL_OR_PICTOGRAM_WORDS = re.compile(
+    r"^[\s·•\-–]*(?:Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?"
+    r"(?:[\s,;:/·•\-–]*(?:Gefahr|Achtung|kein(?:e|es)?|Danger|Warning|Flamme(?:\s+über\s+einem\s+Kreis)?"
+    r"|Totenkopf(?:\s+mit\s+gekreuzten\s+Knochen)?|Ausrufezeichen|Ätzwirkung|Gasflasche"
+    r"|Umwelt|Gesundheitsgefahr|explodierende\s+Bombe|GHS\s*\d{1,2}|Piktogramm\w*)"
+    r"[\s,;:/·•\-–.!]*)+$",
+    re.IGNORECASE,
+)
+# A substance's name in a list of the components that determine the label:
+# no sentence, at most a short line, often a CAS or EC number.
+_SUBSTANCE_LIST_HEAD = re.compile(
+    r"Gefahr(?:en)?bestimmende|zur\s+Etikettierung|zur\s+Kennzeichnung|^[^\w]*Enth[äa]lt\b|"
+    r"Gef[äa]hrliche\s+(?:Bestandteile|Inhaltsstoffe|Komponenten)|"
+    r"Komponenten?\s+f[üu]r\s+die\s+Etikettierung",
+    re.IGNORECASE,
+)
+# What a sheet says about its label instead of labelling (SDB-165): the
+# classification stated in words, or a regulation cited on a line of its own.
+_LABEL_DECLARATION = re.compile(
+    r"\b(?:eingestuft|gekennzeichnet|kennzeichnungspflichtig|einstufungspflichtig"
+    r"|Kennzeichnung\s+(?:ist\s+)?(?:nicht\s+)?erforderlich|keine\s+Kennzeichnung"
+    r"|nicht\s+(?:gef[äa]hrlich|relevant|erforderlich|anwendbar|zutreffend)"
+    r"|kein(?:e|en)?\s+gef[äa]hrlich\w*\s+(?:Stoff|Gemisch|Substanz|Mischung)"
+    r"|keine\s+besonderen\b|keine\s+(?:Wirkungen|Gefahren)\s+bekannt"
+    r"|keine\s+[HPR]-?S[äa]tze|nach\s+EG-Richtlinien|nationalen\s+Gesetzen"
+    r"|kein\s+Gefahrenpiktogramm|entf[äa]llt|Etikettierung\s+gem[äa])",
+    re.IGNORECASE,
+)
+_ONLY_A_REGULATION = re.compile(
+    r"^[\s(\[]*(?:(?:EG|EU|EWG)\s*-?\s*)?(?:Verordnung|Richtlinie|VO)\b[^\n]{0,60}$"
+    r"|^[\s(\[]*\d{3,4}/\d{4}[\s)\]:.]*$"
+    r"|^[\s(\[]*(?:CLP|GHS|REACH)[\s)\]/:]*(?:CLP|GHS)?[\s)\]]*$",
+    re.IGNORECASE,
+)
+# A page's running head that changes from page to page (its page number), and
+# a line without a word: neither is the label's.
+_RUNNING_HEAD = re.compile(
+    r"Sicherheitsdatenblatt\b[^\n]*(?:Seite|Page|1907/2006)|^[\w.-]+\.(?:de|com|at|ch|eu)$",
+    re.IGNORECASE,
+)
+_A_WORD = re.compile(r"[^\W\d_]{4,}")
+_CAS_OR_EC = re.compile(r"\b\d{2,7}-\d{2}-\d\b|\b\d{3}-\d{3}-\d\b")
+
+
+def _comparable_words(text: str) -> str:
+    """*text* as lower-case words, for finding one text inside another."""
+    return " ".join(re.findall(r"[^\W_]+", text.lower()))
+
+
+def _read_already(line: str, read: str) -> bool:
+    """Whether every sentence of *line* stands in the statements' text *read*."""
+    pieces = [
+        words
+        for piece in re.split(r"[.!;:]\s+|[.!;:]$", line)
+        if (words := _comparable_words(piece))
+    ]
+    return bool(pieces) and all(f" {piece} " in f" {read} " for piece in pieces)
+
+
+def _holds_a_statement(line: str) -> bool:
+    """Whether *line* carries a statement's wording, in any form the parser reads."""
+    return bool(
+        codes_from_wording(line)
+        or euh_statements_by_wording(line)
+        or precautionary_by_variants(line)[0]
+    )
+
+
+def _looks_like_substance(line: str) -> bool:
+    """Whether *line* reads as a substance's name rather than a sentence."""
+    if _CAS_OR_EC.search(line):
+        return True
+    words = line.split()
+    return len(words) <= 8 and not line.rstrip().endswith((".", "!"))
+
+
+def unassigned_label_lines(
+    labels: Sequence[str], hazards: HazardStatements, furniture: frozenset[str]
+) -> list[str]:
+    """The lines of *labels* that nothing in *hazards* accounts for (SDB-165).
+
+    A line is accounted for when it holds a code or a pictogram's code, is the
+    signal word or a pictogram named in words, belongs to a statement the
+    reading took (its words stand in that statement's text, or it holds a
+    statement's wording), is a field's own name with nothing behind it that
+    labels, a name in the list of components that determine the label, page
+    furniture, or empty. What is left the parser did not read.
+    """
+    read = _comparable_words(
+        "\n".join(
+            filter(
+                None,
+                [
+                    hazards.hazard_text,
+                    hazards.precautionary_text,
+                    hazards.supplemental_text,
+                ],
+            )
+        )
+    )
+    left: list[str] = []
+    for label in labels:
+        in_substances = False
+        for raw in join_broken_words(label).split("\n"):
+            line = raw.strip()
+            words = _comparable_words(line)
+            if (
+                not words
+                or not _A_WORD.search(line)
+                or _RUNNING_HEAD.search(line)
+                or line in furniture
+                or _PAGE_NUMBER.match(line)
+                or _CONTINUED.fullmatch(line)
+            ):
+                continue
+            if _SUBSTANCE_LIST_HEAD.search(line):
+                in_substances = True
+                continue
+            if (
+                LABEL_HAZARD_CODE.search(line)
+                or PRECAUTION_CODE_PATTERN.search(line)
+                or SUPPLEMENTAL_CODE_PATTERN.search(line)
+                or PICTOGRAM_PATTERN.search(line)
+                or _SIGNAL_OR_PICTOGRAM_WORDS.match(line)
+            ):
+                in_substances = False
+                continue
+            field_name = _LABEL_FIELD.match(line)
+            content = field_name.group("rest") if field_name else line
+            if (
+                _read_already(content, read)
+                or _holds_a_statement(content)
+                or _LABEL_DECLARATION.search(line)
+                or _ONLY_A_REGULATION.match(line)
+                or (field_name and _NOTHING_TO_LABEL.match(content))
+            ):
+                in_substances = False
+                continue
+            if in_substances and _looks_like_substance(line):
+                continue
+            in_substances = False
+            left.append(line)
+    return left
 
 
 # EUH208 printed with its code inside the sentence (SDB-125): "Enthält: A, B.

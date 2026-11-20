@@ -33,9 +33,17 @@ Versions follow the tags of this repository.
   follows. Measures, table values and names ("H 330 mm", "NOAEL P 250",
   "P 750") stay as they are. Before, only "EUH 208" was read this way
   (SDB-164).
-- **`PARSER_VERSION` is 18** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
+- **`PARSER_VERSION` is 19** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
   stored texts are read again as they are; readings kept from before should
   be made again from them.
+
+### Added
+
+- **The message `label-line-unassigned`** names each line of a label that the
+  parser assigned to nothing: no code, no signal word, no pictogram, no
+  statement it read, no field name, no statement about the classification,
+  no substance in the list that determines the label, no page furniture. It
+  changes no reading; it shows where rules are missing (SDB-165).
 
 ### Fixed
 

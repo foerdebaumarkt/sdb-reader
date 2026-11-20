@@ -683,6 +683,7 @@
             "embedded-wrong-root",
             "euh-outside-label",
             "euh-wording-outside-label",
+            "label-line-unassigned",
             "label-undetermined",
             "leaflet-title",
             "model-answer-unreadable",

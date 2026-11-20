@@ -65,6 +65,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "signal-word-not-taken": ("signal_word",),
     "pictograms-derived": ("pictograms",),
     "precautionary-wording-unclear": ("codes",),
+    "label-line-unassigned": ("line",),
     "signal-word-derived": (),
     "no-identification-section": (),
     "no-supplier-name": (),
