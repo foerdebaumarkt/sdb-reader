@@ -85,6 +85,13 @@ Versions follow the tags of this repository.
   of brackets in a name's label were each read again from every character
   of the run; some twenty thousand characters took one to ten seconds. The
   readings are the same.
+- **A statement with many lines behind it no longer slows down.** Each line
+  added to a hazard or precautionary statement had the whole statement
+  joined and searched for the end of its wording again: 100,000 lines of
+  colons behind a statement took eight seconds, of dashes behind a code alone
+  nearly two minutes. The statement is now summed up as its lines come, and
+  searched again only where a line can change what was found. The readings
+  are the same.
 
 ### Fixed
 

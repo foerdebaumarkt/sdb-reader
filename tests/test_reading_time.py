@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import time
 
+import pytest
 from hypothesis import given, strategies as st
 
 from sdb_reader import read_extraction
@@ -147,3 +148,34 @@ def test_a_long_run_anywhere_is_read_in_time(place: str, run: str) -> None:
     read_extraction(extraction)
     elapsed = time.perf_counter() - start
     assert elapsed < LIMIT_SECONDS, f"{elapsed:.1f} s, {place}: {run[:12]!r}…"
+
+
+# Lines behind one statement that nothing ends, and the time a reading of
+# them may take. Each line used to have the whole statement joined and
+# searched again: 100,000 lines of ":" took eight seconds, of "-" behind a
+# code alone nearly two minutes.
+LINES = 100_000
+LINES_LIMIT_SECONDS = 5.0
+
+
+@pytest.mark.parametrize(
+    ("statement", "line"),
+    [
+        ("P280 Schutzhandschuhe tragen.", ":"),
+        ("P280", "-"),
+        ("P280", ":"),
+        ("H373 Kann die Organe schädigen", ":"),
+        ("EUH208 Enthält Musterol.", "-"),
+    ],
+    ids=["whole-colons", "code-alone-dashes", "code-alone-colons", "open-end", "euh"],
+)
+def test_many_lines_behind_a_statement_are_read_in_time(
+    statement: str, line: str
+) -> None:
+    extraction = _extraction(
+        _sheet("label-line", f"{statement}\n" + f"{line}\n" * LINES)
+    )
+    start = time.perf_counter()
+    read_extraction(extraction)
+    elapsed = time.perf_counter() - start
+    assert elapsed < LINES_LIMIT_SECONDS, f"{elapsed:.1f} s"
