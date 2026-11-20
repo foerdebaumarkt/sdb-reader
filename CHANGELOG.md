@@ -55,6 +55,12 @@ Versions follow the tags of this repository.
 
 ### Security
 
+- **The embedded eSDScom file is read with `defusedxml`.** A document type,
+  an entity or an external reference makes it unreadable
+  (`embedded-doctype`), in any encoding. Before, the bytes were searched
+  for "<!DOCTYPE" and "<!ENTITY", which a file in UTF-16 got past, and the
+  standard library's parser expanded its entities. New dependency:
+  `defusedxml` (Python Software Foundation License) (SDW-11).
 - **Five patterns of the parser no longer slow down on long runs of blanks
   or dashes.** The revision date's label, the version line with its
   creation date, a classification given as a dash, a label without a signal
