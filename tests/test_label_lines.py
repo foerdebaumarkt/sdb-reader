@@ -1,4 +1,5 @@
-"""Lines of the label that the parser assigns to nothing (SDB-165).
+"""Lines of the label the parser assigns to nothing (SDB-165), and P501 by
+its disposal sentence (SDB-166).
 
 Every text here is invented.
 """
@@ -75,7 +76,7 @@ def test_a_sentence_of_the_suppliers_own_is_named() -> None:
 
 @pytest.mark.spec("SDB-165")
 def test_a_statement_in_words_the_parser_does_not_know_is_named() -> None:
-    line = "Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen."
+    line = "Beim Streichen Fenster weit öffnen."
     parsed = _parsed(FULL_LABEL + line + "\n")
     assert _unassigned(parsed) == [line]
     # The reading is what it was: the line is named, never read.
@@ -112,3 +113,66 @@ def test_the_message_carries_the_line_and_says_it_in_both_languages() -> None:
         assert "Nur für den Gebrauch durch Erwachsene." in shipped_catalog(
             language
         ).render(message)
+
+
+def _codes_and_text(parsed: ParsedSheet) -> tuple[list[str], str | None]:
+    hazards = parsed.sheet.hazard_statements
+    return hazards.precautionary_codes, hazards.precautionary_text
+
+
+@pytest.mark.spec("SDB-166")
+def test_the_disposal_sentence_beside_other_codes_is_p501() -> None:
+    parsed = _parsed(
+        FULL_LABEL
+        + "Zusätzliche Sätze: Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen.\n"
+    )
+    codes, text = _codes_and_text(parsed)
+    assert codes == ["P280", "P302", "P352", "P501"]
+    assert text is not None
+    assert text.endswith(
+        "P501 Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen."
+    )
+    assert _unassigned(parsed) == []
+
+
+@pytest.mark.spec("SDB-166")
+def test_the_sentence_over_two_lines_with_und() -> None:
+    parsed = _parsed(
+        FULL_LABEL
+        + "Entsorgung: Inhalt und Behälter in Übereinstimmung mit den örtlichen\n"
+        + "Vorschriften entsorgen.\n"
+    )
+    codes, _ = _codes_and_text(parsed)
+    assert "P501" in codes
+
+
+@pytest.mark.spec("SDB-166")
+def test_a_printed_p501_is_not_read_twice() -> None:
+    parsed = _parsed(
+        FULL_LABEL
+        + "P501 Inhalt/Behälter einer zugelassenen Entsorgungsanlage zuführen.\n"
+        + "Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen.\n"
+    )
+    codes, text = _codes_and_text(parsed)
+    assert codes.count("P501") == 1
+    assert text is not None and text.count("P501") == 1
+
+
+@pytest.mark.spec("SDB-166")
+def test_empty_containers_in_the_household_waste_are_no_p501() -> None:
+    parsed = _parsed(
+        FULL_LABEL + "Leere Behälter können über den Hausmüll entsorgt werden.\n"
+    )
+    codes, _ = _codes_and_text(parsed)
+    assert "P501" not in codes
+
+
+@pytest.mark.spec("SDB-166")
+def test_a_label_without_a_hazard_statement_gets_no_p501() -> None:
+    parsed = _parsed(
+        "2.2 Kennzeichnungselemente\n"
+        "Kennzeichnung gemäß Verordnung (EG) Nr. 1272/2008: entfällt\n"
+        "Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen.\n"
+    )
+    codes, _ = _codes_and_text(parsed)
+    assert "P501" not in codes

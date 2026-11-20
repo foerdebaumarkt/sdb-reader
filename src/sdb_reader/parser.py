@@ -2029,6 +2029,13 @@ def _parse_hazard_statements(
         hazard_statements.precautionary_text = _in_print_order(
             precautionary_codes, codeless
         ) or _in_print_order(precautionary_codes, codeless, variants=True)
+    # P501 read off its sentence (SDB-166): the sheet's own words, under its code.
+    disposal = next((r.disposal for r in readings if r.disposal), None)
+    precautionary_text = hazard_statements.precautionary_text or ""
+    if disposal is not None and not re.search(r"\bP501\b", precautionary_text):
+        hazard_statements.precautionary_text = "\n".join(
+            filter(None, [precautionary_text, f"P501 {disposal}"])
+        )
     supplemental_text = _extract_statements_from_sections(
         sections,
         allowed_sections={Section.HAZARDS},
@@ -2412,6 +2419,9 @@ class _LabelReading:
     signal_word: str | None
     pictograms: set[str]
     warnings: list[Message]
+    # The sheet's sentence read as P501 by SDB-166, where the label prints no
+    # P501 code.
+    disposal: str | None = None
 
 
 def _strongest_signal_word(words: Iterable[str | None]) -> str | None:
@@ -2462,6 +2472,23 @@ def _classification_referred_to(part: str, label: str) -> str | None:
         return None
     hazards = split_sections(part).get(Section.HAZARDS, "")
     return "\n".join(_classification_parts(hazards))
+
+
+# The sentence that sends content and container to disposal (SDB-166):
+# "Inhalt/Behälter gemäß lokalen/regionalen/nationalen/internationalen
+# Vorschriften entsorgen." -- the supplier's detail, then "entsorgen" or the
+# regulation's "zuführen", within one sentence.
+_DISPOSAL = re.compile(
+    r"\bInhalt\s*(?:/|\bund\b|\boder\b|\bbzw\.?)\s*(?:den\s+|die\s+)?Beh[äa]lter\b"
+    r"[^.!?:]{0,160}?\b(?:zu\s+)?(?:entsorgen|zuf[üu]hren)\b\.?",
+    re.IGNORECASE,
+)
+
+
+def _disposal_sentence(label_text: str) -> str | None:
+    """The label's disposal sentence without its code, as printed (SDB-166)."""
+    found = _DISPOSAL.search(join_broken_words(_before_next_subsection(label_text)))
+    return " ".join(found.group(0).split()) if found else None
 
 
 def _read_label(
@@ -2520,6 +2547,20 @@ def _read_label(
             precautionary_codes = sorted(
                 {c for c in by_wording if c.startswith("P")} | by_variants
             )
+    # P501 by the words many suppliers use for it, also beside other P codes
+    # (SDB-166); never on a label by the rules before CLP (SDB-120).
+    disposal = None
+    if (
+        hazard_codes
+        and "P501" not in precautionary_codes
+        and not (
+            _OLD_PHRASES_PRINTED.search(hazard_section_text)
+            or old_classification(hazard_section_text) is not None
+        )
+    ):
+        disposal = _disposal_sentence(hazard_section_text)
+        if disposal is not None:
+            precautionary_codes = sorted({*precautionary_codes, "P501"})
     supplemental = sorted(
         set(
             code.upper()
@@ -2579,6 +2620,7 @@ def _read_label(
         signal_word=signal_word,
         pictograms=set(pictograms),
         warnings=warnings,
+        disposal=disposal,
     )
 
 
