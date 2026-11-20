@@ -78,6 +78,13 @@ Versions follow the tags of this repository.
   found by the last word of its class only; before, every capitalised word
   in front of it was tried, and a run of some twenty thousand characters
   took seconds. The codes read from the label are the same.
+- **Five more places no longer slow down on a long run.** Lines of nothing
+  but dashes or bullets above "Sonstige Gefahren", colons before "keine" or
+  "N/A" in the classification, a long word before an article number's
+  label, letters with full stops at the end of a supplier's name, and a run
+  of brackets in a name's label were each read again from every character
+  of the run; some twenty thousand characters took one to ten seconds. The
+  readings are the same.
 
 ### Fixed
 

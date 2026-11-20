@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import re
 import time
+from collections.abc import Callable
 
 import pytest
 
-from sdb_reader import compliance, parser
+from sdb_reader import compliance, parser, statements
 
 RUN = 20_000
 # A quadratic search of 20,000 characters can stay under a second on a fast
@@ -78,6 +79,51 @@ def test_a_long_word_or_chain_is_searched_at_once(
     assert _searched_quickly(pattern, text)
 
 
+def _read_quickly(read: Callable[[str], object], text: str) -> bool:
+    start = time.perf_counter()
+    read(text)
+    return time.perf_counter() - start < 1.0
+
+
+def _section_ends(text: str) -> list[re.Match[str]]:
+    return list(parser._label_section_ends(text))
+
+
+@pytest.mark.parametrize(
+    ("read", "text"),
+    [
+        (parser._NOTHING_TO_LABEL.match, "," * LONG + "x"),
+        (parser._NOTHING_TO_LABEL.match, "(" * LONG + "x"),
+        (parser._NOTHING_TO_LABEL.match, "-" * LONG + "x" * 50),
+        (parser._NOTHING_TO_LABEL.match, "keine" + "," * LONG + "x" * 50),
+        (parser._ARTICLE_LABEL_LAST.match, "ä" * LONG),
+        (parser._ARTICLE_LABEL_LAST.match, "a" * LONG + " Handelsname"),
+        (parser._NOT_CLASSIFIED.search, ": " * (LONG // 2)),
+        (parser._NOT_CLASSIFIED.search, ":" * LONG),
+        (statements._CODE_FIRST.search, "-" * LONG),
+        (_section_ends, "-\n" * (LONG // 2)),
+        (parser._ENDS_IN_ABBREVIATION.search, "a." * (LONG // 2) + "ab."),
+    ],
+    ids=[
+        "nothing-to-label-commas",
+        "nothing-to-label-brackets",
+        "nothing-to-label-dashes",
+        "nothing-to-label-none-commas",
+        "article-label-last-umlauts",
+        "article-label-last-word",
+        "not-classified-colon-blank",
+        "not-classified-colons",
+        "code-first-dashes",
+        "label-section-end-dash-lines",
+        "ends-in-abbreviation",
+    ],
+)
+def test_a_run_of_marks_or_letters_is_read_once(
+    read: Callable[[str], object], text: str
+) -> None:
+    assert _read_quickly(read, text)
+
+
 def test_the_new_forms_still_find_what_they_found() -> None:
     assert parser.VERSION_CREATED_PATTERN.search(
         "Aktuelle Version: 2.0.1, erstellt am: 20.03.2020"
@@ -109,3 +155,19 @@ def test_the_new_forms_still_find_what_they_found() -> None:
     assert parser._SIGNAL_OR_PICTOGRAM_WORDS.match("- Signalwort (CLP): Gefahr")
     assert parser._SIGNAL_OR_PICTOGRAM_WORDS.match("• Flamme, Ausrufezeichen")
     assert not parser._SIGNAL_OR_PICTOGRAM_WORDS.match("- Signalwort: siehe oben")
+    assert parser._NOTHING_TO_LABEL.match("(EU)")
+    assert parser._NOTHING_TO_LABEL.match("- / nicht weiter")
+    assert parser._NOTHING_TO_LABEL.match("Prävention: Reaktion:")
+    assert not parser._NOTHING_TO_LABEL.match("Schutzhandschuhe tragen und lüften.")
+    found = parser._ARTICLE_LABEL_LAST.match("Musterspray 200 ml Art.Nr.")
+    assert found is not None
+    assert found.group(1) == "Musterspray 200 ml"
+    assert parser._NOT_CLASSIFIED.search("Einstufung: : keine")
+    assert parser._NOT_CLASSIFIED.search("Gefahrenhinweise: N/A")
+    assert statements._CODE_FIRST.match("• h315 verursacht hautreizungen.")
+    assert not statements._CODE_FIRST.match("verursacht h315")
+    assert [end.start() for end in _section_ends("x\n-\n- -\nSonstige Gefahren\n")] == [
+        2
+    ]
+    assert parser._ENDS_IN_ABBREVIATION.search("Musterwerk B.V.")
+    assert not parser._ENDS_IN_ABBREVIATION.search("Musterwerk AB.")

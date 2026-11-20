@@ -67,6 +67,19 @@ request. regexploit exits 0 even when it finds something, so the hook reads
 its report. A test in `tests/test_regex_runtime.py` holds the patterns that
 were rewritten for this to a time limit.
 
+**Reading time**: `tests/test_reading_time.py` is a property test with
+Hypothesis. It puts a long run of one mark, letter, word or piece of a label
+(some 15,000 to 30,000 characters) into an invented sheet at a place the
+parser reads, sends the text through the same normalisation as an extracted
+PDF's, and fails when one reading takes two seconds or more. It measures the
+time instead of judging a pattern by its shape, so it also finds what
+regexploit cannot: a pattern put together at runtime, two patterns that read
+the same run one after the other, or code that goes over a run again for each
+line. In CI it runs a fixed set of 40 examples (the profile `ci` in
+`tests/conftest.py`), a few seconds, the same on every run; before a release,
+`HYPOTHESIS_PROFILE=thorough` tries 2,000 random ones (about a minute and a
+half).
+
 **Dead code**: `vulture` reports what nothing calls. `tests/` is deliberately
 not among the scanned paths in `[tool.vulture]`, so a function whose only
 caller is its own test counts as uncalled. See `make deadcode`.

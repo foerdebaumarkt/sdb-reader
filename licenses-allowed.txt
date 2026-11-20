@@ -22,6 +22,9 @@ MIT
 MIT License
 MIT OR Apache-2.0
 Mozilla Public License 2.0 (MPL 2.0)
+# Hypothesis (property tests, development only) states the same licence by
+# its SPDX name.
+MPL-2.0
 PSF-2.0
 # defusedxml states the same licence by its long name.
 Python Software Foundation License

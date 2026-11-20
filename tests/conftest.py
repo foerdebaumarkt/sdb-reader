@@ -1,9 +1,31 @@
+import os
 from collections.abc import Iterator
 
 import pytest
 import structlog
 import structlog.contextvars
 import structlog.stdlib
+from hypothesis import HealthCheck, settings
+
+# Property tests (tests/test_reading_time.py). "ci", the default: few fixed
+# examples, the same on every run, nothing stored between runs. "thorough":
+# many random ones, for a search by hand before a release.
+settings.register_profile(
+    "ci",
+    max_examples=40,
+    derandomize=True,
+    database=None,
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
+)
+settings.register_profile(
+    "thorough",
+    max_examples=2000,
+    database=None,
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
+)
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "ci"))
 
 
 @pytest.fixture(autouse=True)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date
 from itertools import pairwise
@@ -481,6 +481,20 @@ LABEL_SECTION_END_PATTERN = re.compile(
     r"|\d{1,2}\s*\.\s*[A-ZÄÖÜ][a-zäöüß])",
     re.IGNORECASE,
 )
+# The same boundaries with "Sonstige Gefahren" behind marks of its own line
+# only; _label_section_ends adds the lines of marks above it that the pattern
+# above takes in. Searched with the pattern above, every line of a long run of
+# such lines was read again to the run's end.
+_LABEL_SECTION_END_IN_LINE = re.compile(
+    r"(?m)^[ \t]*(?:[·•∙][ \t]*)?(?:2\s*\.\s*3\s*\.?\s|ABSCHNITT\s*0?3\b|SECTION\s*0?3\b"
+    r"|(?:[·•\-]|[^\S\n])*(?:Sonstige\s+Gefahren|Other\s+hazards)\b"
+    r"|\d{1,2}\s*\.\s*[A-ZÄÖÜ][a-zäöüß])",
+    re.IGNORECASE,
+)
+# A line of nothing but those marks, and the first such line, which may open
+# with a bullet of its own.
+_MARKS_LINE = re.compile(r"(?:[·•\-]|[^\S\n])*")
+_BULLET_MARKS_LINE = re.compile(r"[ \t]*∙(?:[·•\-]|[^\S\n])*")
 # The line a version number follows. Some sheets print "Version" in their
 # running header with the number alone on the next line, and where that number
 # is 2.3 it is the heading of section 2.3 to the pattern above. The header lands
@@ -703,9 +717,11 @@ _NOT_CLASSIFIED = re.compile(
     # An article is not classified at all: CLP covers substances and mixtures.
     r"|\bErzeugnis\b"
     r"|\bentfällt\b|nicht\s+(?:relevant|anwendbar|zutreffend)"
-    r"|(?m:(?:^|:)[^\w\n]*keine?\.?[^\w\n]*$)"
+    # From the last colon before the word, so that a run of colons and blanks
+    # is not read again from each of them.
+    r"|(?m:(?:^|:)[^\w\n:]*keine?\.?[^\w\n]*$)"
     # "GHS Einstufung:" / "N/A" -- not applicable (SDB-86).
-    r"|(?m:(?:^|:)[^\w\n]*N\s?/\s?A\b[^\w\n]*$)"
+    r"|(?m:(?:^|:)[^\w\n:]*N\s?/\s?A\b[^\w\n]*$)"
     # A dash where the classification would stand.
     # Each character of the line one way: dashes, then blanks to its end.
     r"|(?m:^[^\S\n]*[-\u2013\u2014](?:[-\u2013\u2014]|[^\S\n](?=[^\S\n]|$))*$)",
@@ -1507,13 +1523,41 @@ def find_label_section(text: str) -> str | None:
     return rest[: end.start()] or None
 
 
+def _label_section_ends(rest: str) -> Iterator[re.Match[str]]:
+    """What LABEL_SECTION_END_PATTERN.finditer(*rest*) gives, each line read once.
+
+    A boundary by "Sonstige Gefahren" behind marks begins, in the pattern, at
+    the first of the lines of nothing but marks above it that follow the
+    previous boundary. Those lines are found here going up from the boundary's
+    own line, and the pattern then matches from the first of them.
+    """
+    done = 0
+    for found in _LABEL_SECTION_END_IN_LINE.finditer(rest):
+        first = found.start()
+        while first > done:
+            above = rest.rfind("\n", 0, first - 1) + 1
+            if above < done or not _MARKS_LINE.fullmatch(rest, above, first - 1):
+                break
+            first = above
+        if first > done:
+            above = rest.rfind("\n", 0, first - 1) + 1
+            if above >= done and _BULLET_MARKS_LINE.fullmatch(rest, above, first - 1):
+                first = above
+        if first < found.start():
+            across = LABEL_SECTION_END_PATTERN.match(rest, first)
+            if across is not None:
+                found = across
+        yield found
+        done = found.end()
+
+
 def _label_section_end(rest: str) -> re.Match[str] | None:
     """The first boundary in *rest* that is a heading, not a version number.
 
     See VERSION_KEY_PATTERN. A boundary always begins a line, so the line before
     it is whatever *rest* holds up to it, read back to the last line break.
     """
-    for end in LABEL_SECTION_END_PATTERN.finditer(rest):
+    for end in _label_section_ends(rest):
         preceding = rest[: end.start()].rstrip().rpartition("\n")[2]
         if VERSION_KEY_PATTERN.fullmatch(preceding.strip()):
             continue
@@ -2130,22 +2174,29 @@ _LABEL_FIELD = re.compile(
     r"\b(?P<rest>[^\n]*)$",
     re.IGNORECASE,
 )
-# What may stand behind such a name without labelling anything.
+# What may stand behind such a name without labelling anything. Each run of
+# marks is read one way. The marks in front are taken whole, and a part that
+# could begin with one of them begins behind them instead ("(EU)" by the
+# bracket before it); a dash among them is the last one, followed as far as
+# such marks go. "(?=(...))\1" takes what the lookahead found and gives none
+# of it back. Read otherwise, a long run of commas took seconds, and a run of
+# dashes before some words minutes.
 _NOTHING_TO_LABEL = re.compile(
-    r"^[\s:;,.()\-–/]*(?:"
+    r"^(?:(?=([\s:;,.()\-–/]*-[\s.:;,()-]*))\1[^\n]{0,40}[\s.:;,()\-–]*$"
+    r"|(?=([\s:;,.()\-–/]*))\2(?:"
     r"(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
-    r"|\((?:EU|CLP|GHS)\))"
+    r"|(?<=\()(?:EU|CLP|GHS)\))"
     r"(?:[\s:;,]+(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung"
-    r"|Allgemein\w*|\((?:EU|CLP|GHS)\)))*[\s:;,]*"
+    r"|Allgemein\w*|\((?:EU|CLP|GHS)\)))*"
     r"|[^\n]{0,40}(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]{0,60}"
-    r"|\**|gem[äa](?:ß|ss)|nach|UFI\s*:?"
+    r"|\*+|gem[äa](?:ß|ss)|nach|UFI"
     r"|(?:nach|gem[äa](?:ß|ss)|entsprechend|laut|according\s+to)\b[^\n]*"
     r"(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]*"
     r"|(?:nicht\s+(?:anwendbar|erforderlich|zutreffend|relevant|vorgeschrieben|"
-    r"kennzeichnungspflichtig|bekannt|vorhanden)|keine?\w*|entf[äa]llt|n\.\s*a\.?|-+)"
-    r"[\s.:;,()-]*[^\n]{0,40}"
-    r"|\(?\s*CLP\s*\)?"
-    r")?[\s.:;,()\-–]*$",
+    r"kennzeichnungspflichtig|bekannt|vorhanden)"
+    r"|keine?\w*|entf[äa]llt|n\.\s*a)"
+    r"(?=([\s.:;,()-]*))\3[^\n]{0,40}"
+    r")?[\s.:;,()\-–]*$)",
     re.IGNORECASE,
 )
 # The signal word's own line, and what the pictograms are called in words.
@@ -4353,9 +4404,12 @@ _LEGAL_FORM_RUN = re.compile(
     rf"{_LEGAL_FORM.pattern}"
     rf"(?:\s*(?:&|\+|und|u\.)?\s*(?:Co\b\.?\s*)?{_LEGAL_FORM.pattern})*"
 )
-# An abbreviation's full stop at a name's end: "Co.", "B.V.", "a.s.".
+# An abbreviation's full stop at a name's end: "Co.", "B.V.", "a.s.". A run
+# of letters with full stops is tried from its first letter only: where it
+# fails, it fails from every later one too.
 _ENDS_IN_ABBREVIATION = re.compile(
-    r"(?:\b(?:Co|Inc|Ltd|Corp|Cie)|\b(?:[A-Za-z]\.\s?)+[A-Za-z])\.$"
+    r"(?:\b(?:Co|Inc|Ltd|Corp|Cie)"
+    r"|(?<!\b[A-Za-z]\.)(?<!\b[A-Za-z]\.\s)\b(?:[A-Za-z]\.\s?)+[A-Za-z])\.$"
 )
 
 
@@ -4512,7 +4566,8 @@ _ARTICLE_NUMBER_FIRST = re.compile(
 # Or its label behind the name, the number on the next line (SDB-148):
 # "Musterspray 200 ml Art.Nr." Two words at least stand before it.
 _ARTICLE_LABEL_LAST = re.compile(
-    r"^(\S*[^\W\d_]\S*\s+\S+(?:\s+\S+)*?)\s+Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?$",
+    r"^((?=\S*?[^\W\d_])\S+\s+\S+(?:\s+\S+)*?)"
+    r"\s+Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?$",
     re.IGNORECASE,
 )
 # A supplier's label, alone or with its value: where 1.1 ends on a sheet
@@ -4543,9 +4598,20 @@ _HEADER_LINE = re.compile(
 _HEADING_BEHIND_NAME = re.compile(r"\s*:?\s*1\s*\.\s*2\b\.?\s+Relevante\b.*$")
 
 
+# A part in brackets. Only the text up to the last ")" can hold one; searched
+# beyond it, a long run of "(" was read again to its end from each of them.
+_BRACKETED = re.compile(r"\([^)]*\)")
+# "UFI" in a label, with a comma and blanks before it. Without the comma it is
+# tried from the first blank of a run only: a run of blanks, as the brackets
+# above leave behind, was otherwise read again from each of them.
+_UFI_IN_LABEL = re.compile(r",\s*ufi\b|(?<![\s,])\s*ufi\b")
+
+
 def _label_parts(key: str) -> list[str]:
-    key = re.sub(r"\([^)]*\)", " ", _BEFORE_LABEL.sub("", key.casefold()))
-    key = re.sub(r",?\s*ufi\b", " ", key)
+    key = _BEFORE_LABEL.sub("", key.casefold())
+    closed = key.rfind(")") + 1
+    key = _BRACKETED.sub(" ", key[:closed]) + key[closed:]
+    key = _UFI_IN_LABEL.sub(" ", key)
     return [" ".join(part.split()) for part in re.split(r"/| oder ", key)]
 
 
