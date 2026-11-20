@@ -106,7 +106,7 @@ The label always stands in the reading as the sheet prints it.
 
 | Field | Meaning |
 | --- | --- |
-| `hazard_codes` | the codes of the hazard statements (H) |
+| `hazard_codes` | the codes of the hazard statements (H); H360 and H361 with the letters of their effect, as Annex VI of the CLP Regulation sets them (`H360D`, `H361fd`) |
 | `precautionary_codes` | the codes of the precautionary statements (P) |
 | `supplemental_codes` | the codes of the supplemental statements (EUH) |
 | `signal_word` | `Gefahr` or `Achtung`, or nothing |

@@ -30,10 +30,14 @@ from .extraction import ExtractionResult, normalise_pdf_text, strip_page_furnitu
 from .messages import Message, shipped_catalog
 from .model import Prompt, build_prompt, named_date, read_answer
 from .parser import split_into_sheets
-from .statements import normalize_statements
+from .statements import lettered_code, normalize_statements
 from .versions import extraction_stage
 
-_H_CODE = re.compile(r"(?<![A-Za-z])H\d{3}(?!\d)(?:\s*\+\s*H\d{3}(?!\d))*")
+# An H360 or H361 with the letters of its effect is one code (SDB-155).
+_H_CODE = re.compile(
+    r"(?<![A-Za-z])H(?:36[01][A-Za-z]{1,2}(?![^\W\d_])|\d{3})(?!\d)"
+    r"(?:\s*\+\s*H\d{3}(?!\d))*"
+)
 _P_CODE = re.compile(r"(?<![A-Za-z])P\d{3}(?!\d)(?:\s*\+\s*P\d{3}(?!\d))*")
 _EUH_CODE = re.compile(r"\bEUH\d{3}(?!\d)")
 
@@ -298,7 +302,9 @@ def model_reading(answer: Mapping[str, Any], text: str) -> dict[str, Any]:
         # As the model wrote it, also where it did not hold up.
         "revision_date_named": named if isinstance(named, str) and named else None,
         "hazard_statements": {
-            "hazard_codes": _codes(_H_CODE, hazard),
+            "hazard_codes": _unique(
+                lettered_code(code) for code in _codes(_H_CODE, hazard)
+            ),
             "precautionary_codes": _codes(_P_CODE, precautionary),
             # A model now and then lists an EUH statement among the H statements.
             "supplemental_codes": _unique(

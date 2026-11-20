@@ -1602,13 +1602,24 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         assert "signal-word-derived" in {w.code for w in result.warnings}
 
     @pytest.mark.spec("SDB-64")
+    @pytest.mark.spec("SDB-155")
     @pytest.mark.parametrize(
         ("sentence", "code"),
         [
-            ("Kann das Kind im Mutterleib schädigen.", "H360"),
-            ("Kann die Fruchtbarkeit beeinträchtigen.", "H360"),
-            ("Kann vermutlich das Kind im Mutterleib schädigen.", "H361"),
-            ("Kann vermutlich die Fruchtbarkeit beeinträchtigen.", "H361"),
+            ("Kann das Kind im Mutterleib schädigen.", "H360D"),
+            ("Kann die Fruchtbarkeit beeinträchtigen.", "H360F"),
+            ("Kann vermutlich das Kind im Mutterleib schädigen.", "H361d"),
+            ("Kann vermutlich die Fruchtbarkeit beeinträchtigen.", "H361f"),
+            (
+                "Kann die Fruchtbarkeit beeinträchtigen oder das Kind im "
+                "Mutterleib schädigen.",
+                "H360",
+            ),
+            (
+                "Kann die Fruchtbarkeit beeinträchtigen. "
+                "Kann vermutlich das Kind im Mutterleib schädigen.",
+                "H360Fd",
+            ),
         ],
     )
     def test_a_label_without_codes_names_the_effect_on_reproduction(

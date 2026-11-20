@@ -9,6 +9,8 @@ Precedence rules (CLP Art. 26):
 
 from __future__ import annotations
 
+import re
+
 # ---------------------------------------------------------------------------
 # H-code → GHS pictogram(s)
 # ---------------------------------------------------------------------------
@@ -271,6 +273,9 @@ H_TO_SIGNAL_WORD.update({c: "Achtung" for c in _ACHTUNG_CODES})
 def _resolve(code: str) -> list[str]:
     """Expand combined codes (e.g. 'H300+H310') to individual codes."""
     upper = code.strip().upper()
+    # The letters of an effect behind H360 and H361 (SDB-155) change neither
+    # pictogram nor signal word: "H360FD" counts as H360.
+    upper = re.sub(r"^(H36[01])[A-Z]{1,2}$", r"\1", upper)
     return COMBINED_H_CODES.get(upper, [upper])
 
 

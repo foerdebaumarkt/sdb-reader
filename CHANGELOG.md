@@ -5,6 +5,45 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Changed
+
+- **H360 and H361 keep the letters of their effect.** A label's `H360D`,
+  `H360FD`, `H361fd` and the other codes of Annex VI of the CLP Regulation
+  are read as such, letters as the regulation sets them (`H360DF` is
+  `H360FD`, `H361D` is `H361d`); before, the code stood without its letters.
+  A sentence that names one effect is that effect's code where the label
+  prints no code, two effects together are the joined code, and the
+  regulation's wording of a lettered code is the one of Annex VI. Pictogram
+  and signal word do not change (SDB-155).
+- **`PARSER_VERSION` is 17** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
+  stored texts are read again as they are; readings kept from before should
+  be made again from them.
+
+### Fixed
+
+Layouts and spellings from sheets outside the collection the reader was
+measured on:
+
+- A label that numbers its own parts on (`2.3 Gefahrbestimmende
+  Komponenten`, `2.4 Gefahrenhinweise`) no longer ends at its "2.3"
+  (SDB-156).
+- A signal word behind its label counts where the label then says the
+  diluted product needs none (SDB-157).
+- No product name: an article number's label, a word for what the product is
+  ("Gemisch"), the article number below stacked labels; "Bezeichnung des
+  Stoffes oder des Gemisches:" is a name's label (SDB-158).
+- The supplier behind "Name der Firma:", "Name des Herstellerunternehmens:",
+  "Herstellerin", "Firmendetails:", "Company:", "Name oder Handelsname", and
+  behind the colon of 1.3's heading; no street and no pointer as the name; a
+  name cut from an address or a column glued to it; "BV", "NV" and "SA" as
+  legal forms (SDB-159).
+- "Abschnitt 7.3 angegeben" at the end of a sentence is no heading
+  (SDB-160).
+- Dates behind "Überarbei tung" broken over a line, with a weekday in front,
+  and "Datum der Ausgabe:" as the issue date (SDB-161).
+- A pictogram's code behind a statement and a page marker "Page n. 1 von 9"
+  are not part of the statement's wording (SDB-162).
+
 ## 0.9.0 – 2026-11-19
 
 The first public version. What it offers:
