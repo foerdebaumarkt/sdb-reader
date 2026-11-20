@@ -51,6 +51,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 
 | Code | Angaben | Satz |
 | --- | --- | --- |
+| `line-too-long` | `count`, `length` | {count} Zeilen mit mehr als 2.000 Zeichen wurden nicht gelesen, die längste mit {length} Zeichen; ein Blatt druckt keine so langen Zeilen. |
 | `no-label-section` | – | Abschnitt 2.2 (Kennzeichnungselemente) wurde nicht gefunden; stattdessen wurde der ganze Abschnitt 2 gelesen. |
 | `several-sheets` | `count` | Die Datei enthält {count} Sicherheitsdatenblätter; ihre Kennzeichnungen sind zusammengeführt. |
 | `classified-before-clp` | `basis` | Abschnitt 2 stuft nach den Richtlinien vor der CLP-Verordnung ein ({basis}); es wurde keine Kennzeichnung gelesen. |
@@ -62,6 +63,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `pictograms-derived` | `pictograms` | Piktogramme aus den H-Sätzen abgeleitet, das Blatt nennt keine: {pictograms} |
 | `precautionary-wording-unclear` | `codes` | Ein Sicherheitshinweis ohne Code passt gleich gut zu {codes}; keiner davon wurde übernommen. |
 | `label-line-unassigned` | `line` | Eine Zeile der Kennzeichnung wurde nichts zugeordnet: {line} |
+| `statement-too-long` | `codes` | Der Satz {codes} ist nach 100 Zeilen abgeschnitten; was folgt, gehört zu keinem Satz. |
 | `signal-word-derived` | – | Signalwort aus den Gefahrenhinweisen abgeleitet; die Kennzeichnung nennt keines. |
 | `no-identification-section` | – | Abschnitt 1 wurde nicht gefunden; der Lieferant lässt sich nicht lesen. |
 | `no-supplier-name` | – | In Abschnitt 1 wurde kein Name des Lieferanten gefunden. |

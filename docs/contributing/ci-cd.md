@@ -78,7 +78,10 @@ the same run one after the other, or code that goes over a run again for each
 line. In CI it runs a fixed set of 40 examples (the profile `ci` in
 `tests/conftest.py`), a few seconds, the same on every run; before a release,
 `HYPOTHESIS_PROFILE=thorough` tries 2,000 random ones (about a minute and a
-half).
+half). A run on one line longer than 2,000 characters is not read at all
+(SDB-167), and a statement takes at most 100 lines (SDB-168); the same file
+holds a reading of 50,000 lines behind each kind of statement to three
+seconds, which the limit makes possible.
 
 **Dead code**: `vulture` reports what nothing calls. `tests/` is deliberately
 not among the scanned paths in `[tool.vulture]`, so a function whose only
