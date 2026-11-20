@@ -2149,8 +2149,10 @@ _NOTHING_TO_LABEL = re.compile(
     re.IGNORECASE,
 )
 # The signal word's own line, and what the pictograms are called in words.
+# The marks before "Signalwort" stand inside its optional group: two classes
+# of the same marks in a row would split a line of dashes every way there is.
 _SIGNAL_OR_PICTOGRAM_WORDS = re.compile(
-    r"^[\s·•\-–]*(?:Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?[\s,;:/·•\-–]*"
+    r"^(?:[\s·•\-–]*Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?[\s,;:/·•\-–]*"
     r"(?:(?:Gefahr|Achtung|kein(?:e|es)?|Danger|Warning|Flamme(?:\s+über\s+einem\s+Kreis)?"
     r"|Totenkopf(?:\s+mit\s+gekreuzten\s+Knochen)?|Ausrufezeichen|Ätzwirkung|Gasflasche"
     r"|Umwelt|Gesundheitsgefahr|explodierende\s+Bombe|GHS\s*\d{1,2}|Piktogramm\w*)"

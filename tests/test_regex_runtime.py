@@ -59,6 +59,8 @@ def test_a_long_run_is_searched_at_once(pattern: re.Pattern[str], text: str) -> 
         (parser._ARTICLE_NUMBER_FIRST, "Art.-Nr. " + "1" * LONG),
         (compliance._NAME_TAIL, "," * LONG + "1"),
         (parser.CLASSIFICATION_ENTRY, "Abc " * (LONG // 4)),
+        (parser._SIGNAL_OR_PICTOGRAM_WORDS, "-" * LONG),
+        (parser._SIGNAL_OR_PICTOGRAM_WORDS, "- " * (LONG // 2)),
     ],
     ids=[
         "email",
@@ -66,6 +68,8 @@ def test_a_long_run_is_searched_at_once(pattern: re.Pattern[str], text: str) -> 
         "article-number-first",
         "name-tail",
         "classification-entry",
+        "signal-word-dashes",
+        "signal-word-dash-blank",
     ],
 )
 def test_a_long_word_or_chain_is_searched_at_once(
@@ -102,3 +106,6 @@ def test_the_new_forms_still_find_what_they_found() -> None:
     assert parser.CLASSIFICATION_ENTRY.sub(" ", "Skin Corr. 1A, H314").split() == [
         "Skin"
     ]
+    assert parser._SIGNAL_OR_PICTOGRAM_WORDS.match("- Signalwort (CLP): Gefahr")
+    assert parser._SIGNAL_OR_PICTOGRAM_WORDS.match("• Flamme, Ausrufezeichen")
+    assert not parser._SIGNAL_OR_PICTOGRAM_WORDS.match("- Signalwort: siehe oben")
