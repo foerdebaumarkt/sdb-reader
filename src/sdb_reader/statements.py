@@ -1260,8 +1260,9 @@ def _variant_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
     return tuple(patterns)
 
 
-# A line that begins with a statement's code, behind a bullet or not.
-_CODE_FIRST = re.compile(r"[^\w\n]*(?:euh|h|p)\s?\d{3}")
+# A line that begins with a statement's code, behind a bullet or not. The
+# marks before the code are read from the first of them only, and once.
+_CODE_FIRST = re.compile(r"(?<![^\w\n])[^\w\n]*(?:euh|h|p)\s?\d{3}")
 
 
 def variant_wordings_in_print_order(

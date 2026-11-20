@@ -101,6 +101,9 @@ dev = [
   "twine==7.0.0",
   # Type information for defusedxml, for mypy.
   "types-defusedxml==0.7.0.20260504",
+  # Property tests: random and degenerate text through the reading, each
+  # reading held to a time limit (tests/test_reading_time.py).
+  "hypothesis==6.170.15",
 ]
 
 [tool.setuptools]
