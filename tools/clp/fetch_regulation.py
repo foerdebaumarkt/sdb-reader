@@ -64,8 +64,10 @@ REQUIRED_MARKERS = ("ANHANG I", "ANNEX I")
 
 def _get(url: str, headers: dict[str, str], *, timeout: int = 600) -> bytes:
     # Both addresses are the constants above: https, one host.
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    request = urllib.request.Request(  # noqa: S310 -- the constants above
+        url, headers={"User-Agent": USER_AGENT, **headers}
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
         payload: bytes = response.read()
     return payload
 

@@ -15,10 +15,12 @@ select = [
   "DTZ",# naive datetimes -- a timestamp without a zone is a guess
   # Fail fast: an `except Exception` must re-raise, log the traceback, or say
   # in a noqa why swallowing it is the point; an `except ...: pass` /
-  # `continue` is never silent, typed or not.
+  # `continue` is never silent, typed or not (S110, S112 below).
   "BLE001",
-  "S110",
-  "S112",
+  # flake8-bandit: a subprocess, an opened URL, eval, XML parsed without
+  # protection. The package reads files from anyone; each remaining finding
+  # carries a noqa that says why it is safe.
+  "S",
   "SIM",# simplifications: one `with`, no needless bool, the builtin for the loop
   "ARG",# arguments nothing reads (not in tests; see below)
   "PT", # pytest style
@@ -26,6 +28,17 @@ select = [
   "RUF",# ruff's own rules; a noqa that suppresses nothing is a false claim (RUF100)
   "UP", # syntax of the oldest Python the project supports (3.12): dict, X | None, ...
   "C90",# complexity ceiling, see [lint.mccabe]
+  # Sets with no finding today, kept at none: shadowed builtins, misc. lints,
+  # pathlib over os.path, logging calls, a noqa or type: ignore names its
+  # code, pep8 naming, tidy imports.
+  "A",
+  "PIE",
+  "PTH",
+  "G",
+  "LOG",
+  "PGH",
+  "N",
+  "TID",
 ]
 ignore = [
   "E203", # whitespace before ':' (formatter compatibility)
@@ -56,7 +69,8 @@ check-typed-exception = true
 # Fixture timestamps: a test constructs the clock it wants to test against.
 # ARG: a fake takes the arguments of what it stands in for, used or not.
 # T20: a test may print what helps read its failure.
-"tests/**" = ["DTZ", "ARG", "T20"]
+# S101: pytest's assert. S102: a test runs the documentation's examples.
+"tests/**" = ["DTZ", "ARG", "T20", "S101", "S102"]
 # A vulture whitelist is a list of names written as bare expressions.
 "vulture_whitelist.py" = ["B018", "F821"]
 

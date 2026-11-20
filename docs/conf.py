@@ -23,7 +23,7 @@ from site_links import for_site
 
 project = "sdb-reader"
 author = "Förde-Baumarkt Holger Claussen GmbH & Co. KG"
-copyright = f"2026, {author}"
+copyright = f"2026, {author}"  # noqa: A001 -- the name Sphinx reads
 release = installed_version("sdb-reader")
 version = release
 

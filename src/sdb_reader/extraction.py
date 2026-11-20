@@ -308,10 +308,16 @@ def _tesseract_version() -> str:
     """
     try:
         asked = subprocess.run(
-            ["tesseract", "--version"], capture_output=True, timeout=30, check=False
+            ["tesseract", "--version"],  # noqa: S607 -- tesseract from PATH (SDB-116)
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         languages = subprocess.run(
-            ["tesseract", "--list-langs"], capture_output=True, timeout=30, check=False
+            ["tesseract", "--list-langs"],  # noqa: S607 -- tesseract from PATH (SDB-116)
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
     except FileNotFoundError as exc:
         raise ExtractionError(Message("ocr-unavailable")) from exc
@@ -342,8 +348,8 @@ def _run_tesseract(image: bytes) -> str:
     """Hand one rendered page to the binary and return what it read."""
     _tesseract_version()
     try:
-        result = subprocess.run(
-            ["tesseract", "stdin", "stdout", "-l", OCR_LANGUAGE, "--psm", "3"],
+        result = subprocess.run(  # noqa: S603 -- fixed arguments, no shell
+            ["tesseract", "stdin", "stdout", "-l", OCR_LANGUAGE, "--psm", "3"],  # noqa: S607 -- tesseract from PATH (SDB-116)
             input=image,
             capture_output=True,
             timeout=OCR_PAGE_TIMEOUT_SECONDS,

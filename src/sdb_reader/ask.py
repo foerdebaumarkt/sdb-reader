@@ -216,7 +216,7 @@ def send(endpoint: Endpoint, prompt: Prompt, *, retries: int = 0) -> Reply:
         headers["Authorization"] = f"Bearer {endpoint.api_key}"
     for attempt in range(retries + 1):
         # The scheme is checked where the endpoint is made: http or https only.
-        request = urllib.request.Request(
+        request = urllib.request.Request(  # noqa: S310 -- http(s) only, see above
             endpoint.url.rstrip("/") + "/chat/completions",
             data=body,
             headers=headers,
@@ -224,7 +224,9 @@ def send(endpoint: Endpoint, prompt: Prompt, *, retries: int = 0) -> Reply:
         )
         named: float | None = None
         try:
-            with urllib.request.urlopen(request, timeout=endpoint.timeout) as response:
+            with urllib.request.urlopen(  # noqa: S310 -- http(s) only, see above
+                request, timeout=endpoint.timeout
+            ) as response:
                 payload = json.loads(response.read())
             break
         except urllib.error.HTTPError as exc:

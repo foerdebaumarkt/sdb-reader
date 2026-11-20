@@ -70,7 +70,7 @@ def main() -> int:
     if command is None:
         problems.append("the command sdb-reader is not installed")
     else:
-        done = subprocess.run(
+        done = subprocess.run(  # noqa: S603 -- the command just installed
             [command, "--help"], capture_output=True, text=True, check=False
         )
         if done.returncode != 0:
