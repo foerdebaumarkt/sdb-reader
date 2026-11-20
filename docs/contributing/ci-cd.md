@@ -7,7 +7,7 @@ tag and is described in [Releasing](releasing.md).
 
 | Workflow | Runs | Covers |
 | --- | --- | --- |
-| `pre-commit.yml` | `pre-commit` over **all** files | hygiene hooks, ruff lint + format, mypy, vulture, gitleaks on staged changes, the editor guardrail |
+| `pre-commit.yml` | `pre-commit` over **all** files | hygiene hooks, ruff lint + format, mypy, vulture, regexploit, gitleaks on staged changes, the editor guardrail |
 | `tests.yml` | for every supported Python version: `uv sync --locked`, then `pytest`, `make package-check`, `make dist` and `make docs` | the test suite, on exactly the versions in `uv.lock`, with `tesseract` installed so that one test reads a scan with the real program; the built wheel, installed by itself, brings its data files along; the distributions a release would publish pass the package index's check; the documentation site builds without a warning, and its reference holds every exported name with a description (it is not published from here; the run keeps it for a week as the artifact `site`) |
 | `gitleaks.yml` | gitleaks over the commits a change adds, weekly over the whole history | secrets |
 | `licenses.yml` | `make licenses` | the licence of every package `uv.lock` installs, against `licenses-allowed.txt` |
@@ -51,6 +51,22 @@ speaks about code that was already in the tree.
 `no-editor-files` hook fails the build if one is committed anyway — see
 [editor-agnostic.md](editor-agnostic.md).
 
+**Security rules**: ruff runs flake8-bandit's rules (`S`): a subprocess, an
+opened URL, `eval`, XML parsed without protection. The package reads files from
+anyone, so each finding is fixed or carries a `noqa` that says why it is safe.
+Several other rule sets are on although nothing in the tree breaks them today
+(`A`, `PIE`, `PTH`, `G`, `LOG`, `PGH`, `N`, `TID`), so that it stays that way;
+`ruff.toml` names them.
+
+**Slow regular expressions**: the `regexploit` hook looks at every pattern
+written as a literal under `src/` and `tools/` and fails on one that takes
+cubic or worse time on a long run of one character ("x" followed by thousands
+of spaces). It does not see a pattern put together at runtime, and it misses
+the exponential cases; those are CodeQL's, which reports them on every pull
+request. regexploit exits 0 even when it finds something, so the hook reads
+its report. A test in `tests/test_regex_runtime.py` holds the patterns that
+were rewritten for this to a time limit.
+
 **Dead code**: `vulture` reports what nothing calls. `tests/` is deliberately
 not among the scanned paths in `[tool.vulture]`, so a function whose only
 caller is its own test counts as uncalled. See `make deadcode`.
@@ -78,7 +94,8 @@ The repository includes a comprehensive pre-commit configuration with:
 
 ### Python Quality
 
-- Ruff linting and formatting
+- Ruff linting and formatting, security rules (`S`) included
+- regexploit: regular expressions with polynomial worst case
 - MyPy type checking
 - Vulture dead-code gate
 

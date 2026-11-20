@@ -75,3 +75,22 @@ repos:
           (docs/editor-agnostic.md) -- keep them locally and share the
           equivalent Makefile or CLI command instead.
         files: ^\.(vscode|idea)/
+
+  # Regular expressions that take cubic or worse time on a long run of one
+  # character (ReDoS), checked where they are written as literals; a pattern
+  # put together from pieces at runtime is not seen, and the exponential cases
+  # are CodeQL's. regexploit-py prints what it finds and still exits 0, so its
+  # report decides here: a finding, a file it cannot parse or a pattern it
+  # fails on stops the commit. 1.0.0 is its last release; pinned.
+  - repo: local
+    hooks:
+      - id: regexploit
+        name: regexploit (ReDoS)
+        language: python
+        language_version: python3.14
+        additional_dependencies: [regexploit==1.0.0]
+        files: ^(src|tools)/.*\.py$
+        entry: >-
+          bash -c 'report="$(regexploit-py "$@")" || exit 1;
+          printf "%s\n" "$report";
+          ! grep -qE "^(Vulnerable regex|Bad Python3 syntax|RecursionError|Error finding ReDoS)" <<< "$report"' --

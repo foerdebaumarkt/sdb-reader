@@ -20,7 +20,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
     "EXTRACTION_VERSION": (
         ("extraction.py", "layout.py", "line_breaks.py"),
         2,
-        "84d2141fcceb0693",
+        "edd646c6bcd02e5a",
     ),
     "PARSER_VERSION": (
         (

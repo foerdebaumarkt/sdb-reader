@@ -96,7 +96,7 @@ class _Model:
                 self.end_headers()
                 self.wfile.write(body)
 
-            def log_message(self, format: str, *args: Any) -> None:
+            def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 -- the base class's name
                 return
 
         self._server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

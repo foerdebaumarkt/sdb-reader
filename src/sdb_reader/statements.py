@@ -1227,7 +1227,7 @@ def _variant_pattern(wording: str) -> re.Pattern[str] | None:
                 fixed_words += any(
                     option not in ("", "…") for option in token.split("/")
                 )
-            elif token == "…":
+            elif token == "…":  # noqa: S105 -- a word, not a secret
                 pieces.append(_FILL)
             else:
                 pieces.append(_piece(token))
