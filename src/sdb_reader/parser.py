@@ -1833,6 +1833,10 @@ _SPACED_HP_CODE = re.compile(
 )
 _AFTER_SPACED_CODE = re.compile(r"[^\S\n]*(?:$|[:+,;\-–])", re.MULTILINE)
 _FIRST_WORD = re.compile(r"[^\S\n]*([^\W\d_]+)")
+# A sentence as the sheet words it, behind a code that opens its line: a
+# capital and at least two more letters ("H 226 Entzündliche Flüssigkeit …"),
+# not a unit or a dimension ("mm", "x 113").
+_SHEETS_SENTENCE = re.compile(r"[^\S\n]+[^\W\d_a-zäöüß][^\W\d_]{2,}")
 
 
 def _join_spaced_codes(text: str) -> str:
@@ -1847,9 +1851,15 @@ def _join_spaced_codes(text: str) -> str:
         if effect and code not in ("H360", "H361"):
             return match.group(0)
         in_combination = before.strip() == "+"
+        opens_line = not before.strip(" \t•·*-–")
         if not in_combination and not _AFTER_SPACED_CODE.match(text, match.end()):
             word = _FIRST_WORD.match(text, match.end())
-            if word is None or word.group(1).lower() != first_word_of(code):
+            own_wording = word is not None and word.group(1).lower() == first_word_of(
+                code
+            )
+            if not own_wording and not (
+                opens_line and _SHEETS_SENTENCE.match(text, match.end())
+            ):
                 return match.group(0)
         return f"{before}{code}{effect or ''}"
 
@@ -1867,7 +1877,9 @@ def _mend_codes(text: str) -> str:
             return match.group(0)
         return f"{head}{begun}{end}{rest}"
 
-    return _join_spaced_codes(_SPACED_EUH_CODE.sub("EUH", _BROKEN_CODE.sub(whole, text)))
+    return _join_spaced_codes(
+        _SPACED_EUH_CODE.sub("EUH", _BROKEN_CODE.sub(whole, text))
+    )
 
 
 def _without_the_old_directives_phrase(text: str) -> tuple[str, list[str]]:

@@ -265,6 +265,21 @@ class TestCodesPrintedWithASpace:
         assert "P305 + P351 + P338 BEI KONTAKT" in label.precautionary_text
 
     @pytest.mark.spec("SDB-164")
+    def test_a_spaced_code_opening_its_line_with_the_sheets_own_sentence(
+        self,
+    ) -> None:
+        label = read(
+            CLASSIFIED
+            + "2.2 Kennzeichnungselemente\n"
+            + "Gefahrenhinweise\n"
+            + "H 226 Entzündliche Flüssigkeit (Paste) und Dampf\n"
+            + "H 336 Kann Schläfrigkeit verursachen\n"
+            + "2.3 Sonstige Gefahren\nKeine.\n"
+        )
+
+        assert label.hazard_codes == ["H226", "H336"]
+
+    @pytest.mark.spec("SDB-164")
     def test_the_letters_of_an_effect_belong_to_a_spaced_code(self) -> None:
         label = read(
             "2.1 Einstufung des Stoffs oder Gemischs\n"
