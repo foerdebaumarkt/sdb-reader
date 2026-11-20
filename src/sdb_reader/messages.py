@@ -55,6 +55,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "not-a-sheet": (),
     "unreadable": (),
     # Parsing the sheet.
+    "line-too-long": ("count", "length"),
     "no-label-section": (),
     "several-sheets": ("count",),
     "classified-before-clp": ("basis",),
@@ -66,6 +67,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "pictograms-derived": ("pictograms",),
     "precautionary-wording-unclear": ("codes",),
     "label-line-unassigned": ("line",),
+    "statement-too-long": ("codes",),
     "signal-word-derived": (),
     "no-identification-section": (),
     "no-supplier-name": (),

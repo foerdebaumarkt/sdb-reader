@@ -69,6 +69,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
         "Reading the sheet",
         "Das Blatt lesen",
         (
+            "line-too-long",
             "no-label-section",
             "several-sheets",
             "classified-before-clp",
@@ -80,6 +81,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "pictograms-derived",
             "precautionary-wording-unclear",
             "label-line-unassigned",
+            "statement-too-long",
             "signal-word-derived",
             "no-identification-section",
             "no-supplier-name",

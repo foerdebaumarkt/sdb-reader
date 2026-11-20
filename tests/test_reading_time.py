@@ -7,7 +7,12 @@ supplier, the classification, a line or a field of the label, behind the
 label). The text goes through the same normalisation as an extracted PDF's,
 so only runs that can reach the parser are tried; a run of blanks or of empty
 lines cannot. A pattern that tries such a run again from each of its
-characters takes seconds on it and fails here, however its source looks.
+characters takes seconds on it and fails here, however its source looks. A
+run on one line longer than a sheet prints is not read at all (SDB-167); the
+runs over several lines are what the parser still sees.
+
+Below, the statement whose lines nothing ends: a reading takes the first
+lines up to the limit of SDB-168 and reads past the rest.
 
 In CI the examples are fixed (derandomised) and few, so the suite stays fast
 and gives the same result on every run. `HYPOTHESIS_PROFILE=thorough` tries
@@ -18,6 +23,7 @@ from __future__ import annotations
 
 import time
 
+import pytest
 from hypothesis import given, strategies as st
 
 from sdb_reader import read_extraction
@@ -147,3 +153,48 @@ def test_a_long_run_anywhere_is_read_in_time(place: str, run: str) -> None:
     read_extraction(extraction)
     elapsed = time.perf_counter() - start
     assert elapsed < LIMIT_SECONDS, f"{elapsed:.1f} s, {place}: {run[:12]!r}…"
+
+
+# Lines behind one statement that nothing ends, and the time a reading of them
+# may take. Before the limit of SDB-168 each line had the whole statement
+# joined and searched again: 50,000 lines of "-" behind a code alone took
+# about half a minute.
+LINES = 50_000
+LINES_LIMIT_SECONDS = 3.0
+
+
+def _with_lines_behind(statement: str, line: str) -> str:
+    return _sheet("label-line", "").replace(
+        "P280 Schutzhandschuhe tragen.\n",
+        f"P280 Schutzhandschuhe tragen.\n{statement}\n{line * LINES}",
+        1,
+    )
+
+
+@pytest.mark.parametrize(
+    ("statement", "line"),
+    [
+        ("P280", "-\n"),
+        ("P280 Schutzhandschuhe tragen.", ":\n"),
+        ("H373 Kann die Organe schädigen", ":\n"),
+        ("EUH208 Enthält Musterol. Kann allergische Reaktionen hervorrufen.", "-\n"),
+        ("EUH208 Enthält Musterol. Kann allergische Reaktionen hervorrufen.", "abc\n"),
+        ("P280 Schutz-", "ab-\n"),
+    ],
+    ids=[
+        "code-alone-dashes",
+        "worded-colons",
+        "hazard-colons",
+        "euh-dashes",
+        "euh-words",
+        "word-breaks",
+    ],
+)
+def test_many_lines_behind_a_statement_are_read_in_time(
+    statement: str, line: str
+) -> None:
+    extraction = _extraction(_with_lines_behind(statement, line))
+    start = time.perf_counter()
+    read_extraction(extraction)
+    elapsed = time.perf_counter() - start
+    assert elapsed < LINES_LIMIT_SECONDS, f"{elapsed:.1f} s"

@@ -35,7 +35,7 @@ from .messages import (
     shipped_catalog,
     shipped_languages,
 )
-from .reading import read_sheet
+from .reading import read_sheet, within_line_limit
 from .scan import Outcome
 from .serialise import reading_to_dict
 from .verification import DocumentKind, SDSVerifier, Verification
@@ -851,7 +851,8 @@ def _ask_one(path: Path, options: _AskOptions) -> Outcome:
             done = _ask_about(
                 path,
                 extraction,
-                SDSVerifier().verify(extraction),
+                # Judged on the text as the reading judges it (SDB-167).
+                SDSVerifier().verify(within_line_limit(extraction)[0]),
                 (),
                 options,
                 catalog,

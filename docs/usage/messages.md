@@ -51,6 +51,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 
 | Code | Values | Sentence |
 | --- | --- | --- |
+| `line-too-long` | `count`, `length` | {count} lines of more than 2,000 characters were not read, the longest with {length}; a sheet prints no lines that long. |
 | `no-label-section` | – | Section 2.2 (Kennzeichnungselemente) was not found; the whole of section 2 was read instead. |
 | `several-sheets` | `count` | The file holds {count} safety data sheets; their labels are combined. |
 | `classified-before-clp` | `basis` | Section 2 classifies under the directives before CLP ({basis}); no label was read. |
@@ -62,6 +63,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `pictograms-derived` | `pictograms` | Pictograms derived from the H statements, the sheet names none: {pictograms} |
 | `precautionary-wording-unclear` | `codes` | A precautionary statement without its code fits {codes} alike; none of them was taken. |
 | `label-line-unassigned` | `line` | A line of the label was assigned to nothing: {line} |
+| `statement-too-long` | `codes` | The statement {codes} is cut off after 100 lines; what follows belongs to no statement. |
 | `signal-word-derived` | – | Signal word derived from the statements; the label states none. |
 | `no-identification-section` | – | Section 1 was not found; the supplier cannot be read. |
 | `no-supplier-name` | – | No supplier name was found in section 1. |

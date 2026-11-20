@@ -53,6 +53,11 @@ Versions follow the tags of this repository.
   code; the precautionary text keeps the sheet's sentence. "Leere Behälter
   können über den Hausmüll entsorgt werden." is no P501 (SDB-166).
 
+- **The messages `line-too-long` and `statement-too-long`** name what the
+  new bounds on a reading (see Security) left out: how many lines were too
+  long and the length of the longest, and the codes a statement cut off
+  after 100 lines begins with (SDB-167, SDB-168).
+
 ### Security
 
 - **The embedded eSDScom file is read with `defusedxml`.** A document type,
@@ -85,6 +90,15 @@ Versions follow the tags of this repository.
   of brackets in a name's label were each read again from every character
   of the run; some twenty thousand characters took one to ten seconds. The
   readings are the same.
+- **What a reading takes in is bounded.** A line of more than 2,000
+  characters is not read (`line-too-long`), and a hazard, precautionary or
+  EUH statement takes at most 100 lines (`statement-too-long`); the longest
+  line of the sheets the reader was measured on has 837 characters, the
+  longest statement 37 lines. A built text with a line of tens of thousands
+  of dashes, or a statement followed by a hundred thousand lines that end
+  nothing, took seconds to minutes; the bounds cover such cases whether or
+  not anyone has found them. The text as read stays whole, so a kept text
+  is read again as before (SDB-167, SDB-168).
 
 ### Fixed
 

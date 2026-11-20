@@ -50,6 +50,10 @@ LABEL_UNDETERMINED = "label-undetermined"
 LABEL_LINE_UNASSIGNED = "label-line-unassigned"
 EUH_WORDING_OUTSIDE_LABEL = "euh-wording-outside-label"
 CLASSIFIED_BEFORE_CLP = "classified-before-clp"
+STATEMENT_TOO_LONG = "statement-too-long"
+# How many lines a statement of the hint texts spans at most (SDB-168): the
+# longest a sheet of the measured collection prints has 37.
+MAX_STATEMENT_LINES = 100
 
 SECTION_BY_NUMBER: dict[int, Section] = {
     1: Section.IDENTIFICATION,
@@ -2056,12 +2060,15 @@ def _parse_hazard_statements(
     # confirmed a dropped code on two, both H318 beside H314 -- the pair Article
     # 27 lets the label print as H314 alone.
     furniture = _page_furniture(full_text, pages)
+    # The statements cut off at their limit (SDB-168), by the codes they begin with.
+    too_long: list[str] = []
     hazard_statements.hazard_text = _statements_within(
         _extract_statements_from_sections(
             sections,
             allowed_sections={Section.HAZARDS},
             pattern=HAZARD_CODE_PATTERN,
             furniture=furniture,
+            too_long=too_long,
         ),
         set(hazard_codes),
     )
@@ -2075,6 +2082,7 @@ def _parse_hazard_statements(
         allowed_sections={Section.HAZARDS},
         pattern=PRECAUTION_CODE_PATTERN,
         furniture=furniture,
+        too_long=too_long,
     )
     # A label that prints its statements without their codes (SDB-6) leaves
     # no text to cut; the codes take the sentences they were read from.
@@ -2092,6 +2100,7 @@ def _parse_hazard_statements(
         allowed_sections={Section.HAZARDS},
         pattern=SUPPLEMENTAL_CODE_PATTERN,
         furniture=furniture,
+        too_long=too_long,
     )
     # The text is cut from all of section 2, the codes from the label: a
     # statement the text holds under a code the label does not carry is the
@@ -2131,6 +2140,7 @@ def _parse_hazard_statements(
         or None
     )
     _without_trailing_pictograms(hazard_statements)
+    warnings.extend(Message(STATEMENT_TOO_LONG, {"codes": codes}) for codes in too_long)
     # What the label holds that nothing above read (SDB-165): a measure of
     # where rules are missing, never a reading.
     warnings.extend(
@@ -2780,6 +2790,10 @@ class _StatementReader:
     following: bool = False
     # How many lines the statement held at the first page break read past.
     page_break: int | None = None
+    # The lines read into the statement, joined ones and those behind it
+    # included (SDB-168), and the codes of each statement cut off at the limit.
+    taken: int = 0
+    too_long: list[str] = field(default_factory=list)
 
     def close(self) -> None:
         if self.current:
@@ -2795,9 +2809,22 @@ class _StatementReader:
                 self.statements.extend(_whole_sentences(left))
             self.current.clear()
         self.behind.clear()
-        self.complete = self.whole = 0
+        self.complete = self.whole = self.taken = 0
         self.capturing = self.following = False
         self.page_break = None
+
+    def _at_the_limit(self) -> bool:
+        """Whether the statement has all the lines it may take (SDB-168); if
+        so, it is closed, and nothing up to the next code belongs to it."""
+        if self.taken < MAX_STATEMENT_LINES:
+            self.taken += 1
+            return False
+        begun = (
+            _LEADING_STATEMENT_CODES.match(self.current[0]) if self.current else None
+        )
+        self.too_long.append(begun.group(1) if begun else "")
+        self.close()
+        return True
 
     def pass_page_break(self) -> None:
         if self.page_break is None:
@@ -2805,6 +2832,8 @@ class _StatementReader:
 
     def follow(self, value: str) -> None:
         """Take *value* as a line behind the statement, which is over."""
+        if self._at_the_limit():
+            return
         self.following = True
         self.behind.append(value)
 
@@ -2814,6 +2843,8 @@ class _StatementReader:
         self.add(_statement_start(value))
 
     def add(self, value: str, *, whole: bool = False) -> None:
+        if self._at_the_limit():
+            return
         # "Reakti-" before the page header, "onen hervorrufen." after it: one
         # word, joined as the reader joins it within a page (SDB-54).
         joined = (
@@ -2921,7 +2952,10 @@ _FOOTNOTE_MARK = re.compile(r"(?<=[a-zäöüß][.!?])\d$")
 
 
 def _extract_statement_text(
-    text: str, pattern: re.Pattern[str], furniture: frozenset[str]
+    text: str,
+    pattern: re.Pattern[str],
+    furniture: frozenset[str],
+    too_long: list[str] | None = None,
 ) -> str | None:
     """The statements *pattern* finds in *text*, one per line (SDB-27, SDB-51).
 
@@ -3025,6 +3059,8 @@ def _extract_statement_text(
         reader.add(_clean_value(normalized))
 
     reader.close()
+    if too_long is not None:
+        too_long.extend(reader.too_long)
     return reader.text(_passages(lines, furniture))
 
 
@@ -3510,6 +3546,7 @@ def _extract_statements_from_sections(
     allowed_sections: set[Section],
     pattern: re.Pattern[str],
     furniture: frozenset[str],
+    too_long: list[str],
 ) -> str | None:
     relevant_chunks = [
         sections[section] for section in allowed_sections if sections.get(section)
@@ -3518,7 +3555,7 @@ def _extract_statements_from_sections(
         return None
 
     combined = "\n\n".join(relevant_chunks)
-    return _extract_statement_text(combined, pattern, furniture)
+    return _extract_statement_text(combined, pattern, furniture, too_long)
 
 
 def _parse_contact_info(
