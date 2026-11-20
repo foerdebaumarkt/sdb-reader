@@ -67,6 +67,12 @@ Versions follow the tags of this repository.
   word, and the substances before EUH208 read each character one way now; a
   crafted text of a few thousand blanks took them seconds before. The
   readings are the same.
+- **Four more patterns no longer slow down on one long word.** The e-mail
+  address, a display named on a cover page, an article number in front of a
+  product's name and the addition at the end of a name start only where a
+  run of their characters starts, or ask for the digit ahead; before, a run
+  of some ten thousand letters or digits took seconds. The readings are the
+  same.
 
 ### Fixed
 

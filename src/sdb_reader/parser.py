@@ -1624,8 +1624,9 @@ _COVER_TITLE = re.compile(
     re.IGNORECASE,
 )
 # A word that names a display, the unit a supplier ships to be set up in a
-# shop: "Mix-Display", "Mixdisplay".
-_DISPLAY_TERM = re.compile(r"[\w-]*display[\w-]*", re.IGNORECASE)
+# shop: "Mix-Display", "Mixdisplay". Starting only where a word starts finds
+# the same word and reads a long one once (see _EMAIL).
+_DISPLAY_TERM = re.compile(r"(?<![\w-])[\w-]*display[\w-]*", re.IGNORECASE)
 
 
 def split_cover_page(text: str) -> tuple[str, str]:
@@ -3757,7 +3758,10 @@ _REGISTER_LABEL = re.compile(r"^(?:Id-?Nr|USt-?Id-?Nr|Ust\.?-?Id)\b", re.IGNOREC
 # The second half of a legal form at the start of the address line: "…
 # GmbH" / "KG . Haselring 4 . 81602 Neufeld".
 _LEGAL_FORM_BEFORE_ADDRESS = re.compile(r"^(KG|KGaA|OHG)\s*[.,]\s*(?=\S)")
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# It starts only where a run of its characters starts: the same address as
+# without the lookbehind (only search() reads it), but a long run without an
+# "@" is read once instead of once from every character in it.
+_EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _WEBSITE = re.compile(r"\b(?:https?://|www\.)[^\s,;]+", re.IGNORECASE)
 # A company's legal form: a name without one may go on on the next line.
 _LEGAL_FORM = re.compile(
@@ -4491,9 +4495,11 @@ _LABELLED_VALUE = re.compile(
     r"^(?:[^:\d()]{2,40}|(?:REACH[-\s]?)?Registrier[^:]{2,80}):\s*\S", re.IGNORECASE
 )
 # An article number with its label in front of the name on the name's line
-# (SDB-148): "Art.-Nr. 12.345 Musterdünger".
+# (SDB-148): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
+# its characters, with a digit in it: asked for ahead, so that a long run
+# is not tried once for every digit in it.
 _ARTICLE_NUMBER_FIRST = re.compile(
-    r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*[\w./-]*\d[\w./-]*\s+(?=\S)",
+    r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*(?=[\w./-]*\d)[\w./-]*\s+(?=\S)",
     re.IGNORECASE,
 )
 # Or its label behind the name, the number on the next line (SDB-148):

@@ -323,7 +323,9 @@ _COMPONENT_ROLE = re.compile(
     r"\b(?:harz|härter|haerter|mörtel|moertel|basis)\b", re.IGNORECASE
 )
 # An addition in brackets or a number at the end of a name: "(Finish)", "-019".
-_NAME_TAIL = re.compile(r"(?:\([^()]*\)|[\s,;:–-]+\d{2,4})\s*$")
+# The separators start only where a run of them starts: the same tail, and a
+# long run of them is read once.
+_NAME_TAIL = re.compile(r"(?:\([^()]*\)|(?<![\s,;:–-])[\s,;:–-]+\d{2,4})\s*$")
 _NOT_A_NAME_S = re.compile(r"[^\w]+")
 
 
