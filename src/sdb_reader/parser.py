@@ -2122,7 +2122,7 @@ _LABEL_FIELD = re.compile(
 _NOTHING_TO_LABEL = re.compile(
     r"^[\s:;,.()\-–/]*(?:"
     r"(?:(?:Pr[äa]vention|Reaktion|Aufbewahrung|Lagerung|Entsorgung|Allgemein\w*"
-    r"|\((?:EU|CLP|GHS)\))[\s:;,]*)+"
+    r"|\((?:EU|CLP|GHS)\))(?:\b|(?<=\)))[\s:;,]*)+"
     r"|[^\n]{0,40}(?:1272/2008|CLP|GHS|Verordnung|Richtlinie)[^\n]{0,60}"
     r"|\**|gem[äa](?:ß|ss)|nach|UFI\s*:?"
     r"|(?:nach|gem[äa](?:ß|ss)|entsprechend|laut|according\s+to)\b[^\n]*"
@@ -2136,11 +2136,11 @@ _NOTHING_TO_LABEL = re.compile(
 )
 # The signal word's own line, and what the pictograms are called in words.
 _SIGNAL_OR_PICTOGRAM_WORDS = re.compile(
-    r"^[\s·•\-–]*(?:Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?"
-    r"(?:[\s,;:/·•\-–]*(?:Gefahr|Achtung|kein(?:e|es)?|Danger|Warning|Flamme(?:\s+über\s+einem\s+Kreis)?"
+    r"^[\s·•\-–]*(?:Signalwort\w*(?:\s*\((?:CLP|GHS)\))?\s*:?)?[\s,;:/·•\-–]*"
+    r"(?:(?:Gefahr|Achtung|kein(?:e|es)?|Danger|Warning|Flamme(?:\s+über\s+einem\s+Kreis)?"
     r"|Totenkopf(?:\s+mit\s+gekreuzten\s+Knochen)?|Ausrufezeichen|Ätzwirkung|Gasflasche"
     r"|Umwelt|Gesundheitsgefahr|explodierende\s+Bombe|GHS\s*\d{1,2}|Piktogramm\w*)"
-    r"[\s,;:/·•\-–.!]*)+$",
+    r"\b[\s,;:/·•\-–.!]*)+$",
     re.IGNORECASE,
 )
 # A substance's name in a list of the components that determine the label:
