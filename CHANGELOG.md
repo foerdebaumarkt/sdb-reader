@@ -5,7 +5,9 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
-### Changed
+## 0.10.0 – 2026-11-20
+
+### Breaking
 
 - **H360 and H361 keep the letters of their effect.** A label's `H360D`,
   `H360FD`, `H361fd` and the other codes of Annex VI of the CLP Regulation
@@ -15,6 +17,14 @@ Versions follow the tags of this repository.
   prints no code, two effects together are the joined code, and the
   regulation's wording of a lettered code is the one of Annex VI. Pictogram
   and signal word do not change (SDB-155).
+  A caller that compares codes with `H360` or `H361` has to take the
+  lettered codes too.
+- **`PARSER_VERSION` is 19** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
+  stored texts are read again as they are; readings kept from before should
+  be made again from them.
+
+### Changed
+
 - **Precautionary statements printed as sentences only are read in the
   forms Annex IV of the CLP Regulation allows.** Where the label prints no P
   code and carries a hazard statement, a sentence that selects from a choice
@@ -33,9 +43,6 @@ Versions follow the tags of this repository.
   follows. Measures, table values and names ("H 330 mm", "NOAEL P 250",
   "P 750") stay as they are. Before, only "EUH 208" was read this way
   (SDB-164).
-- **`PARSER_VERSION` is 19** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
-  stored texts are read again as they are; readings kept from before should
-  be made again from them.
 
 ### Added
 
