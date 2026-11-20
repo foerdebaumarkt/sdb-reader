@@ -176,3 +176,19 @@ def test_a_label_without_a_hazard_statement_gets_no_p501() -> None:
     )
     codes, _ = _codes_and_text(parsed)
     assert "P501" not in codes
+
+
+@pytest.mark.spec("SDB-166")
+def test_a_label_of_sentences_keeps_its_other_statements_text() -> None:
+    parsed = _parsed(
+        "2.2 Kennzeichnungselemente\n"
+        "Signalwort: Achtung\n"
+        "Gefahrenhinweise: Verursacht Hautreizungen.\n"
+        "Sicherheitshinweise: Schutzhandschuhe und Augenschutz tragen.\n"
+        "Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen.\n"
+    )
+    codes, text = _codes_and_text(parsed)
+    assert codes == ["P280", "P501"]
+    assert text is not None
+    assert "P280 Schutzhandschuhe und Augenschutz tragen." in text
+    assert "P501 Inhalt/Behälter gemäß den örtlichen Vorschriften entsorgen." in text

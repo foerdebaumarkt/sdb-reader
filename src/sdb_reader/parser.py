@@ -2025,12 +2025,16 @@ def _parse_hazard_statements(
     codeless = _passages(sections.get(Section.HAZARDS, "").split("\n"), furniture)
     if hazard_statements.hazard_text is None and hazard_codes:
         hazard_statements.hazard_text = _in_print_order(hazard_codes, codeless)
-    if hazard_statements.precautionary_text is None and precautionary_codes:
-        hazard_statements.precautionary_text = _in_print_order(
-            precautionary_codes, codeless
-        ) or _in_print_order(precautionary_codes, codeless, variants=True)
-    # P501 read off its sentence (SDB-166): the sheet's own words, under its code.
+    # P501 read off its sentence (SDB-166) takes the sheet's own words below;
+    # the other codes find theirs as before.
     disposal = next((r.disposal for r in readings if r.disposal), None)
+    worded_codes = [
+        code for code in precautionary_codes if disposal is None or code != "P501"
+    ]
+    if hazard_statements.precautionary_text is None and worded_codes:
+        hazard_statements.precautionary_text = _in_print_order(
+            worded_codes, codeless
+        ) or _in_print_order(worded_codes, codeless, variants=True)
     precautionary_text = hazard_statements.precautionary_text or ""
     if disposal is not None and not re.search(r"\bP501\b", precautionary_text):
         hazard_statements.precautionary_text = "\n".join(
