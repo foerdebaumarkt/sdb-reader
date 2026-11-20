@@ -25,7 +25,15 @@ Versions follow the tags of this repository.
   two cover them alike, neither does, and the new message
   `precautionary-wording-unclear` names them. Never outside the label
   (SDB-163).
-- **`PARSER_VERSION` is 17** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
+- **Codes printed with a space are read.** "H 315", "P 305 + P 351 + P 338"
+  and "H 360 D" are the codes where they can be nothing else: the number is
+  a statement of the regulation, the code opens its line or follows a list
+  mark, "+", a colon, semicolon or comma, and the line's end, a separator,
+  the statement's own first word or, at a line's start, the sheet's sentence
+  follows. Measures, table values and names ("H 330 mm", "NOAEL P 250",
+  "P 750") stay as they are. Before, only "EUH 208" was read this way
+  (SDB-164).
+- **`PARSER_VERSION` is 18** (0.9.0: 16). `EXTRACTION_VERSION` stays 2:
   stored texts are read again as they are; readings kept from before should
   be made again from them.
 
