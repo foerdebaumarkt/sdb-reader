@@ -236,6 +236,17 @@ Nothing in a reading says which file it came from: the same content under
 two names gives the same reading. Keeping the two together is your program's
 part.
 
+## Time, and files from anyone
+
+A reading takes time in proportion to its file. The library reads a PDF of
+up to 50 MB (`pdf-too-large` beyond), ignores lines of more than 2,000
+characters (`line-too-long`, SDB-167) and ends a statement after 100 lines
+(`statement-too-long`, SDB-168); the size of the text as a whole is not
+bounded. A large file therefore takes long, most of it in reading the PDF.
+Where files come from anyone, bound the files you accept by size and give
+each reading a time limit of your own, for example by reading in a separate
+process and ending it when the limit is reached.
+
 ## As JSON
 
 `reading_to_dict` gives what `sdb-reader read` prints for a file, without the
