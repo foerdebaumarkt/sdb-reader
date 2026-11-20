@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date
-from itertools import pairwise
+from itertools import islice, pairwise
 
 import structlog
 
@@ -2762,7 +2762,18 @@ _ORGAN_WORDS = 2
 
 @dataclass(slots=True)
 class _StatementReader:
-    """The statements of one kind, collected line by line."""
+    """The statements of one kind, collected line by line.
+
+    A statement grows a line at a time, and what is asked after each line
+    concerns all of it. That is answered without joining it each time, since a
+    statement can run on over thousands of lines that nothing ends: what its
+    codes say stands in its first line, because a line with a code ends a
+    statement; the lines after it are summed up as they come; and the end of
+    its wording is searched again only where the new line can change it. A
+    later line with a digit, which a code needs, or with blanks other than one
+    space between words, has the statement joined and read as a whole, as
+    before.
+    """
 
     pattern: re.Pattern[str]
     statements: list[str] = field(default_factory=list)
@@ -2780,6 +2791,22 @@ class _StatementReader:
     following: bool = False
     # How many lines the statement held at the first page break read past.
     page_break: int | None = None
+    # The statement joined: its length; whether the lines after the first are
+    # plain (no digit, single spaces); how many characters other than a blank
+    # they hold, counted up to two; how many of them hold more than marks
+    # (" :-–+"); and the last line's share of the two counts.
+    length: int = 0
+    plain: bool = True
+    signs: int = 0
+    worded_lines: int = 0
+    last_signs: int = 0
+    last_worded: bool = False
+    # The end of the wording as last searched: from where (-1: not searched
+    # for the statement as it stands), whether found, and whether only blanks
+    # stood behind the last one found.
+    searched_from: int = -1
+    found: bool = False
+    blank_behind: bool = False
 
     def close(self) -> None:
         if self.current:
@@ -2798,6 +2825,9 @@ class _StatementReader:
         self.complete = self.whole = 0
         self.capturing = self.following = False
         self.page_break = None
+        self.length = self.signs = self.worded_lines = self.last_signs = 0
+        self.plain, self.last_worded = True, False
+        self.searched_from = -1
 
     def pass_page_break(self) -> None:
         if self.page_break is None:
@@ -2816,25 +2846,121 @@ class _StatementReader:
     def add(self, value: str, *, whole: bool = False) -> None:
         # "Reakti-" before the page header, "onen hervorrufen." after it: one
         # word, joined as the reader joins it within a page (SDB-54).
-        joined = (
-            join_broken_words(f"{self.current[-1]}\n{value}") if self.current else ""
-        )
+        joined = _joined_at_break(self.current[-1], value) if self.current else ""
         if joined and "\n" not in joined:
+            self.length += len(joined) - len(self.current[-1])
             self.current[-1] = joined
+            appended = False
+            if len(self.current) > 1:
+                self.signs -= self.last_signs
+                self.worded_lines -= self.last_worded
+                self._sum_up_last()
         else:
+            self.length += len(value) + (1 if self.current else 0)
             self.current.append(value)
-        statement = " ".join(self.current)
-        if whole or _wording_complete(statement, value, self.whole):
+            appended = True
+            if len(self.current) > 1:
+                self._sum_up_last()
+        if whole:
+            # The end found so far describes the statement before this line.
+            self.searched_from = -1
+        if whole or self._wording_complete(value, appended=appended):
             self.complete = len(self.current)
-            self.whole = len(statement)
+            self.whole = self.length
 
-    def fills_its_hole(self, line: str, below: Sequence[str]) -> bool:
+    def _sum_up_last(self) -> None:
+        line = self.current[-1]
+        self.plain = (
+            self.plain
+            and line == line.strip()
+            and not any(c.isdecimal() or (c.isspace() and c != " ") for c in line)
+        )
+        self.last_signs = min(2, sum(not c.isspace() for c in line))
+        self.signs = min(2, self.signs + self.last_signs)
+        self.last_worded = bool(line.strip(" :-–+"))
+        self.worded_lines += self.last_worded
+
+    def joined(self) -> str:
+        return " ".join(self.current)
+
+    def _codes_part(self) -> str:
+        """What the statement's codes are read from: the same as the joined
+        statement for _ONLY_CODES, _codes_of and _LEADING_STATEMENT_CODES.
+
+        The later lines hold no code, so the codes are the first line's. Only
+        blanks behind them leave a row of codes a row; one comma, semicolon or
+        colon may close it, if it is the last character; anything else after
+        the first line makes it no row.
+        """
+        if not self.plain:
+            return self.joined()
+        first, later = self.current[0], len(self.current) - 1
+        if not later:
+            return first
+        if not self.signs:
+            return first + " "
+        if self.signs == 1 and len(self.current[-1]) == 1:
+            return first + " " * later + self.current[-1]
+        return first + " x x"
+
+    def _wording_complete(self, value: str, *, appended: bool) -> bool:
+        """_wording_complete for the joined statement and *value*, its last line.
+
+        Searched again for the wording's end only where *value* can change
+        what was found: a line of nothing but marks, blanks and no sentence's
+        end completes no wording and moves no end found before it.
+        """
+        if not self.plain:
+            self.searched_from = -1
+            return _wording_complete(self.joined(), value, self.whole)
+        codes_part = self._codes_part()
+        if _ONLY_CODES.match(codes_part):
+            self.searched_from = -1
+            return len(_codes_of(codes_part)) > 1
+        wording = _wording_of(codes_part)
+        if wording is None:
+            self.searched_from = -1
+            return False
+        position, closing, _ = wording
+        start = max(position, self.whole)
+        if (
+            appended
+            and start == self.searched_from
+            and not any(c.isalnum() or c in ".!?" for c in value)
+        ):
+            self.blank_behind = self.blank_behind and not value.strip()
+        else:
+            offset = max(0, start - 1)
+            tail = self._from(offset)
+            found = list(closing.finditer(tail, start - offset))
+            self.searched_from = start
+            self.found = bool(found)
+            self.blank_behind = bool(found) and not tail[found[-1].end() :].strip()
+        if not self.found:
+            return False
+        return self.blank_behind or bool(_SENTENCE_END.search(value.rstrip()))
+
+    def _from(self, offset: int) -> str:
+        """The joined statement from character *offset* on."""
+        if offset == 0:
+            return self.joined()
+        taken: list[str] = []
+        begins = self.length
+        for line in reversed(self.current):
+            begins -= len(line)
+            taken.append(line)
+            if begins <= offset:
+                break
+            begins -= 1
+        return " ".join(reversed(taken))[offset - begins :]
+
+    def fills_its_hole(self, line: str, below: Iterable[str]) -> bool:
         """Whether *line* is what the supplier adds to a wording that ends in
         a hole (SDB-108): in brackets, or under the hole's name, or a word or
         two right above that name ("Blut" / "Expositionsweg: oral")."""
         if not self.complete or self.complete != len(self.current):
             return False
-        if not _ends_in_a_hole(" ".join(self.current)):
+        if not _ends_in_a_hole(self._codes_part()):
             return False
         if _HOLE_FILLING.match(line):
             return True
@@ -2849,11 +2975,18 @@ class _StatementReader:
         """Whether the statement is whole and *line* does not begin it again (SDB-51)."""
         if not self.complete or self.complete != len(self.current):
             return False
-        return not _begins_again(" ".join(self.current), line)
+        return not _begins_again(self._codes_part(), line)
 
     @property
     def worded(self) -> bool:
-        return bool(self.pattern.sub("", " ".join(self.current)).strip(" :-–+"))
+        if not self.plain:
+            return bool(self.pattern.sub("", self.joined()).strip(" :-–+"))
+        if not self.current:
+            return False
+        # A code needs a digit, so the later lines hold none of them.
+        return self.worded_lines > 0 or bool(
+            self.pattern.sub("", self.current[0] + " ").strip(" :-–+")
+        )
 
     def text(self, passages: Sequence[str]) -> str | None:
         """The statements, one per line; *passages* is the text without a code."""
@@ -3013,7 +3146,9 @@ def _extract_statement_text(
         ):
             reader.close()
             continue
-        if reader.fills_its_hole(normalized, lines[index + 1 :]):
+        # The lines below, read only as far as needed: a copy of them for each
+        # line was quadratic in a long statement.
+        if reader.fills_its_hole(normalized, islice(lines, index + 1, None)):
             reader.add(_clean_value(normalized), whole=True)
             continue
         if reader.is_over_before(normalized):
@@ -3435,6 +3570,16 @@ def _ends_in_a_hole(statement: str) -> bool:
     """Whether the regulation leaves the end of *statement*'s wording open."""
     codes = _LEADING_STATEMENT_CODES.match(statement)
     return codes is not None and open_end(_listed(codes.group(1))[-1]) is not None
+
+
+def _joined_at_break(line: str, value: str) -> str:
+    """join_broken_words of *line* and *value* across a line break, read near it.
+
+    Both of its patterns hold the line break and at most two characters before
+    it, so the rest of *line* is copied as it is.
+    """
+    keep = max(0, len(line) - 2)
+    return line[:keep] + join_broken_words(f"{line[keep:]}\n{value}")
 
 
 def _wording_complete(statement: str, last_line: str, whole_before: int) -> bool:
