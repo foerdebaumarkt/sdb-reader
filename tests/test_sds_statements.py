@@ -785,14 +785,44 @@ class TestDeviatesFromRegulation:
             "Möglichkeit entfernen. Weiter ausspülen.",
         )
 
-    def test_a_combination_mixing_its_own_and_its_parts_wordings_deviates(
-        self,
+    @pytest.mark.parametrize(
+        ("rinse", "rinse_on"),
+        [("ausspülen", "spülen"), ("spülen", "ausspülen")],
+    )
+    def test_each_part_may_take_its_form_inside_the_combination(
+        self, rinse: str, rinse_on: str
     ) -> None:
+        """P351 alone says "ausspülen", inside P305+P351+P338 "spülen"; a
+        sheet may mix the two forms part by part."""
+        assert not deviates_from_regulation(
+            "P305+P351+P338",
+            _EYES + f"{rinse}. Eventuell vorhandene Kontaktlinsen nach "
+            f"Möglichkeit entfernen. Weiter {rinse_on}.",
+        )
+
+    def test_a_part_in_neither_form_deviates(self) -> None:
         assert deviates_from_regulation(
             "P305+P351+P338",
             _EYES + "ausspülen. Eventuell vorhandene Kontaktlinsen nach "
-            "Möglichkeit entfernen. Weiter spülen.",
+            "Möglichkeit entfernen. Weiter waschen.",
         )
+
+    def test_a_part_takes_its_units_of_the_combination_in_order(self) -> None:
+        forms = statements._forms_inside("P305+P351+P338", statements._wordings_ever())
+
+        assert "BEI KONTAKT MIT DEN AUGEN:" in forms[0]
+        assert "Einige Minuten lang behutsam mit Wasser spülen." in forms[1]
+        assert (
+            "Eventuell vorhandene Kontaktlinsen nach Möglichkeit entfernen. "
+            "Weiter spülen."
+        ) in forms[2]
+
+    def test_a_combination_of_one_sentence_gives_its_parts_no_form(self) -> None:
+        """ "Giftig bei Verschlucken oder Hautkontakt" cannot be cut into H301
+        and H311."""
+        forms = statements._forms_inside("H301+H311", statements._wordings_ever())
+
+        assert forms == [set(), set()]
 
     @pytest.mark.parametrize(
         ("code", "wording"),

@@ -1355,24 +1355,76 @@ def _wordings_ever() -> dict[str, tuple[str, ...]]:
     }
 
 
+# A wording's units: each sentence, and a condition that ends in a colon
+# ("BEI EINATMEN:").
+_UNIT = re.compile(r"[^.:]*[.:]|[^.:]+$")
+
+
+def _units(wording: str) -> list[str]:
+    return [unit.strip() for unit in _UNIT.findall(wording.strip()) if unit.strip()]
+
+
+def _forms_inside(code: str, ever: dict[str, tuple[str, ...]]) -> list[set[str]]:
+    """Per part of the combination *code*, the forms it takes inside the
+    combination's wordings (SDW-50).
+
+    A wording of the combination is cut where it has as many units as its
+    parts together, each part counted by its wordings of its own (which have
+    to agree), and each part takes its units in order: P351 is "Einige
+    Minuten lang behutsam mit Wasser spülen." inside P305+P351+P338. A
+    combination that joins its parts into one sentence ("Giftig bei
+    Verschlucken oder Hautkontakt", "… ausziehen und vor erneutem Tragen
+    waschen.") gives its parts no form.
+
+    >>> forms = _forms_inside("P305+P351+P338", _wordings_ever())
+    >>> sorted(forms[1])
+    ['Einige Minuten lang behutsam mit Wasser spülen.']
+    """
+    parts = code.split("+")
+    counts = []
+    for part in parts:
+        sizes = {len(_units(wording)) for wording in ever.get(part, ())}
+        if len(sizes) != 1:
+            return [set() for _ in parts]
+        counts.append(sizes.pop())
+    inside: list[set[str]] = [set() for _ in parts]
+    for wording in ever.get(code, ()):
+        units = _units(wording)
+        if len(units) != sum(counts):
+            continue
+        start = 0
+        for forms, count in zip(inside, counts, strict=True):
+            forms.add(" ".join(units[start : start + count]))
+            start += count
+    return inside
+
+
 @lru_cache(maxsize=256)
 def _official_forms(code: str) -> tuple[re.Pattern[str], ...]:
     """What a sheet may print for *code* without deviating, as patterns (SDW-50).
 
     Each wording the regulation gives or gave the code and, for a
     combination, its parts' wordings one after the other, each part in any
-    of its own: P305+P351+P338 as "… mit Wasser ausspülen. … Weiter
-    ausspülen.", the wordings of P351 and P338. A form matches the start of
-    the normalised text, in the forms Annex IV allows (SDB-163), a bracketed
-    part also behind a slash (``_variant_body``).
+    of its own or in the form it has inside a wording of the combination
+    (``_forms_inside``): P305+P351+P338 as "… mit Wasser ausspülen. … Weiter
+    ausspülen." (the wordings of P351 and P338) or "… mit Wasser ausspülen.
+    … Weiter spülen.". A form matches the start of the normalised text, in
+    the forms Annex IV allows (SDB-163), a bracketed part also behind a
+    slash (``_variant_body``).
     """
     ever = _wordings_ever()
     # canonical_text first: it also words the lettered H360 and H361.
     wordings = [canonical_text(code) or "", *ever.get(code, ())]
     if "+" in code:
-        parts = [ever.get(part, ()) for part in code.split("+")]
-        if all(parts):
-            wordings.extend(" ".join(chosen) for chosen in itertools.product(*parts))
+        parts = code.split("+")
+        own = [ever.get(part, ()) for part in parts]
+        if all(own):
+            inside = _forms_inside(code, ever)
+            choices = [
+                tuple(dict.fromkeys([*forms, *sorted(extra)]))
+                for forms, extra in zip(own, inside, strict=True)
+            ]
+            wordings.extend(" ".join(chosen) for chosen in itertools.product(*choices))
     return tuple(
         re.compile(_variant_body(wording, choice_for_brackets=True)[0] + r"(?!\w)")
         for wording in dict.fromkeys(wordings)
