@@ -1172,14 +1172,33 @@ def label_statements(hazards: HazardStatements) -> list[StatementWording]:
     ]
 
 
+# A negation does not tell where a wording begins: a sheet that leaves it out
+# still begins the statement with the rest of its words (SDW-50).
+_NEGATIONS = frozenset({"nicht", "kein", "keine"})
+
+
+def _same_opening(printed: str, official: str) -> bool:
+    """Whether *printed* begins with *official*'s first three words, negations
+    not counted, and articles and auxiliaries not counted either where the
+    two differ in those (SDW-50)."""
+    for ignored in (_NEGATIONS, _NEGATIONS | _ARTICLES):
+        first = [w for w in _comparable(printed).split() if w not in ignored]
+        second = [w for w in _comparable(official).split() if w not in ignored]
+        if first[:_OPENING_WORDS] == second[:_OPENING_WORDS]:
+            return True
+    return False
+
+
 def deviates_from_regulation(code: str, wording: str) -> bool:
     """Whether the sheet's *wording* departs from the regulation's for *code* (SDW-50).
 
     Only a wording that begins with the regulation's first three words is
-    compared: one that begins otherwise is mostly text the parser found under
-    the code. It deviates where it begins with none of the code's official
-    forms (``_official_forms``); text after a complete form is mostly a
-    heading the parser read on into, and does not count.
+    compared, negations not counted and, where they make the difference,
+    articles and auxiliaries neither (``_same_opening``): one that begins
+    otherwise is mostly text the parser found under the code. It
+    deviates where it begins with none of the code's official forms
+    (``_official_forms``), strict or loose; text after a complete form is
+    mostly a heading the parser read on into, and does not count.
 
     >>> deviates_from_regulation("P243", "Maßnahmen gegen elektrostatische Aufladungen treffen.")
     False
@@ -1189,11 +1208,12 @@ def deviates_from_regulation(code: str, wording: str) -> bool:
     canonical = canonical_text(code)
     if canonical is None or not wording.strip() or _holds_another(code, wording):
         return False
-    printed = _comparable(wording).split()
-    official = _comparable(canonical).split()
-    if printed[:_OPENING_WORDS] != official[:_OPENING_WORDS]:
+    if not _same_opening(wording, canonical):
         return False
-    return not holds_official_form(code, wording)
+    if holds_official_form(code, wording):
+        return False
+    text = re.sub(r"^[\W_]+", "", _normalised(re.sub(r"\s+", " ", wording)))
+    return not any(form.match(text) for form in _official_forms(code, loose=True))
 
 
 def holds_official_form(code: str, wording: str) -> bool:
@@ -1248,6 +1268,11 @@ _FILL = r"[^.!?:\n]{1,60}?"
 # sentence's end included, as the wording itself may hold one ("… fernhalten.
 # Nicht rauchen.").
 _GAP = r"[^\w]{0,4}"
+# The articles and auxiliaries a sheet may leave out or add (SDW-50). A
+# negation is no such word: "nicht", "kein" and "keine" have to stand as the
+# regulation has them.
+_ARTICLES = frozenset({"der", "die", "das", "ist", "sind"})
+_LOOSE_GAP = rf"{_GAP}(?:(?:{'|'.join(sorted(_ARTICLES))})(?!\w){_GAP})*"
 # At most this many choices in one slash group are spelt out as their ordered
 # selections; P260 and P261 have six, the most in the Annex.
 _MOST_CHOICES = 6
@@ -1286,6 +1311,15 @@ def _piece(text: str) -> str:
     return _FILL.join(parts) if len(parts) > 1 else parts[0]
 
 
+def _with_zu(token: str) -> str:
+    """*token* as a pattern; an infinitive also with "zu" inside it (SDW-50):
+    "einhalten" admits "einzuhalten"."""
+    if "…" in token or not token.endswith("en") or len(token) < 6:
+        return _piece(token)
+    forms = [token[:at] + "zu" + token[at:] for at in range(2, len(token) - 3)]
+    return "(?:" + "|".join(map(re.escape, [token, *forms])) + ")"
+
+
 def _choices(token: str) -> str:
     """A slash group as its ordered, non-empty selections (SDB-163).
 
@@ -1310,7 +1344,7 @@ def _choices(token: str) -> str:
 
 
 def _variant_body(
-    wording: str, *, choice_for_brackets: bool = False
+    wording: str, *, choice_for_brackets: bool = False, loose: bool = False
 ) -> tuple[str, int]:
     """The forms Annex IV allows for *wording* as a pattern, and how many of its
     words are fixed.
@@ -1318,6 +1352,10 @@ def _variant_body(
     With *choice_for_brackets*, a part in square brackets that begins with
     "oder" may also stand without it, behind a slash: "Haut mit Wasser
     abwaschen/duschen" for "abwaschen [oder duschen]" (SDW-50).
+
+    With *loose*, an article or auxiliary may be left out or added between
+    any two words, and an infinitive may take "zu" inside it ("einzuhalten"
+    for "einhalten", SDW-50).
     """
     text = _normalised(wording)
     text = re.sub(r"(\d+|…) o ([cf])\b", r"\1°\2", text)
@@ -1335,15 +1373,20 @@ def _variant_body(
                 )
             elif token == "…":  # noqa: S105 -- a word, not a secret
                 pieces.append(_FILL)
+            elif loose and token in _ARTICLES:
+                continue
             else:
-                pieces.append(_piece(token))
+                pieces.append(_with_zu(token) if loose else _piece(token))
                 fixed_words += "…" not in token
         if not pieces:
             continue
-        joined = _GAP.join(pieces)
+        joined = (_LOOSE_GAP if loose else _GAP).join(pieces)
+        gap = _LOOSE_GAP if loose else _GAP
         if optional and choice_for_brackets and len(pieces) > 1 and tokens[0] == "oder":
-            joined = f"(?:oder{_GAP})?" + _GAP.join(pieces[1:])
-        parts.append(f"(?:{_GAP}{joined})?" if optional else _GAP + joined)
+            joined = f"(?:oder{gap})?" + gap.join(pieces[1:])
+        parts.append(f"(?:{gap}{joined})?" if optional else gap + joined)
+    if loose:
+        return _LOOSE_GAP + "".join(parts).removeprefix(_LOOSE_GAP), fixed_words
     return "".join(parts).removeprefix(_GAP), fixed_words
 
 
@@ -1437,8 +1480,8 @@ def _forms_inside(code: str, ever: dict[str, tuple[str, ...]]) -> list[set[str]]
     return inside
 
 
-@lru_cache(maxsize=256)
-def _official_forms(code: str) -> tuple[re.Pattern[str], ...]:
+@lru_cache(maxsize=512)
+def _official_forms(code: str, *, loose: bool = False) -> tuple[re.Pattern[str], ...]:
     """What a sheet may print for *code* without deviating, as patterns (SDW-50).
 
     Each wording the regulation gives or gave the code and, for a
@@ -1448,7 +1491,8 @@ def _official_forms(code: str) -> tuple[re.Pattern[str], ...]:
     ausspülen." (the wordings of P351 and P338) or "… mit Wasser ausspülen.
     … Weiter spülen.". A form matches the start of the normalised text, in
     the forms Annex IV allows (SDB-163), a bracketed part also behind a
-    slash (``_variant_body``).
+    slash (``_variant_body``). With *loose*, articles and auxiliaries may be
+    left out or added and an infinitive may take "zu" (SDW-50).
     """
     ever = _wordings_ever()
     # canonical_text first: it also words the lettered H360 and H361.
@@ -1464,7 +1508,9 @@ def _official_forms(code: str) -> tuple[re.Pattern[str], ...]:
             ]
             wordings.extend(" ".join(chosen) for chosen in itertools.product(*choices))
     return tuple(
-        re.compile(_variant_body(wording, choice_for_brackets=True)[0] + r"(?!\w)")
+        re.compile(
+            _variant_body(wording, choice_for_brackets=True, loose=loose)[0] + r"(?!\w)"
+        )
         for wording in dict.fromkeys(wordings)
         if wording
     )

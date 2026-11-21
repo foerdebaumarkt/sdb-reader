@@ -773,7 +773,7 @@ class TestDeviatesFromRegulation:
 
     def test_a_missing_word_deviates(self) -> None:
         assert deviates_from_regulation(
-            "P102", "Darf nicht in Hände von Kindern gelangen."
+            "P102", "Darf nicht in die Hände der Kinder gelangen."
         )
 
     def test_a_combination_in_its_parts_wordings_does_not_deviate(self) -> None:
@@ -858,6 +858,56 @@ class TestDeviatesFromRegulation:
     def test_another_word_for_a_part_in_brackets_deviates(self) -> None:
         assert deviates_from_regulation(
             "P303+P361+P353", _SKIN + "Haut mit Wasser abspülen."
+        )
+
+    @pytest.mark.parametrize(
+        ("code", "wording"),
+        [
+            ("P102", "Darf nicht in Hände von Kindern gelangen."),
+            (
+                "EUH401",
+                "Zur Vermeidung von Risiken für Mensch und Umwelt ist die "
+                "Gebrauchsanleitung einzuhalten.",
+            ),
+            (
+                "P304+P340",
+                "BEI EINATMEN: Die Person an die frische Luft bringen und für die "
+                "ungehinderte Atmung sorgen.",
+            ),
+        ],
+    )
+    def test_articles_auxiliaries_and_zu_do_not_count(
+        self, code: str, wording: str
+    ) -> None:
+        assert not deviates_from_regulation(code, wording)
+
+    @pytest.mark.parametrize(
+        ("code", "wording"),
+        [
+            ("P102", "Darf in die Hände von Kindern gelangen."),
+            ("P251", "Nicht durchstechen oder verbrennen, auch nach Gebrauch."),
+            ("P251", "Durchstechen oder verbrennen, auch nicht nach Gebrauch."),
+        ],
+    )
+    def test_a_missing_negation_deviates(self, code: str, wording: str) -> None:
+        assert deviates_from_regulation(code, wording)
+
+    def test_an_extra_negation_deviates(self) -> None:
+        assert deviates_from_regulation(
+            "P251",
+            "Nicht durchstechen oder nicht verbrennen, auch nicht nach Gebrauch.",
+        )
+
+    def test_another_content_word_still_deviates(self) -> None:
+        assert deviates_from_regulation(
+            "EUH401",
+            "Zur Vermeidung von Risiken für Mensch und Umwelt ist die "
+            "Gebrauchsanweisung einzuhalten.",
+        )
+
+    def test_another_sentence_under_the_code_still_deviates(self) -> None:
+        assert deviates_from_regulation(
+            "P262", "Nicht in die Augen, Wunden oder gereizte Haut auftragen."
         )
 
     def test_case_punctuation_and_spacing_do_not_count(self) -> None:
