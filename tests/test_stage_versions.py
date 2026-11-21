@@ -22,6 +22,11 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
         2,
         "edd646c6bcd02e5a",
     ),
+    "LABEL_IMAGES_VERSION": (
+        ("label_images.py", "pictogram_references.json"),
+        1,
+        "ba42cb0d65102801",
+    ),
     "PARSER_VERSION": (
         (
             "clp_statements_de.json",
@@ -36,7 +41,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
             "verification.py",
         ),
         21,
-        "dfae03418afa6a99",
+        "b9053b7b9e93f572",
     ),
 }
 
@@ -151,5 +156,8 @@ def test_a_statement_moved_out_of_its_block_changes_the_fingerprint(
 def test_the_extraction_stage_names_its_version_and_the_pdf_librarys() -> None:
     assert sdb_reader.extraction_stage() == (
         f"{sdb_reader.EXTRACTION_VERSION}+pymupdf-{pymupdf.__version__}"
+    )
+    assert sdb_reader.label_images_stage() == (
+        f"{sdb_reader.LABEL_IMAGES_VERSION}+pymupdf-{pymupdf.__version__}"
     )
     assert isinstance(sdb_reader.PARSER_VERSION, int)

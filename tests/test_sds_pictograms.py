@@ -106,7 +106,7 @@ def test_unknown_code_returns_none() -> None:
     assert get_signal_word({"HXXX"}) is None
 
 
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("BIB-25")
 def test_an_aerosol_s_h229_gives_achtung_unless_h222_stands_beside_it() -> None:
     # Anhang I, Tabelle 2.3.1: category 3 prints H229 alone, category 2 H223
     # beside it, category 1 H222.
@@ -115,14 +115,14 @@ def test_an_aerosol_s_h229_gives_achtung_unless_h222_stands_beside_it() -> None:
     assert get_signal_word({"H222", "H229"}) == "Gefahr"
 
 
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("BIB-25")
 @pytest.mark.parametrize("code", ["H204", "H280", "H281"])
 def test_division_1_4_and_gases_under_pressure_give_achtung(code: str) -> None:
     # Anhang I, Tabellen 2.1.2 and 2.5.2.
     assert get_signal_word({code}) == "Achtung"
 
 
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("BIB-25")
 def test_every_h_statement_of_the_regulation_has_its_signal_word_or_none() -> None:
     # The four the regulation gives no signal word: effects on or via
     # lactation, and the aquatic categories chronic 2 to 4.

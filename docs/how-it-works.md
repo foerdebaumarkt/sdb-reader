@@ -159,11 +159,15 @@ Only a German safety data sheet goes on to the parser.
   those of 2.1 count (SDB-119). A sentence that says a statement is not
   applied or not required is no label (SDB-78), and a code a narrow cell
   breaks or a space divides is read whole (SDB-121). The signal word is
-  the printed one only (SDB-176, SDB-63, SDB-77); the one the codes call
-  for, where the label says nothing, stands apart and is a finding when
-  none is printed (SDB-177, SDB-178). Pictograms are the named ones, or follow from
-  the codes, with the precedence of Article 26 CLP (SDB-8). Several sheets in
-  one file are combined (SDB-9).
+  the printed one only (SDB-176, SDB-63, SDB-77). Pictograms are the
+  printed ones only: the codes the label names and the red-framed diamonds
+  it shows, each named by its likeness to the public-domain drawings of the
+  nine pictograms, looked for on the page and not in the text (SDB-179).
+  Whether the label states it has no signal word or no pictogram is part of
+  the reading (SDB-180). Nothing is derived from the codes: what they call
+  for comes from `clp_expected`, apart from the reading, and differences
+  are findings (BIB-25, SDB-178, SDB-181). Several sheets in one file are
+  combined (SDB-9).
 - **The statement texts.** The sentences of the H, P and EUH statements are
   cut from section 2: where a statement begins and ends, what belongs to a
   classification entry, what follows an EUH statement (SDB-10, SDB-27,

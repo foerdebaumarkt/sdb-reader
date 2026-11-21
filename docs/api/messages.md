@@ -10,11 +10,13 @@ a file could not be read, and the findings. A message has a `code` and
 ```python
 from sdb_reader import MESSAGE_CODES, Message
 
-derived = Message("pictograms-derived", {"pictograms": ["GHS07"]})
+from sdb_reader import sheet_findings
 
-assert derived.code == "pictograms-derived"
-assert derived.params == {"pictograms": ["GHS07"]}
-assert derived in reading.parser_result.warnings
+missing = Message("pictogram-not-found", {"pictogram": "GHS07"})
+
+assert missing.code == "pictogram-not-found"
+assert missing.params == {"pictogram": "GHS07"}
+assert missing in sheet_findings(sheet, reading.parser_result.warnings)
 ```
 
 `MESSAGE_CODES` maps every code to the names of its values. A `Message` with
@@ -22,7 +24,7 @@ a code that is not in it, or with other values than the code names, cannot
 be made:
 
 ```python
-assert MESSAGE_CODES["pictograms-derived"] == ("pictograms",)
+assert MESSAGE_CODES["pictogram-not-found"] == ("pictogram",)
 assert MESSAGE_CODES["undated"] == ()
 
 try:
@@ -38,8 +40,8 @@ language and keeps its meaning; a sentence can be reworded with any release.
 ```python
 parser_codes = {message.code for message in reading.parser_result.warnings}
 
-if "pictograms-derived" in parser_codes:
-    ...  # the label named no pictogram; they follow from the H codes
+if "pictograms-not-recognised" in parser_codes:
+    ...  # a red diamond on the label stayed unnamed
 ```
 
 ## Sentences come from a catalog
@@ -53,11 +55,13 @@ from sdb_reader import shipped_catalog
 german = shipped_catalog()
 english = shipped_catalog("en")
 
-assert german.render(derived) == (
-    "Piktogramme aus den H-Sätzen abgeleitet, das Blatt nennt keine: GHS07"
+assert german.render(missing) == (
+    "Die H-Sätze der Kennzeichnung verlangen das Piktogramm GHS07, und es wurde "
+    "nicht gefunden (CLP Art. 19)."
 )
-assert english.render(derived) == (
-    "Pictograms derived from the H statements, the sheet names none: GHS07"
+assert english.render(missing) == (
+    "The label's H statements call for the pictogram GHS07, and it was not "
+    "found (CLP Article 19)."
 )
 ```
 
@@ -69,10 +73,13 @@ shipped catalog raises `ValueError`.
 parts:
 
 ```python
-assert english.to_dict(derived) == {
-    "code": "pictograms-derived",
-    "params": {"pictograms": ["GHS07"]},
-    "message": "Pictograms derived from the H statements, the sheet names none: GHS07",
+assert english.to_dict(missing) == {
+    "code": "pictogram-not-found",
+    "params": {"pictogram": "GHS07"},
+    "message": (
+        "The label's H statements call for the pictogram GHS07, and it was not "
+        "found (CLP Article 19)."
+    ),
 }
 ```
 
@@ -83,8 +90,8 @@ from sdb_reader import reading_to_dict
 
 record = reading_to_dict(reading, catalog=english)
 
-[noted] = [w for w in record["parser"]["warnings"] if w["code"] == derived.code]
-assert noted["message"] == english.render(derived)
+[noted] = [f for f in record["findings"] if f["code"] == missing.code]
+assert noted["message"] == english.render(missing)
 ```
 
 ## A catalog of your own
@@ -98,12 +105,12 @@ from sdb_reader import load_catalog
 
 own_file = path.with_name("kurz.toml")
 own_file.write_text(
-    '[messages]\n"pictograms-derived" = "Piktogramme ergänzt: {pictograms}"\n',
+    '[messages]\n"pictogram-not-found" = "Piktogramm fehlt: {pictogram}"\n',
     encoding="utf-8",
 )
 own = load_catalog(own_file)
 
-assert own.render(derived) == "Piktogramme ergänzt: GHS07"
+assert own.render(missing) == "Piktogramm fehlt: GHS07"
 assert own.language == "kurz"
 ```
 
@@ -153,8 +160,8 @@ Store code and values, not the sentence: `to_dict` gives them, `from_dict`
 reads them back. Render the sentence where a person reads it.
 
 ```python
-stored = derived.to_dict()
+stored = missing.to_dict()
 
-assert stored == {"code": "pictograms-derived", "params": {"pictograms": ["GHS07"]}}
-assert Message.from_dict(stored) == derived
+assert stored == {"code": "pictogram-not-found", "params": {"pictogram": "GHS07"}}
+assert Message.from_dict(stored) == missing
 ```

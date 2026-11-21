@@ -6,6 +6,7 @@ from datetime import date
 import pytest
 
 from sdb_reader.compliance import Classification, classification
+from sdb_reader.expected import clp_expected
 from sdb_reader.extraction import ExtractionResult
 from sdb_reader.messages import Message
 from sdb_reader.parser import (
@@ -823,12 +824,15 @@ class TestWhereAStatementEnds:
         assert hazards.hazard_text == "H319 Verursacht schwere Augenreizung."
 
 
-@pytest.mark.spec("SDB-8")
-def test_label_codes_drive_the_pictograms(parser: SDSParser) -> None:
-    """H318 -> GHS05, H302 -> GHS07 (kept, acute toxicity), H410 -> GHS09."""
+@pytest.mark.spec("SDB-179", "BIB-25")
+def test_label_codes_drive_the_expected_pictograms(parser: SDSParser) -> None:
+    """H318 -> GHS05, H302 -> GHS07 (kept, acute toxicity), H410 -> GHS09; the
+    text names none, so the reading has none."""
     result = parser.parse(_build_extraction(_TWO_SECTION_SHEET))
 
-    assert result.sheet.hazard_statements.pictograms == ["GHS05", "GHS07", "GHS09"]
+    hazards = result.sheet.hazard_statements
+    assert hazards.pictograms == []
+    assert clp_expected(hazards).pictograms == ["GHS05", "GHS07", "GHS09"]
 
 
 @pytest.mark.spec("SDB-4")
@@ -894,7 +898,7 @@ class TestVersionNumberInTheRunningHeader:
         assert hazards.hazard_codes == ["H317"]
         assert hazards.precautionary_codes == ["P280"]
         assert hazards.signal_word == "Achtung"
-        assert hazards.pictograms == ["GHS07"]
+        assert clp_expected(hazards).pictograms == ["GHS07"]
 
     def test_a_heading_with_its_title_on_the_next_line_still_ends_it(self) -> None:
         """Section 2.3 is written this way 342 times in the corpus."""
@@ -1341,7 +1345,7 @@ def test_signal_word_survives_the_two_column_layout(parser: SDSParser) -> None:
     assert result.sheet.hazard_statements.signal_word == "Achtung"
 
 
-@pytest.mark.spec("SDB-176", "SDB-177")
+@pytest.mark.spec("SDB-176", "SDB-180", "BIB-25")
 def test_stated_absence_is_not_overridden_by_the_derivation(
     parser: SDSParser,
 ) -> None:
@@ -1351,10 +1355,10 @@ def test_stated_absence_is_not_overridden_by_the_derivation(
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert result.sheet.hazard_statements.expected_signal_word is None
+    assert result.sheet.hazard_statements.states_no_signal_word
 
 
-@pytest.mark.spec("SDB-176", "SDB-177")
+@pytest.mark.spec("SDB-176", "SDB-180", "BIB-25")
 def test_a_silent_label_has_no_signal_word_but_an_expected_one(
     parser: SDSParser,
 ) -> None:
@@ -1365,10 +1369,10 @@ def test_a_silent_label_has_no_signal_word_but_an_expected_one(
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert result.sheet.hazard_statements.expected_signal_word == "Gefahr"
+    assert clp_expected(result.sheet.hazard_statements).signal_word == "Gefahr"
 
 
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("BIB-25")
 @pytest.mark.parametrize(
     ("body", "word"),
     [
@@ -1389,10 +1393,10 @@ def test_derivation_counts_the_euh_codes_that_carry_a_signal_word(
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert result.sheet.hazard_statements.expected_signal_word == word
+    assert clp_expected(result.sheet.hazard_statements).signal_word == word
 
 
-def test_a_read_signal_word_is_not_flagged_as_derived(parser: SDSParser) -> None:
+def test_a_read_signal_word_is_no_statement_of_none(parser: SDSParser) -> None:
     result = parser.parse(
         _build_extraction(
             _label("Signalwort: Achtung\nH315: Verursacht Hautreizungen.")
@@ -1400,7 +1404,7 @@ def test_a_read_signal_word_is_not_flagged_as_derived(parser: SDSParser) -> None
     )
 
     assert result.sheet.hazard_statements.signal_word == "Achtung"
-    assert result.sheet.hazard_statements.expected_signal_word is None
+    assert not result.sheet.hazard_statements.states_no_signal_word
 
 
 def test_absence_written_as_entfaellt(parser: SDSParser) -> None:
@@ -1411,7 +1415,7 @@ def test_absence_written_as_entfaellt(parser: SDSParser) -> None:
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert result.sheet.hazard_statements.expected_signal_word is None
+    assert result.sheet.hazard_statements.states_no_signal_word
 
 
 def test_absence_written_as_a_dash(parser: SDSParser) -> None:
@@ -1589,9 +1593,9 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         )
         result = parser.parse(_build_extraction(text))
         assert result.sheet.hazard_statements.signal_word is None
-        assert result.sheet.hazard_statements.expected_signal_word is None
+        assert result.sheet.hazard_statements.states_no_signal_word
 
-    @pytest.mark.spec("SDB-177")
+    @pytest.mark.spec("BIB-25")
     def test_h229_alone_derives_achtung_where_the_label_is_silent(
         self, parser: SDSParser
     ) -> None:
@@ -1601,7 +1605,7 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         )
         result = parser.parse(_build_extraction(text))
         assert result.sheet.hazard_statements.signal_word is None
-        assert result.sheet.hazard_statements.expected_signal_word == "Achtung"
+        assert clp_expected(result.sheet.hazard_statements).signal_word == "Achtung"
 
     @pytest.mark.spec("SDB-64")
     @pytest.mark.spec("SDB-155")

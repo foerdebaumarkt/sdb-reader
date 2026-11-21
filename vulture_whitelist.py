@@ -14,6 +14,9 @@ justify.
 # Part of the answer `current_state` gives (BIB-8); read by callers.
 instead_of  # current.py: Choice
 
+# Part of the answer `clp_expected` gives (BIB-25); read by callers.
+signal_word_differs  # expected.py: ClpExpected
+
 # Called by docs/conf.py for every page Sphinx reads (make docs); docs/ is
 # not among the scanned paths, its settings are names Sphinx reads.
 for_site  # tools/docs/site_links.py

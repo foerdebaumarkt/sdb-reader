@@ -93,8 +93,16 @@ def test_a_stored_text_reads_like_the_file(tmp_path: Path, text: str) -> None:
     assert from_file.extraction is not None
 
     stored = json.loads(json.dumps(sdb_reader.extraction_to_dict(from_file.extraction)))
+    images = (
+        json.loads(json.dumps(sdb_reader.label_images_to_dict(from_file.label_images)))
+        if from_file.label_images is not None
+        else None
+    )
     path.unlink()
-    from_text = sdb_reader.read_extraction(sdb_reader.extraction_from_dict(stored))
+    from_text = sdb_reader.read_extraction(
+        sdb_reader.extraction_from_dict(stored),
+        None if images is None else sdb_reader.label_images_from_dict(images),
+    )
 
     assert sdb_reader.reading_to_dict(from_text) == sdb_reader.reading_to_dict(
         from_file

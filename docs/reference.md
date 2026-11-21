@@ -25,6 +25,16 @@ What `read_sheet` and its relatives give back is described in [A reading and its
 
 .. autofunction:: read_extraction
 
+.. autofunction:: read_label_images
+
+.. autoclass:: LabelImages
+   :members:
+   :undoc-members:
+
+.. autoclass:: LabelImagesStatus
+   :members:
+   :undoc-members:
+
 .. autoclass:: SheetReading
    :members:
    :undoc-members:
@@ -96,6 +106,12 @@ See [Keeping texts](api/stored-texts.md) and [The JSON schema](api/schema.md).
 .. autofunction:: extraction_from_dict
 
 .. autofunction:: extraction_stage
+
+.. autofunction:: label_images_to_dict
+
+.. autofunction:: label_images_from_dict
+
+.. autofunction:: label_images_stage
 ```
 
 ## Judging a sheet
@@ -120,6 +136,18 @@ See [Judging a sheet](api/judging.md).
 .. autofunction:: predates_annex_ii
 
 .. autofunction:: predates_clp
+```
+
+## What the regulation expects
+
+See [What the regulation expects](api/expected.md).
+
+```{eval-rst}
+.. autofunction:: clp_expected
+
+.. autoclass:: ClpExpected
+   :members:
+   :undoc-members:
 ```
 
 ## Statements and pictograms
@@ -214,6 +242,15 @@ See [Keeping texts](api/stored-texts.md) for the two stage versions and
 [Messages and catalogs](api/messages.md) for the codes.
 
 ```{eval-rst}
+.. py:data:: LABEL_IMAGES_VERSION
+   :type: int
+
+   The version of the stage that reads the pictograms a label shows as
+   pictures from the PDF (SDB-179, BIB-24). It rises with every change after
+   which the same PDF can give other pictograms, and never falls. Compare
+   ``label_images_stage()``, which names it together with the PDF library's
+   version, with what stored pictures say.
+
 .. py:data:: EXTRACTION_VERSION
    :type: int
 

@@ -13,20 +13,21 @@ carry what the parser noticed.
 from sdb_reader import Message, sheet_findings
 
 findings = sheet_findings(sheet, reading.parser_result.warnings)
-assert findings == []
+assert findings == [Message("pictogram-not-found", {"pictogram": "GHS07"})]
 ```
 
-The example sheet is from 2024 and has nothing to report. The same sheet
-revised in 2019 would be reported:
+The example sheet is from 2024. It prints no pictogram, though its H315
+calls for GHS07; that is all there is to report. The same sheet revised in
+2019 would be reported for its age as well:
 
 ```python
 import dataclasses
 from datetime import date
 
 older = dataclasses.replace(sheet, revision_date=date(2019, 5, 2))
-[finding] = sheet_findings(older, reading.parser_result.warnings)
+findings = sheet_findings(older, reading.parser_result.warnings)
 
-assert finding == Message("predates-annex-ii", {"revised": "2019-05-02"})
+assert Message("predates-annex-ii", {"revised": "2019-05-02"}) in findings
 ```
 
 A date in the future cannot be right and is no date, but the library reads
@@ -70,6 +71,10 @@ assert "revised-in-future" not in [
 | `different-products` | `products` | is a file of several sheets whose product names are not one product's; only with `parts` |
 | `country-editions-differ` | `fields` | is a file holding one product's sheets for different countries that differ in these fields; only with `parts` |
 | `wording-deviates` | `statement`, `sheet`, `regulation` | words a statement differently from the regulation |
+| `signal-word-not-found` | `expected` | prints no signal word its codes call for; not where the label states it has none |
+| `pictogram-not-found` | `pictogram` | lacks a pictogram its H statements call for; only where the label was looked at as drawn (`drawing_read`), not where it states it has none, never GHS04 |
+| `pictogram-not-expected` | `pictogram` | names or shows a pictogram none of its H statements calls for |
+| `pictogram-precedence` | `pictogram`, `beside` | shows GHS07 beside a pictogram that Article 26 CLP lets it give way to |
 
 The checks behind two of them are exported for use on their own:
 `predates_annex_ii(revised)` and `contradicts_label(sheet)`.
@@ -88,7 +93,9 @@ assert contradicts_label(sheet) is False
 ```
 
 A finding is an observation. What your program does about it is its own
-decision.
+decision. The findings on signal word and pictograms come from
+`clp_expected`, which gives the same comparison as data
+([What the regulation expects](expected.md)).
 
 ## What the label states
 

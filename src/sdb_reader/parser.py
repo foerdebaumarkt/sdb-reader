@@ -14,7 +14,6 @@ import structlog
 from .extraction import ExtractionResult
 from .line_breaks import join_broken_words
 from .messages import Message
-from .pictograms import get_signal_word, pictograms_for, suppress_pictograms
 from .schema import (
     ContactInfo,
     HazardStatements,
@@ -1112,6 +1111,39 @@ NO_SIGNAL_WORD_PATTERN = re.compile(
     r"(?:kein(?:e[ns]?)?|ohne)[^\S\n]*(?=\n|$)",
     re.IGNORECASE,
 )
+# A label that states it carries no pictogram (SDB-180), the word anchored to
+# the label as for the signal word above:
+#   Gefahrenpiktogramme entfällt
+#   Piktogramme: nicht erforderlich
+#   Gefahrenpiktogramme
+#   -
+#   Kein Piktogramm, kein Signalwort, keine Gefahrenhinweise
+# The dash ends its line: "Symbol R - Sätze" is a heading of the old law.
+NO_PICTOGRAM_PATTERN = re.compile(
+    r"\bkein(?:e[ns]?)?[^\S\n]+(?:Gefahren)?piktogramm"
+    r"|\b(?:Gefahren)?(?:piktogramm(?:e|en|\(e\)|/e)?|symbole)\b[^\S\n]*"
+    r"(?:code[^\S\n]*)?(?::[^\S\n]*)?(?:\n[^\S\n]*)?"
+    r"(?:entfällt|nicht\s+(?:erforderlich|anwendbar|zutreffend|kennzeichnungspflichtig)"
+    r"|kein(?:e[nrs]?)?\b|[-\u2013\u2014]+[^\S\n]*(?=\n|$))",
+    re.IGNORECASE,
+)
+
+
+def states_no_pictograms(label_text: str) -> bool:
+    r"""Whether the label states that it carries no pictogram (SDB-180), of the
+    pictograms or of the whole label (UNLABELLED_PATTERN, as for the signal
+    word).
+
+    >>> states_no_pictograms("Gefahrenpiktogramme entfällt\nSignalwort entfällt")
+    True
+    >>> states_no_pictograms("Gefahrenpiktogramme\nGHS07\nSignalwort Achtung")
+    False
+    """
+    return bool(
+        NO_PICTOGRAM_PATTERN.search(label_text) or UNLABELLED_PATTERN.search(label_text)
+    )
+
+
 # A product that carries no label at all carries no signal word either. These
 # sheets never print a Signalwort row, because there is no label to print it on
 # -- they say so in section 2.2 instead:
@@ -2119,8 +2151,14 @@ def _parse_hazard_statements(
         signal_word=_strongest_signal_word(r.signal_word for r in readings),
         pictograms=sorted(set().union(*(r.pictograms for r in readings))),
     )
-    hazard_statements.expected_signal_word = _expected_signal_word(
-        hazard_statements.signal_word, readings
+    # The file's label states none only where every sheet's label does
+    # (SDB-176, SDB-180).
+    hazard_statements.states_no_signal_word = (
+        hazard_statements.signal_word is None
+        and all(r.states_no_signal_word for r in readings)
+    )
+    hazard_statements.states_no_pictograms = all(
+        r.states_no_pictograms for r in readings
     )
     # A code one sheet's label prints is printed, even where another sheet of
     # the file only prints its sentence (SDB-174).
@@ -2612,25 +2650,16 @@ class _LabelReading:
     signal_word: str | None
     pictograms: set[str]
     warnings: list[Message]
-    # The signal word the codes call for where the label says nothing about
-    # one (SDB-177); never the reading's signal word.
-    expected_signal_word: str | None = None
+    # Whether the label states it has no signal word (SDB-176) or no
+    # pictogram (SDB-180).
+    states_no_signal_word: bool = False
+    states_no_pictograms: bool = False
     # The sheet's sentence read as P501 by SDB-166, where the label prints no
     # P501 code.
     disposal: str | None = None
     # The codes the parser assigned to sentences the label prints without
     # them (SDB-174): SDB-6, SDB-28, SDB-163, SDB-166.
     from_wording: set[str] = field(default_factory=set)
-
-
-def _expected_signal_word(
-    printed: str | None, readings: Iterable[_LabelReading]
-) -> str | None:
-    """The signal word the united label's codes call for (SDB-177): none where
-    one of the file's sheets prints a signal word."""
-    if printed is not None:
-        return None
-    return _strongest_signal_word(r.expected_signal_word for r in readings)
 
 
 def _strongest_signal_word(words: Iterable[str | None]) -> str | None:
@@ -2802,29 +2831,10 @@ def _read_label(
     # Two sentences of one effect each are the Annex's joined code (SDB-155).
     h_code_set = with_effects_joined(set(hazard_codes))
 
-    # Fallback: derive pictograms from H-codes when not found in PDF text
-    if not pictograms and h_code_set:
-        derived = pictograms_for(h_code_set)
-        if derived:
-            pictograms = sorted(derived)
-            warnings.append(Message("pictograms-derived", {"pictograms": pictograms}))
-    else:
-        # Always enforce CLP Art. 26 precedence rules, even on PDF-extracted codes.
-        pdf_set = set(pictograms)
-        enforced = pictograms_for(h_code_set) if h_code_set else pdf_set
-        # A pictogram listed in the PDF or implied by the codes can suppress;
-        # PDF-listed codes our mapping does not know are kept as they are.
-        candidates = pdf_set | enforced
-        removed = candidates - suppress_pictograms(candidates, h_code_set)
-        if removed & pdf_set:
-            pictograms = sorted(pdf_set - removed)
-
-    # The reading keeps the printed signal word only (SDB-176). Where the
-    # label says nothing about one, the word its codes call for stands apart
-    # (SDB-177). A sheet that prints "Kein Signalwort" has answered.
-    expected_signal_word = None
-    if not signal_word_stated and (h_code_set or supplemental):
-        expected_signal_word = get_signal_word(h_code_set | set(supplemental))
+    # The pictograms are the ones the label names (SDB-179); those it shows as
+    # pictures are added after the parse (reading.py). Nothing is derived from
+    # the codes, and a printed pictogram Article 26 would leave out stays, as
+    # printed; what the codes call for is clp_expected's (BIB-25).
 
     return _LabelReading(
         hazard_codes=h_code_set,
@@ -2834,7 +2844,8 @@ def _read_label(
         signal_word=signal_word,
         pictograms=set(pictograms),
         warnings=warnings,
-        expected_signal_word=expected_signal_word,
+        states_no_signal_word=signal_word is None and signal_word_stated,
+        states_no_pictograms=states_no_pictograms(hazard_section_text),
         disposal=disposal,
         from_wording=(h_code_set if hazard_by_wording else set())
         | precautionary_by_wording

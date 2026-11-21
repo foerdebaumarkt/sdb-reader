@@ -93,6 +93,7 @@ api/getting-started
 api/reading
 api/messages
 api/judging
+api/expected
 api/statements
 api/stored-texts
 api/current-sheet

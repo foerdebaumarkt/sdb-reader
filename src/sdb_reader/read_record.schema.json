@@ -48,6 +48,10 @@
       },
       "description": "The label's H, P and EUH statements, each with the sheet's wording and the regulation's. Only for a German safety data sheet."
     },
+    "clp_expected": {
+      "$ref": "#/$defs/clp_expected",
+      "description": "Only for a German safety data sheet: what the CLP Regulation expects of the file's label (SDW-48). Not required, so that a record written before stays valid."
+    },
     "sheet_count": {
       "type": "integer",
       "minimum": 1,
@@ -400,13 +404,17 @@
               },
               "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
             },
-            "expected_signal_word": {
-              "enum": [
-                "Gefahr",
-                "Achtung",
-                null
-              ],
-              "description": "The signal word the label's codes call for where the label says nothing about one (SDB-177); never the signal word of the reading, which is only the printed one (SDB-176). Missing in a reading stored before."
+            "drawing_read": {
+              "type": "boolean",
+              "description": "Whether the label was looked at as drawn and every red diamond in it was named (SDB-179). Missing in a reading stored before."
+            },
+            "states_no_signal_word": {
+              "type": "boolean",
+              "description": "Whether the label states that it has no signal word, as \"Kein Signalwort\" (SDB-176). Missing in a reading stored before."
+            },
+            "states_no_pictograms": {
+              "type": "boolean",
+              "description": "Whether the label states that it has no pictogram, as \"Piktogramme: keine\" (SDB-180). Missing in a reading stored before."
             }
           }
         },
@@ -535,6 +543,10 @@
             "$ref": "#/$defs/statement"
           }
         },
+        "clp_expected": {
+          "$ref": "#/$defs/clp_expected",
+          "description": "What the CLP Regulation expects of this sheet's label (SDW-48). Not required, so that a record written before stays valid."
+        },
         "warnings": {
           "type": "array",
           "items": {
@@ -574,6 +586,9 @@
                 "label-without-hazard-statement",
                 "label-without-precautionary-statement",
                 "hazard-statement-not-in-label",
+                "pictogram-not-found",
+                "pictogram-not-expected",
+                "pictogram-precedence",
                 "signal-word-not-found",
                 "different-products",
                 "country-editions-differ",
@@ -754,6 +769,7 @@
             "euh-wording-outside-label",
             "issued-in-future",
             "label-before-clp",
+            "label-images-not-read",
             "label-line-unassigned",
             "label-not-found",
             "statement-too-long",
@@ -799,7 +815,10 @@
             "pdf-not-found",
             "pdf-too-large",
             "pdf-unreadable",
-            "pictograms-derived",
+            "pictogram-not-expected",
+            "pictogram-not-found",
+            "pictogram-precedence",
+            "pictograms-not-recognised",
             "precautionary-wording-unclear",
             "predates-annex-ii",
             "read-by-ocr-no-text-layer",
@@ -826,6 +845,70 @@
         "message": {
           "type": "string",
           "description": "The sentence, from the message catalog of the language chosen."
+        }
+      }
+    },
+    "clp_expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_word",
+        "pictograms",
+        "signal_word_missing",
+        "signal_word_differs",
+        "pictograms_missing",
+        "pictograms_not_expected",
+        "pictograms_left_out"
+      ],
+      "description": "What the CLP Regulation expects of the label, from its codes, and where the label as read differs (clp_expected, BIB-25; SDW-48). Not part of the reading: the label's own signal word and pictograms stand under sheet.hazard_statements.",
+      "properties": {
+        "signal_word": {
+          "enum": [
+            "Gefahr",
+            "Achtung",
+            null
+          ],
+          "description": "The signal word the H and EUH codes call for (Annex I); never from the pictograms."
+        },
+        "pictograms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^GHS\\d{1,2}$"
+          },
+          "description": "The pictograms the H codes call for, with the precedence of Article 26."
+        },
+        "signal_word_missing": {
+          "type": "boolean",
+          "description": "The codes call for a signal word, and the label as read has none."
+        },
+        "signal_word_differs": {
+          "type": "boolean",
+          "description": "The label as read has a signal word other than the one the codes call for."
+        },
+        "pictograms_missing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^GHS\\d{1,2}$"
+          },
+          "description": "Called for, and not in the label as read."
+        },
+        "pictograms_not_expected": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^GHS\\d{1,2}$"
+          },
+          "description": "In the label as read, and no H code calls for them."
+        },
+        "pictograms_left_out": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^GHS\\d{1,2}$"
+          },
+          "description": "In the label as read and called for, but Article 26 leaves them out beside another pictogram it has."
         }
       }
     }
@@ -864,7 +947,8 @@
           "cover_page": false,
           "display_term": false,
           "parts": false,
-          "oldest_sheet": false
+          "oldest_sheet": false,
+          "clp_expected": false
         }
       }
     }

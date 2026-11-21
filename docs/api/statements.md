@@ -93,5 +93,6 @@ assert sorted(pictograms_for({"H300", "H302"})) == ["GHS06"]
 assert sorted(pictograms_for(set(sheet.hazard_statements.hazard_codes))) == ["GHS07"]
 ```
 
-The parser does this itself where a label names no pictogram, and says so
-with the message `pictograms-derived`.
+The reading's `pictograms` are only those the label prints
+([A reading and its parts](reading.md)); `clp_expected` compares the two
+([What the regulation expects](expected.md)).

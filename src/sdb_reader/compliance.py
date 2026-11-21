@@ -14,6 +14,7 @@ from dataclasses import asdict
 from datetime import date
 from enum import StrEnum
 
+from .expected import clp_expected
 from .messages import Message
 from .parser import (
     CLASSIFIED_BEFORE_CLP,
@@ -336,29 +337,92 @@ def _label_is_exempt(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
     return LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES
 
 
+# The pictogram that makes Article 26 leave out GHS07, in the order
+# suppress_pictograms tries them.
+_GHS07_GIVES_WAY_TO = ("GHS06", "GHS05", "GHS08")
+
+
+def pictogram_findings(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    """What the label's pictograms say against its H codes (SDB-181), from
+    ``clp_expected`` (BIB-25).
+
+    ``pictogram-not-found`` for each pictogram the codes call for that the
+    label neither names nor shows, only where the label was looked at as
+    drawn and every red diamond in it was named (``drawing_read``), not where
+    the label states it has none, and not for GHS04 (CLP Article 33);
+    ``pictogram-not-expected`` for each pictogram the label names or shows
+    that none of its H codes calls for; ``pictogram-precedence`` for a
+    pictogram the label shows although Article 26 CLP leaves it out beside
+    another. Not for an article, a classification under the old law, or a
+    label under the old directives on a sheet dated before 1 June 2015
+    (SDB-170), and nothing where the label carries no H code.
+
+    >>> from sdb_reader import HazardStatements
+    >>> label = HazardStatements(
+    ...     hazard_codes=["H225", "H319"],
+    ...     pictograms=["GHS02", "GHS09"],
+    ...     drawing_read=True,
+    ... )
+    >>> sheet = SafetyDataSheet(None, None, None, None, "de", hazard_statements=label)
+    >>> [(m.code, m.params["pictogram"]) for m in pictogram_findings(sheet, [])]
+    [('pictogram-not-found', 'GHS07'), ('pictogram-not-expected', 'GHS09')]
+    """
+    label = sheet.hazard_statements
+    noted = {warning.code for warning in parser_warnings}
+    if not label.hazard_codes or _label_is_exempt(sheet, noted):
+        return []
+    expected = clp_expected(label)
+    findings: list[Message] = []
+    if label.drawing_read and not label.states_no_pictograms:
+        findings.extend(
+            Message("pictogram-not-found", {"pictogram": code})
+            for code in expected.pictograms_missing
+            if code != "GHS04"
+        )
+    findings.extend(
+        Message("pictogram-not-expected", {"pictogram": code})
+        for code in expected.pictograms_not_expected
+    )
+    printed = set(label.pictograms)
+    findings.extend(
+        Message(
+            "pictogram-precedence",
+            {
+                "pictogram": code,
+                "beside": next(c for c in _GHS07_GIVES_WAY_TO if c in printed),
+            },
+        )
+        for code in expected.pictograms_left_out
+    )
+    return findings
+
+
 def signal_word_not_found(
     sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
 ) -> list[Message]:
     """The signal word the label's codes call for and the parser did not find
-    printed (SDB-178), with the word under ``expected``.
+    printed (SDB-178), with the word under ``expected``, from ``clp_expected``
+    (BIB-25).
 
-    The reading keeps the printed signal word only (SDB-176); the one the codes
-    call for stands in ``expected_signal_word``. Not for an article, a
-    classification under the old law, or a label under the old directives on a
-    sheet dated before 1 June 2015 (SDB-170).
+    Not where the label states it has none (SDB-176), and not for an article,
+    a classification under the old law, or a label under the old directives
+    on a sheet dated before 1 June 2015 (SDB-170).
 
     >>> from sdb_reader import HazardStatements
-    >>> label = HazardStatements(hazard_codes=["H225"], expected_signal_word="Gefahr")
+    >>> label = HazardStatements(hazard_codes=["H225"])
     >>> [m.params for m in signal_word_not_found(
     ...     SafetyDataSheet(None, None, None, None, "de", hazard_statements=label), [])]
     [{'expected': 'Gefahr'}]
     """
-    expected = sheet.hazard_statements.expected_signal_word
-    if expected is None or sheet.hazard_statements.signal_word is not None:
+    label = sheet.hazard_statements
+    expected = clp_expected(label)
+    if not expected.signal_word_missing or label.states_no_signal_word:
         return []
     if _label_is_exempt(sheet, {warning.code for warning in parser_warnings}):
         return []
-    return [Message("signal-word-not-found", {"expected": expected})]
+    return [Message("signal-word-not-found", {"expected": expected.signal_word})]
 
 
 # The order of precedence Annex III Part 1 sets under Article 27 (consolidated
@@ -816,6 +880,7 @@ def sheet_findings(
 
     if contradicts_label(sheet):
         findings.append(Message("classification-contradicts-label"))
+    findings.extend(pictogram_findings(sheet, parser_warnings))
 
     findings.extend(label_not_found(sheet, parser_warnings))
     findings.extend(hazard_statements_not_in_label(sheet, parser_warnings))
