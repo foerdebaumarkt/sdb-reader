@@ -129,8 +129,14 @@ def _file_notes(record: Mapping[str, Any], seen: set[str]) -> list[str]:
 
 
 def _part_notes(part: Mapping[str, Any]) -> list[str]:
+    """What is noted about one sheet: its age first (SDW-46), then the reading."""
     without = _repeated(part["sheet"], part["statements"])
-    return _unique(_sentences(part["warnings"], without=without), set())
+
+    def said() -> Iterator[str]:
+        yield from _sentences(part.get("findings", ()))
+        yield from _sentences(part["warnings"], without=without)
+
+    return _unique(said(), set())
 
 
 def _notes(record: Mapping[str, Any]) -> tuple[list[list[str]], list[str]]:
@@ -313,9 +319,23 @@ def report(record: Mapping[str, Any], name: str, catalog: Catalog) -> list[str]:
         _INDENT * 2
         + _say(catalog, "show-needs-sheet" if needs else "show-needs-no-sheet")
     )
+    lines.append(_INDENT * 2 + _oldest(record, catalog))
     lines.append("")
     lines.extend(_indented(_notes_block(whole, catalog), 2))
     return lines
+
+
+def _oldest(record: Mapping[str, Any], catalog: Catalog) -> str:
+    """The sheet of the file with the oldest date, as the record names it (SDW-45)."""
+    oldest = record.get("oldest_sheet")
+    if not oldest:
+        return _say(catalog, "show-oldest-none")
+    code = (
+        "show-oldest-revised"
+        if oldest["dated_by"] == "revision"
+        else "show-oldest-issued"
+    )
+    return _say(catalog, code, number=oldest["sheet"], date=oldest["date"])
 
 
 def _cover(record: Mapping[str, Any], catalog: Catalog, *, short: bool) -> str | None:

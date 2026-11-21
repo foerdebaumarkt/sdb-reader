@@ -622,6 +622,82 @@ def _edition_differences(one: SafetyDataSheet, other: SafetyDataSheet) -> list[s
     return names
 
 
+def counted_date(sheet: SafetyDataSheet, today: date | None = None) -> date | None:
+    """The date a sheet's age is judged by (SDW-7, SDW-34).
+
+    Its revision date, else its issue date; with *today*, neither of them
+    when it lies after that day (SDB-137).
+    """
+    return next(
+        (
+            day
+            for day in (sheet.revision_date, sheet.issue_date)
+            if day is not None and (today is None or day <= today)
+        ),
+        None,
+    )
+
+
+def _dated(sheet: SafetyDataSheet, today: date | None) -> list[Message]:
+    """A date in the future, and the sheet's age: undated or before 2021."""
+    findings: list[Message] = []
+    stated = sheet.revision_date or sheet.issue_date
+    if today is not None and stated is not None and stated > today:
+        findings.append(
+            Message(
+                "revised-in-future",
+                {"revised": stated.isoformat(), "today": today.isoformat()},
+            )
+        )
+    revised = counted_date(sheet, today)
+    if revised is None:
+        findings.append(Message("undated"))
+    elif predates_annex_ii(revised):
+        findings.append(Message("predates-annex-ii", {"revised": revised.isoformat()}))
+    return findings
+
+
+def _old_format(sheet: SafetyDataSheet, revised: date | None) -> list[Message]:
+    """A sheet revised from 2021 on that follows the layout before (SDW-9)."""
+    if (
+        revised is not None
+        and not predates_annex_ii(revised)
+        and requires_sheet(sheet)
+        and lacks_annex_ii_2020(sheet.section_text)
+    ):
+        return [Message("old-format", {"revised": revised.isoformat()})]
+    return []
+
+
+def age_findings(sheet: SafetyDataSheet, today: date | None = None) -> list[Message]:
+    """The findings on one sheet's age, judged on its own dates (SDW-46).
+
+    The same as for a file that is this sheet: a date in the future,
+    undated, revised before 2021, or the layout before 2020/878.
+    """
+    return [*_dated(sheet, today), *_old_format(sheet, counted_date(sheet, today))]
+
+
+def oldest_sheet(
+    parts: Sequence[SheetPart], today: date | None = None
+) -> tuple[int, date, str] | None:
+    """The sheet of a file of several with the oldest date (SDW-45).
+
+    Its number in the file's order (from 1), its date and whether that is
+    its revision or its issue date; the first where several share the
+    oldest; None where no sheet carries a date that counts.
+    """
+    best: tuple[int, date, str] | None = None
+    for number, part in enumerate(parts, start=1):
+        day = counted_date(part.sheet, today)
+        if day is None:
+            continue
+        dated_by = "revision" if day == part.sheet.revision_date else "issue"
+        if best is None or day < best[1]:
+            best = (number, day, dated_by)
+    return best
+
+
 def sheet_findings(
     sheet: SafetyDataSheet,
     parser_warnings: Sequence[Message],
@@ -683,26 +759,8 @@ def sheet_findings(
                 )
             )
 
-    stated = sheet.revision_date or sheet.issue_date
-    revised = next(
-        (
-            day
-            for day in (sheet.revision_date, sheet.issue_date)
-            if day is not None and (today is None or day <= today)
-        ),
-        None,
-    )
-    if today is not None and stated is not None and stated > today:
-        findings.append(
-            Message(
-                "revised-in-future",
-                {"revised": stated.isoformat(), "today": today.isoformat()},
-            )
-        )
-    if revised is None:
-        findings.append(Message("undated"))
-    elif predates_annex_ii(revised):
-        findings.append(Message("predates-annex-ii", {"revised": revised.isoformat()}))
+    findings.extend(_dated(sheet, today))
+    revised = counted_date(sheet, today)
 
     hazards = sheet.hazard_statements
     state = classification(hazards.hazard_codes, hazards.signal_word, parser_warnings)
@@ -710,13 +768,7 @@ def sheet_findings(
         findings.append(Message("classification-undetermined"))
     if state is Classification.OLD_SYSTEM:
         findings.append(Message("old-classification"))
-    if (
-        revised is not None
-        and not predates_annex_ii(revised)
-        and requires_sheet(sheet)
-        and lacks_annex_ii_2020(sheet.section_text)
-    ):
-        findings.append(Message("old-format", {"revised": revised.isoformat()}))
+    findings.extend(_old_format(sheet, revised))
 
     if (
         state is Classification.NOT_CLASSIFIED

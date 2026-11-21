@@ -161,6 +161,9 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `show-line-cover-page-display` | `term` | mit Deckblatt (Display: „{term}“) |
 | `show-sheet-of` | `number`, `count` | Blatt {number} von {count} |
 | `show-whole-file` | – | Die Datei als Ganzes |
+| `show-oldest-revised` | `number`, `date` | Ältestes Blatt: Blatt {number}, überarbeitet am {date} |
+| `show-oldest-issued` | `number`, `date` | Ältestes Blatt: Blatt {number}, ausgegeben am {date} |
+| `show-oldest-none` | – | Ältestes Blatt: keines trägt ein Datum |
 | `show-label-product` | – | Produkt |
 | `show-label-supplier` | – | Lieferant |
 | `show-label-contact` | – | Kontakt |

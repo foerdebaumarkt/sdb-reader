@@ -204,6 +204,7 @@ MIX_DE = """mix.pdf
 
   Die Datei als Ganzes
     Braucht ein Sicherheitsdatenblatt: ja
+    Ältestes Blatt: Blatt 1, überarbeitet am 12.03.2024
 
     Hinweise
       - Die Datei enthält Sicherheitsdatenblätter verschiedener Produkte: Musterlack seidenmatt, Musterhärter
@@ -245,6 +246,7 @@ MIX_EN = """mix.pdf
 
   The file as a whole
     Needs a safety data sheet: yes
+    Oldest sheet: sheet 1, revised 2024-03-12
 
     Notes
       - The file holds safety data sheets of different products: Musterlack seidenmatt, Musterhärter
@@ -633,6 +635,100 @@ def test_a_note_stands_with_every_sheet_that_carries_it_and_not_with_the_file() 
         "  Vor den Blättern steht ein Deckblatt; es wird nicht gelesen."
     )
     assert show.notes_count(record) == 5
+
+
+def _dated(sheet: str, day: str) -> str:
+    """The sheet, revised on another day."""
+    return sheet.replace("12.03.2024", day)
+
+
+@pytest.mark.spec("SDW-45")
+@pytest.mark.parametrize(
+    ("text", "oldest", "line"),
+    [
+        (
+            PAINT + _dated(HARDENER, "12.03.2014"),
+            {"sheet": 2, "date": "2014-03-12", "dated_by": "revision"},
+            "Ältestes Blatt: Blatt 2, überarbeitet am 12.03.2014",
+        ),
+        (
+            PAINT + BARE,
+            {"sheet": 2, "date": "2023-06-05", "dated_by": "issue"},
+            "Ältestes Blatt: Blatt 2, ausgegeben am 05.06.2023",
+        ),
+        # A date after the day of the run does not count.
+        (
+            _dated(PAINT, "12.03.2027") + HARDENER,
+            {"sheet": 2, "date": "2024-03-12", "dated_by": "revision"},
+            "Ältestes Blatt: Blatt 2, überarbeitet am 12.03.2024",
+        ),
+        # Of two sheets of the same date, the first.
+        (
+            PAINT + HARDENER,
+            {"sheet": 1, "date": "2024-03-12", "dated_by": "revision"},
+            "Ältestes Blatt: Blatt 1, überarbeitet am 12.03.2024",
+        ),
+    ],
+)
+def test_a_file_of_several_sheets_names_the_sheet_with_the_oldest_date(
+    text: str, oldest: dict[str, Any], line: str
+) -> None:
+    record = _record(text)
+
+    assert record["oldest_sheet"] == oldest
+    whole = show.report(record, "x.pdf", shipped_catalog())
+    whole = whole[whole.index("  Die Datei als Ganzes") :]
+    assert whole[2] == "    " + line
+
+
+@pytest.mark.spec("SDW-45")
+def test_the_oldest_sheet_is_null_where_no_sheet_carries_a_date_that_counts() -> None:
+    record = _record(
+        _dated(PAINT, "12.03.2027") + _dated(HARDENER, "01.01.2028"), language="en"
+    )
+
+    assert record["oldest_sheet"] is None
+    assert "    Oldest sheet: none carries a date" in show.report(
+        record, "x.pdf", shipped_catalog("en")
+    )
+
+
+@pytest.mark.spec("SDW-45")
+def test_the_oldest_sheet_leaves_the_file_s_reading_and_findings_as_they_were() -> (
+    None
+):
+    record = _record(PAINT + _dated(HARDENER, "12.03.2014"))
+
+    # The file is dated by the newest date it names (SDB-20).
+    assert record["sheet"]["revision_date"] == "2024-03-12"
+    assert "predates-annex-ii" not in {f["code"] for f in record["findings"]}
+    # A file of one sheet has no oldest sheet.
+    assert "oldest_sheet" not in _record(PAINT)
+
+
+@pytest.mark.spec("SDW-46")
+def test_each_sheet_of_a_file_carries_the_findings_on_its_own_age() -> None:
+    record = _record(PAINT + _dated(HARDENER, "12.03.2014"))
+
+    first, second = record["parts"]
+    assert first["findings"] == []
+    assert [f["code"] for f in second["findings"]] == ["predates-annex-ii"]
+    assert second["findings"][0]["params"] == {"revised": "2014-03-12"}
+
+    future = _record(PAINT + _dated(HARDENER, "12.03.2027"))["parts"][1]
+    assert [f["code"] for f in future["findings"]] == ["revised-in-future", "undated"]
+
+
+@pytest.mark.spec("SDW-46")
+def test_a_sheet_s_age_stands_with_the_sheet_and_not_again_with_the_file() -> None:
+    record = _record(PAINT + _dated(HARDENER, "12.03.2027"))
+    sentence = "      - " + record["parts"][1]["findings"][0]["message"]
+
+    report = show.report(record, "x.pdf", shipped_catalog())
+
+    whole = report.index("  Die Datei als Ganzes")
+    assert report.index(sentence) < whole
+    assert report.count(sentence) == 1
 
 
 @pytest.mark.spec("SDW-40")

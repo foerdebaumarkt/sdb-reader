@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # - **SDB-4.** Die Regel.
 # - **SDW-12.** *Zurückgezogen 2026-11-16:* ...
-# - **SDB-22.** *Vorgeschlagen:* ...
+# - **SDW-99.** *Vorgeschlagen:* ...
 # The specs are German (specs/README.md), so are the markers.
 _RULE = re.compile(r"^- \*\*([A-Z]+-\d+)\.\*\*(.*)$", re.MULTILINE)
 _WITHDRAWN = re.compile(r"^\s*\*Zurückgezogen \d{4}-\d{2}-\d{2}")
@@ -104,7 +104,7 @@ def test_the_check_reads_the_rules() -> None:
     assert rules["SDB-4"] == ACTIVE
     assert rules["SDB-83"] == WITHDRAWN
     assert rules["SDW-12"] == WITHDRAWN
-    assert rules["SDB-22"] == PROPOSED
+    assert rules["SDB-22"] == WITHDRAWN
 
 
 def test_the_check_sees_a_violation(tmp_path: Path) -> None:

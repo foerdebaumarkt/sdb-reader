@@ -238,6 +238,8 @@ For such a file the record gives two readings side by side:
   `parser.warnings` says so.
 - `parts` lists each sheet read on its own, in the file's order, as if it
   were a file by itself.
+- `oldest_sheet` names the sheet with the oldest date; see
+  [The oldest sheet](#the-oldest-sheet).
 
 ```json
 {
@@ -247,14 +249,17 @@ For such a file the record gives two readings side by side:
     {
       "sheet": {"product_identifier": "Harz", "revision_date": "2022-07-20", "hazard_statements": {"hazard_codes": ["H315"], "signal_word": "Achtung"}},
       "statements": [{"code": "H315", "sheet": "Verursacht Hautreizungen.", "regulation": "Verursacht Hautreizungen."}],
-      "warnings": []
+      "warnings": [],
+      "findings": []
     },
     {
       "sheet": {"product_identifier": "Härter", "revision_date": "2021-05-03", "hazard_statements": {"hazard_codes": ["H318"], "signal_word": "Gefahr"}},
       "statements": [{"code": "H318", "sheet": "Verursacht schwere Augenschäden.", "regulation": "Verursacht schwere Augenschäden."}],
-      "warnings": []
+      "warnings": [],
+      "findings": []
     }
-  ]
+  ],
+  "oldest_sheet": {"sheet": 2, "date": "2021-05-03", "dated_by": "revision"}
 }
 ```
 
@@ -272,13 +277,35 @@ tell:
 Each entry holds `sheet` (with the fingerprint `content_hash` of that
 sheet's text), `statements` and `warnings`, what was noticed while reading
 that sheet, and names its countries (`countries`, empty where none is
-recognised) and its product (`product_identifier`). There are no findings
-per sheet. A later sheet begins at the title "Sicherheitsdatenblatt" above
+recognised) and its product (`product_identifier`). Its `findings` hold
+the findings on that sheet's age, judged on its own dates as for a file
+that is this sheet: `revised-in-future`, `undated`, `predates-annex-ii` and
+`old-format`; the list is empty where there is none. There are no other
+findings per sheet: a finding is about the product, and whether one sheet
+is the product the program does not know. A later sheet begins at the title "Sicherheitsdatenblatt" above
 its section 1, so that the date and version in the header of its first page
 count for it. A list of changes that names the sections, and the same sheet
 once more in another language, are no further sheets.
 [Comparing two runs](comparing-runs.md) compares the file's reading, not
 `parts`.
+
+### The oldest sheet
+
+The file's reading carries the newest date the file names, and its
+findings on age follow that date. A file whose new resin stands beside a
+hardener from 2014 is therefore not reported as old. `oldest_sheet` names
+the sheet you would judge such a file by:
+
+| Key | Meaning |
+| --- | --- |
+| `sheet` | the sheet's number in the file's order, from 1 |
+| `date` | its date: the revision date, else the issue date; a date after the day of the run does not count |
+| `dated_by` | `revision` or `issue`: which of the two the date is |
+
+Where several sheets share the oldest date, the first counts; where no
+sheet carries a date that counts, `oldest_sheet` is `null`. A file of one
+sheet has no `oldest_sheet`. Which sheet's date counts for your product is
+yours to decide; the file's reading and findings stay as they are.
 
 ### What the sheets say about each other
 

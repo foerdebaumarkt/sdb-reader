@@ -82,17 +82,26 @@ set.pdf
     Produkt        Musterkleber Komponente B
     …
 
+    Hinweise
+      - Überarbeitet am 12.03.2014, vor dem 01.01.2021: Das Blatt kann Anhang II der REACH-Verordnung in der Fassung der Verordnung (EU) 2020/878 nicht erfüllen.
+
   Die Datei als Ganzes
     Braucht ein Sicherheitsdatenblatt: ja
+    Ältestes Blatt: Blatt 2, überarbeitet am 12.03.2014
 
     Hinweise
       - Die Datei enthält 2 Sicherheitsdatenblätter; ihre Kennzeichnungen sind zusammengeführt.
 ```
 
 Jedes Blatt steht für sich, in der Reihenfolge der Datei, mit den Hinweisen,
-die zu ihm gehören. Der letzte Block gilt der Datei: ob das Produkt ein Blatt
-braucht, wenn man alle Blätter zusammennimmt, und die Hinweise, die die
-Blätter vergleichen oder die Datei betreffen. Ein Deckblatt vor den Blättern
+die zu ihm gehören, darunter die Befunde zu seinem eigenen Alter. Der letzte
+Block gilt der Datei: ob das Produkt ein Blatt braucht, wenn man alle Blätter
+zusammennimmt, welches Blatt das älteste Datum trägt (überarbeitet, sonst
+ausgegeben), und die Hinweise, die die Blätter vergleichen oder die Datei
+betreffen. Ein Hinweis, den ein Blatt trägt, steht bei der Datei nicht noch
+einmal. Das Datum der Datei ist das neueste, das sie nennt; eine Datei mit
+einem alten Blatt neben einem neuen ist darum nur an diesem Blatt als alt zu
+erkennen. Ein Deckblatt vor den Blättern
 wird genannt und nicht gelesen; nennt es ein Display, steht das Wort dabei.
 
 ## Eine Datei, die kein Blatt ist

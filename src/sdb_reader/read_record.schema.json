@@ -72,6 +72,36 @@
       },
       "description": "Only for a file that holds several sheets: each sheet read on its own, in the file's order (SDB-118). The keys sheet, statements, parser and findings beside it are the file's: its sheets united."
     },
+    "oldest_sheet": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "sheet",
+        "date",
+        "dated_by"
+      ],
+      "properties": {
+        "sheet": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The sheet's number in the file's order."
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "dated_by": {
+          "enum": [
+            "revision",
+            "issue"
+          ]
+        }
+      },
+      "description": "Only for a file that holds several sheets: the sheet with the oldest date that counts for age (revision date, else issue date, none after the day of the run); the first where several share it; null where no sheet carries such a date (SDW-45). The file's own dates stay the newest it names. Not required, so that a record written before stays valid."
+    },
     "findings": {
       "type": "array",
       "items": {
@@ -511,6 +541,13 @@
             "$ref": "#/$defs/message"
           },
           "description": "What the parser noted while reading this sheet."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          },
+          "description": "The findings on this sheet's age, judged on its own dates as for a file that is this sheet: revised-in-future, undated, predates-annex-ii, old-format (SDW-46). Not required, so that a record written before stays valid."
         }
       }
     },
@@ -677,6 +714,9 @@
             "show-line-cover-page-display",
             "show-sheet-of",
             "show-whole-file",
+            "show-oldest-revised",
+            "show-oldest-issued",
+            "show-oldest-none",
             "show-label-product",
             "show-label-supplier",
             "show-label-contact",
@@ -821,7 +861,8 @@
           "sheet_count": false,
           "cover_page": false,
           "display_term": false,
-          "parts": false
+          "parts": false,
+          "oldest_sheet": false
         }
       }
     }

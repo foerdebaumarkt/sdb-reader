@@ -165,7 +165,7 @@ def test_a_file_of_two_sheets_gives_each_sheet_beside_the_file_s_reading(
     assert not list(_validator().iter_errors(record))
     assert record["sheet_count"] == 2
     first, second = record["parts"]
-    assert set(first) == {"sheet", "statements", "warnings"}
+    assert set(first) == {"sheet", "statements", "warnings", "findings"}
     assert set(first["sheet"]) == set(record["sheet"])
     assert first["sheet"]["hazard_statements"]["hazard_codes"] == ["H315"]
     assert first["sheet"]["hazard_statements"]["signal_word"] == "Achtung"
