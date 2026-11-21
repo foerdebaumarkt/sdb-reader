@@ -356,7 +356,7 @@ def _label(record: Mapping[str, Any]) -> Mapping[str, Any]:
 
 
 def _wordings(record: Mapping[str, Any]) -> dict[str, dict[str, str]]:
-    """Per code as printed, its wordings by what identifies them (SDW-6)."""
+    """Per code as printed, its wordings by what identifies them (SDW-27)."""
     if "asked" in record:
         label = _label(record)
         pairs: Iterable[tuple[str, str | None]] = (

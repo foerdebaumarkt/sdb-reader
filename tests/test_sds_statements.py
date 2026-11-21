@@ -755,19 +755,89 @@ class TestLabelStatements:
         assert [s.code for s in label_statements(hazards)] == ["P102"]
 
 
-@pytest.mark.spec("SDW-6")
+_EYES = "BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser "
+_SKIN = (
+    "BEI BERÜHRUNG MIT DER HAUT (oder dem Haar): Alle kontaminierten "
+    "Kleidungsstücke sofort ausziehen. "
+)
+
+
+@pytest.mark.spec("SDW-50")
 class TestDeviatesFromRegulation:
-    def test_an_older_wording_deviates(self) -> None:
+    def test_another_word_deviates(self) -> None:
         assert deviates_from_regulation(
             "P305+P351+P338",
-            "BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser "
-            "ausspülen. Eventuell vorhandene Kontaktlinsen nach Möglichkeit "
-            "entfernen. Weiter ausspülen.",
+            _EYES + "spülen. Eventuell vorhandene Kontaktlinsen nach Möglichkeit "
+            "entfernen. Weiter waschen.",
+        )
+
+    def test_a_missing_word_deviates(self) -> None:
+        assert deviates_from_regulation(
+            "P102", "Darf nicht in Hände von Kindern gelangen."
+        )
+
+    def test_a_combination_in_its_parts_wordings_does_not_deviate(self) -> None:
+        """P351 alone says "ausspülen", P338 "Weiter ausspülen"; the
+        combination says "spülen" in both places."""
+        assert not deviates_from_regulation(
+            "P305+P351+P338",
+            _EYES + "ausspülen. Eventuell vorhandene Kontaktlinsen nach "
+            "Möglichkeit entfernen. Weiter ausspülen.",
+        )
+
+    def test_a_combination_mixing_its_own_and_its_parts_wordings_deviates(
+        self,
+    ) -> None:
+        assert deviates_from_regulation(
+            "P305+P351+P338",
+            _EYES + "ausspülen. Eventuell vorhandene Kontaktlinsen nach "
+            "Möglichkeit entfernen. Weiter spülen.",
+        )
+
+    @pytest.mark.parametrize(
+        ("code", "wording"),
+        [
+            ("P243", "Maßnahmen gegen elektrostatische Aufladungen treffen."),
+            (
+                "P305+P351+P338",
+                _EYES + "spülen. Vorhandene Kontaktlinsen nach Möglichkeit "
+                "entfernen. Weiter spülen.",
+            ),
+            ("P302+P334", "BEI KONTAKT MIT DER HAUT: In kaltes Wasser tauchen."),
+        ],
+    )
+    def test_an_earlier_wording_of_the_regulation_does_not_deviate(
+        self, code: str, wording: str
+    ) -> None:
+        assert not deviates_from_regulation(code, wording)
+
+    @pytest.mark.parametrize(
+        "ending",
+        [
+            "Haut mit Wasser abwaschen.",
+            "Haut mit Wasser abwaschen oder duschen.",
+            "Haut mit Wasser abwaschen/duschen.",
+            "Haut mit Wasser abwaschen / duschen.",
+            "Haut mit Wasser abwaschen [oder duschen].",
+        ],
+    )
+    def test_a_part_in_brackets_may_be_left_out_or_given(self, ending: str) -> None:
+        assert not deviates_from_regulation("P303+P361+P353", _SKIN + ending)
+        assert not deviates_from_regulation("P353", ending)
+
+    def test_another_word_for_a_part_in_brackets_deviates(self) -> None:
+        assert deviates_from_regulation(
+            "P303+P361+P353", _SKIN + "Haut mit Wasser abspülen."
         )
 
     def test_case_punctuation_and_spacing_do_not_count(self) -> None:
         assert not deviates_from_regulation(
             "H412", "schädlich für  Wasserorganismen mit langfristiger Wirkung"
+        )
+
+    def test_marks_before_the_wording_do_not_count(self) -> None:
+        assert not deviates_from_regulation(
+            "P102", "| Darf nicht in die Hände von Kindern gelangen."
         )
 
     def test_text_after_the_complete_wording_does_not_count(self) -> None:
@@ -787,6 +857,31 @@ class TestDeviatesFromRegulation:
 
     def test_a_code_without_a_single_wording_never_deviates(self) -> None:
         assert not deviates_from_regulation("P280", "Augenschutz tragen.")
+
+    def test_a_lettered_code_is_compared_with_its_effects_wording(self) -> None:
+        assert not deviates_from_regulation(
+            "H360D", "Kann das Kind im Mutterleib schädigen."
+        )
+        assert deviates_from_regulation("H360D", "Kann das Kind im Bauch schädigen.")
+
+
+@pytest.mark.spec("SDW-50")
+class TestEarlierWordings:
+    """The wordings of earlier consolidations, shipped with the package."""
+
+    def test_each_differs_from_todays_and_names_its_versions(self) -> None:
+        data = json.loads(statements.EARLIER_PATH.read_text(encoding="utf-8"))
+        current = json.loads(statements.DATA_PATH.read_text(encoding="utf-8"))
+
+        assert data["current"] == current["source"]
+        today_version = current["source"].split("-")[1][:8]
+        for code, entries in data["statements"].items():
+            today = statements._comparable(current["statements"][code]["text"])
+            for entry in entries:
+                assert statements._comparable(entry["text"]) != today
+                assert entry["versions"]
+                assert set(entry["versions"]) <= set(data["versions"])
+                assert all(version < today_version for version in entry["versions"])
 
 
 @pytest.mark.spec("SDB-47")

@@ -29,6 +29,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
     ),
     "PARSER_VERSION": (
         (
+            "clp_earlier_wordings_de.json",
             "clp_statements_de.json",
             "compliance.py",
             "messages.py",
@@ -41,7 +42,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
             "verification.py",
         ),
         21,
-        "9f4f27e3a9fe5f16",
+        "5fbfcfaf53562175",
     ),
 }
 

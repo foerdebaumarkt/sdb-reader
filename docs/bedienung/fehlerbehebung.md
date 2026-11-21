@@ -42,7 +42,7 @@
 | `signal_word` ist leer, obwohl das Blatt H-Sätze trägt | das Blatt druckt kein Signalwort, oder es wurde nicht gefunden | `findings` meldet `signal-word-not-found` mit dem Wort, das die Codes verlangen, außer die Kennzeichnung gibt an, keines zu tragen (`states_no_signal_word`) |
 | ein Wert fehlt bei einem Blatt, das als Formular in zwei Spalten ohne Doppelpunkte gesetzt ist | außerhalb von Abschnitt 1 werden solche Zeilen als Tabelle gelesen, und Bezeichnung und Wert können auseinanderstehen | eine bekannte Grenze; `section_text` prüfen |
 | die Meldung `short-text` oder `short-sample` | die Datei hat wenig Text für ein Blatt | sie kann abgeschnitten oder teils gescannt sein; die Datei ansehen |
-| der Befund `wording-deviates` bei einem Satz, der richtig aussieht | der Wortlaut des Blatts weicht in einem Wort von dem der Verordnung ab | die beiden Wortlaute in den Angaben des Befunds vergleichen |
+| der Befund `wording-deviates` bei einem Satz, der richtig aussieht | der Wortlaut des Blatts weicht in einem Wort von jeder Form ab, die die Verordnung dem Satz gibt oder gab; ein früherer Wortlaut der Verordnung, ein verbundener Satz aus den Wortlauten seiner Teile und ein weggelassener Text in eckigen Klammern sind kein Befund | die beiden Wortlaute in den Angaben des Befunds vergleichen |
 
 ## Ein Problem melden
 

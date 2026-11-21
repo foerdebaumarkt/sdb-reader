@@ -800,7 +800,7 @@ def sheet_findings(
     today: date | None = None,
     parts: Sequence[SheetPart] = (),
 ) -> list[Message]:
-    """What is wrong with *sheet* as a document (SDW-6, SDW-7, SDW-9).
+    """What is wrong with *sheet* as a document (SDW-7, SDW-9, SDW-50).
 
     A sheet that has to be renewed anyway (revised before 2021, or since in
     the layout from before 2020/878) gets only the findings on its age and

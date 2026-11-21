@@ -220,8 +220,8 @@ Only a German safety data sheet goes on to the parser.
   2021 or still in the old layout, no readable date, classified under the old
   directives, a classification that is undetermined, not stated or
   contradicted by the label, an EUH statement outside the label, a statement
-  worded differently from the regulation (SDW-6, SDW-7, SDW-9, SDW-10,
-  SDB-79).
+  worded differently from every form the regulation gives or gave it
+  (SDW-7, SDW-9, SDW-10, SDW-50, SDB-79).
 - **Statements for output.** Each statement is listed with the sheet's
   wording and the regulation's (SDW-5); statement texts can be brought into
   one form (SDB-17, SDB-18, SDB-30, SDB-47, SDB-126); H360 and H361 keep
