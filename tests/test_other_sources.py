@@ -11,6 +11,7 @@ from datetime import date
 import pytest
 
 from sdb_reader import statements
+from sdb_reader.expected import clp_expected
 from sdb_reader.extraction import ExtractionResult
 from sdb_reader.messages import Message
 from sdb_reader.parser import (
@@ -105,7 +106,8 @@ class TestLetteredReproductionCodes:
         )
         hazards = _sheet(label=label).hazard_statements
         assert hazards.hazard_codes == [code]
-        assert hazards.pictograms == ["GHS08"]
+        assert hazards.pictograms == []
+        assert clp_expected(hazards).pictograms == ["GHS08"]
         assert hazards.signal_word == "Gefahr"
 
     @pytest.mark.spec("SDB-155")

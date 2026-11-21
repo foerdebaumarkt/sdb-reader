@@ -17,16 +17,22 @@ with notice. Everything reached through a submodule is internal and may change
 with any release, the parts that ask a language model included.
 
 - Reading: ``read_sheet`` reads a PDF, ``extract_pdf_text`` only its text,
-  ``read_extraction`` a text read before. ``SheetReading`` is what comes back;
+  ``read_label_images`` only the pictograms its labels show as pictures
+  (``LabelImages``, ``LabelImagesStatus``), ``read_extraction`` a text read
+  before. ``SheetReading`` is what comes back;
   for a file that holds several sheets its parsed result names each one read
   on its own as a ``SheetPart``.
 - Keeping: ``reading_to_dict``, ``sheet_to_dict`` and ``verification_to_dict``
   give JSON, ``sheet_from_dict`` reads a stored sheet back;
-  ``extraction_to_dict`` and ``extraction_from_dict`` store a text.
-  ``EXTRACTION_VERSION``, ``PARSER_VERSION`` and ``extraction_stage`` say
-  whether what was kept still holds.
+  ``extraction_to_dict`` and ``extraction_from_dict`` store a text,
+  ``label_images_to_dict`` and ``label_images_from_dict`` its pictograms.
+  ``EXTRACTION_VERSION``, ``LABEL_IMAGES_VERSION``, ``PARSER_VERSION``,
+  ``extraction_stage`` and ``label_images_stage`` say whether what was kept
+  still holds.
 - Judging a sheet: ``sheet_findings`` and the checks it is made of,
-  ``classification`` and ``requires_sheet``.
+  ``classification`` and ``requires_sheet``; ``clp_expected`` gives the
+  signal word and pictograms a label's codes call for and where the reading
+  differs (``ClpExpected``).
 - Statements and pictograms: ``label_statements`` with the regulation's
   wording (``canonical_text``) and whether the label prints each code, the
   statement texts tidied and rendered, ``as_printed`` for the texts without
@@ -60,10 +66,18 @@ from .embedded import (
     parse_embedded,
     read_embedded,
 )
+from .expected import ClpExpected, clp_expected
 from .extraction import (
     ExtractionError,
     ExtractionResult,
     extract_pdf_text,
+)
+from .label_images import (
+    LabelImages,
+    LabelImagesStatus,
+    label_images_from_dict,
+    label_images_to_dict,
+    read_label_images,
 )
 from .messages import (
     MESSAGE_CODES,
@@ -100,16 +114,24 @@ from .statements import (
     tidy_statements,
 )
 from .verification import DocumentKind, Verification
-from .versions import EXTRACTION_VERSION, PARSER_VERSION, extraction_stage
+from .versions import (
+    EXTRACTION_VERSION,
+    LABEL_IMAGES_VERSION,
+    PARSER_VERSION,
+    extraction_stage,
+    label_images_stage,
+)
 
 __all__ = [
     "EXTRACTION_VERSION",
+    "LABEL_IMAGES_VERSION",
     "MESSAGE_CODES",
     "PARSER_VERSION",
     "Catalog",
     "Choice",
     "ChoiceReason",
     "Classification",
+    "ClpExpected",
     "ContactInfo",
     "DocumentKind",
     "EmbeddedData",
@@ -118,6 +140,8 @@ __all__ = [
     "ExtractionError",
     "ExtractionResult",
     "HazardStatements",
+    "LabelImages",
+    "LabelImagesStatus",
     "Message",
     "ParsedSheet",
     "SafetyDataSheet",
@@ -131,6 +155,7 @@ __all__ = [
     "as_printed",
     "canonical_text",
     "classification",
+    "clp_expected",
     "contradicts_label",
     "current_state",
     "embedded_differences",
@@ -139,6 +164,9 @@ __all__ = [
     "extraction_from_dict",
     "extraction_stage",
     "extraction_to_dict",
+    "label_images_from_dict",
+    "label_images_stage",
+    "label_images_to_dict",
     "label_statements",
     "load_catalog",
     "normalize_statements",
@@ -148,6 +176,7 @@ __all__ = [
     "predates_clp",
     "read_embedded",
     "read_extraction",
+    "read_label_images",
     "read_sheet",
     "reading_to_dict",
     "render_statements",

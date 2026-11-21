@@ -282,7 +282,7 @@ def test_a_record_has_the_same_keys_for_every_file_of_its_kind(
     assert [set(record) for record in records] == [
         always
         | {"extraction", "sheet", "statements", "parser", "sheet_count"}
-        | {"cover_page", "display_term"},
+        | {"cover_page", "display_term", "clp_expected"},
         always | {"extraction"},
         always | {"extraction"},
         always,

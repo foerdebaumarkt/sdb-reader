@@ -112,16 +112,25 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 | `precautionary_codes` | die Codes der Sicherheitshinweise (P) |
 | `supplemental_codes` | die Codes der ergänzenden Gefahrenmerkmale (EUH) |
 | `signal_word` | `Gefahr` oder `Achtung`, wie die Kennzeichnung es druckt, oder nichts |
-| `expected_signal_word` | wo die Kennzeichnung nichts zum Signalwort sagt, das, das ihre Codes verlangen; sonst nichts |
-| `pictograms` | die Codes der Piktogramme, `GHS01` bis `GHS09` |
+| `pictograms` | die Codes der Piktogramme, die die Kennzeichnung druckt, `GHS01` bis `GHS09`: die, die ihr Text nennt, und die, die sie als Bild zeigt |
+| `drawing_read` | ob die Kennzeichnung als Bild angesehen und jede rote Raute darin benannt ist |
+| `states_no_signal_word`, `states_no_pictograms` | ob die Kennzeichnung angibt, keines zu tragen („Signalwort entfällt“, „Gefahrenpiktogramme: keine“) |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |
 | `codes_from_wording` | die Codes, die die Kennzeichnung nicht druckt: Das Blatt druckt nur den Satz, und der Parser hat ihm den Code zugeordnet; jeder steht auch in seiner Liste oben |
 
-Das Signalwort ist nur das gedruckte. Nennt die Kennzeichnung keines, steht
-das, das die CLP-Verordnung ihren Codes zuordnet, unter `expected_signal_word`,
-und der Befund `signal-word-not-found` sagt es. Piktogramme, die der Text nicht
-nennt, folgen aus den Gefahrenhinweisen; `parser.warnings` sagt es mit
-`pictograms-derived`.
+Die Kennzeichnung enthält nur, was das Blatt druckt. Das Signalwort ist das
+gedruckte. Piktogramme sind die gedruckten: Die meisten Blätter drucken sie
+als Bild, und `read` sucht in der Kennzeichnung auf der Seite die roten
+Rauten und benennt jede. Aus den Codes abgeleitet wird nichts. Weicht die
+Kennzeichnung von dem ab, was ihre Codes nach der CLP-Verordnung verlangen,
+sagen es die Befunde (`signal-word-not-found`, `pictogram-not-found`,
+`pictogram-not-expected`, `pictogram-precedence`); eine Kennzeichnung, die
+angibt, keines zu tragen, bekommt keinen Befund, dass eines nicht gefunden
+wurde. Ließ sich die Kennzeichnung nicht als Bild ansehen (ein gescanntes
+Blatt, eine Kennzeichnung ohne die Überschrift „Kennzeichnungselemente“)
+oder blieb eine Raute unbenannt, sagt es `parser.warnings`
+(`label-images-not-read`, `pictograms-not-recognised`), und `drawing_read`
+ist falsch.
 
 ## Die Sätze
 
@@ -136,6 +145,33 @@ nennt, folgen aus den Gefahrenhinweisen; `parser.warnings` sagt es mit
 
 Wer die Sätze so zeigen will, wie das Blatt sie druckt, lässt den Code eines
 Satzes weg, dessen `code_source` `from_wording` ist.
+
+## Was die Verordnung erwartet
+
+`clp_expected` steht neben dem Blatt und gehört nicht dazu: was die
+CLP-Verordnung von der Kennzeichnung erwartet, aus ihren Codes ermittelt, und
+worin die gelesene Kennzeichnung davon abweicht. Die Kennzeichnung selbst
+steht unverändert, wie gedruckt, unter `sheet.hazard_statements`. Ob eine
+Abweichung zählt, entscheiden Sie: eine Lücke damit füllen oder eine
+Kennzeichnung damit prüfen.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `signal_word` | `Gefahr`, `Achtung` oder nichts: das Wort, das die H- und EUH-Codes verlangen; nie aus den Piktogrammen |
+| `pictograms` | die Piktogramme, die die H-Codes verlangen, mit dem Vorrang nach Art. 26 CLP |
+| `signal_word_missing` | die Codes verlangen ein Signalwort, und die gelesene Kennzeichnung hat keines |
+| `signal_word_differs` | die gelesene Kennzeichnung hat ein anderes Signalwort, als die Codes verlangen |
+| `pictograms_missing` | verlangt, und nicht in der gelesenen Kennzeichnung |
+| `pictograms_not_expected` | in der gelesenen Kennzeichnung, und kein H-Code verlangt sie |
+| `pictograms_left_out` | in der gelesenen Kennzeichnung und verlangt, aber Art. 26 lässt sie neben einem anderen weg, das sie hat |
+
+Bevor Sie etwas fehlend nennen, sehen Sie unter `sheet.hazard_statements`
+nach `drawing_read`, `states_no_signal_word` und `states_no_pictograms`: Eine
+Kennzeichnung, die sich nicht als Bild ansehen ließ, kann ein Piktogramm
+trotzdem zeigen, und eine, die angibt, keines zu tragen, hat geantwortet. Die
+Befunde berücksichtigen beides, dieser Block nicht. Bei einer Datei mit
+mehreren Blättern trägt jeder Eintrag von `parts` seinen eigenen. Ein früher
+geschriebener Datensatz hat keinen solchen Block.
 
 ## Die Befunde
 
@@ -157,6 +193,9 @@ Befund ist eine [Meldung](#meldungen).
 | `different-products` | die Datei enthält Blätter verschiedener Produkte; `products` nennt sie. Siehe [Mehrere Blätter in einer Datei](#mehrere-blätter-in-einer-datei) |
 | `country-editions-differ` | die Datei enthält Blätter desselben Produkts für verschiedene Länder, und sie weichen in den genannten Feldern (`fields`) ab |
 | `wording-deviates` | ein Satz weicht im Wortlaut von der Verordnung ab |
+| `pictogram-not-found` | die H-Sätze verlangen ein Piktogramm, das die Kennzeichnung nicht druckt; nur wo `drawing_read` |
+| `pictogram-not-expected` | die Kennzeichnung druckt ein Piktogramm, das keiner ihrer H-Sätze verlangt |
+| `pictogram-precedence` | die Kennzeichnung druckt GHS07 neben einem Piktogramm, dem es nach Art. 26 CLP weicht |
 | `not-german` | das Blatt ist in einer anderen Sprache |
 
 Ein Befund ist eine Beobachtung am Dokument. Was daraus folgt, etwa beim
@@ -243,7 +282,7 @@ Für eine solche Datei gibt der Datensatz zwei Lesungen nebeneinander aus:
   Blatt druckt, das stärkere Signalwort, das neueste Datum. Die Meldung
   `several-sheets` unter `parser.warnings` sagt das.
 - `parts` nennt jedes Blatt für sich gelesen, in der Reihenfolge der Datei,
-  als wäre es eine eigene Datei.
+  als wäre es eine eigene Datei, jedes mit seinem eigenen `clp_expected`.
 - `oldest_sheet` nennt das Blatt mit dem ältesten Datum; siehe
   [Das älteste Blatt](#das-älteste-blatt).
 
@@ -355,7 +394,7 @@ gehört zum Display, nicht zu einem seiner Produkte.
 | Teil | Enthält |
 | --- | --- |
 | `file` | Pfad, Name und Größe der Datei |
-| `parser.warnings` | was beim Lesen des Blatts auffiel, etwa ein abgeleitetes Piktogramm; leer, wo nichts auffiel |
+| `parser.warnings` | was beim Lesen des Blatts auffiel, etwa eine Kennzeichnung, die sich nicht als Bild ansehen ließ; leer, wo nichts auffiel |
 | `warnings` | bei einer Datei, die kein deutsches Blatt ist oder sich nicht lesen ließ: dass nichts weiter gelesen wurde; sonst leer |
 | `errors` | bei einer Datei, aus der sich kein Text lesen ließ: der Grund; sonst leer |
 | `embedded_data` | bei einem PDF mit eingebetteter Datei: siehe [Die eingebettete Datei](eingebettete-datei.md) |

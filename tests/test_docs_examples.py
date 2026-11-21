@@ -15,6 +15,7 @@ API_PAGES = (
     "reading.md",
     "messages.md",
     "judging.md",
+    "expected.md",
     "statements.md",
     "stored-texts.md",
     "embedded.md",

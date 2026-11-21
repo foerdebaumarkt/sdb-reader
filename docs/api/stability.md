@@ -20,6 +20,7 @@ summary for developers.
 | No decision by wording | The library never decides by the sentence of a message, and a caller need not either. | BIB-12 |
 | The output's description | What `read` prints for a file is described by the shipped JSON Schema. The command prints no key the schema does not name. | SDW-16 |
 | The choice among sheets | `current_state` follows a fixed order and says why it chose. | BIB-6 to BIB-9 |
+| What the regulation expects | `clp_expected` gives the signal word and pictograms a label's codes call for apart from the reading, which holds only what the label prints. Its fields change only with notice; an expectation that changes with the regulation is named in the changelog. | BIB-25 |
 | No clock | The library does not read the date. What depends on today takes it as an argument, `today`, and without it no result depends on the day. | BIB-19 |
 | The output's schema | The schema is part of the promise, not only a description: a change that makes a formerly valid record invalid, or drops a key, is breaking. | BIB-15 |
 

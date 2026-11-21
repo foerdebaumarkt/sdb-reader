@@ -8,6 +8,7 @@ bounds how many pages are read; by default all.
 | `verification` | `Verification` | what the file is, and why |
 | `extraction` | `ExtractionResult` or None | the text read from the PDF; None where no text could be read |
 | `parser_result` | `ParsedSheet` or None | the parsed sheet; set only for a German safety data sheet |
+| `label_images` | `LabelImages` or None | the pictograms the label shows as pictures; set only where the label of a German safety data sheet was looked at |
 | `warnings` | list of `Message` | that nothing was read further: `not-a-sheet` or `unreadable` |
 | `errors` | list of `Message` | why no text could be read |
 
@@ -71,7 +72,7 @@ assert sheet.section_text[Section.HAZARDS].startswith("Mögliche Gefahren")
 label = sheet.hazard_statements
 assert label.precautionary_codes == ["P102"]
 assert label.supplemental_codes == []
-assert label.pictograms == ["GHS07"]
+assert label.pictograms == []
 assert label.hazard_text == "H315 Verursacht Hautreizungen."
 
 supplier = sheet.contact_info
@@ -88,15 +89,26 @@ None where no such label stands at an address, as in this sheet; it may
 equal `supplier_email`, and it may belong to a firm that wrote the sheet for the
 supplier. Which of the two to use is the caller's to decide.
 
-The pictogram is not printed in this sheet. It follows from H315, and the
-parser says that it derived it:
+The pictograms are the ones the label names or shows as pictures
+(`read_sheet` looks at the label as drawn). This sheet prints none. H315
+calls for GHS07, but that is not in the reading: `clp_expected` gives it
+([What the regulation expects](expected.md)). The label was looked at and
+holds no red diamond, so `drawing_read` is true and the findings say the
+pictogram was not found. `states_no_signal_word` and `states_no_pictograms`
+say whether the label states it has none; this one states neither:
 
 ```python
-from sdb_reader import Message
+from sdb_reader import Message, sheet_findings
 
-derived = Message("pictograms-derived", {"pictograms": ["GHS07"]})
-assert derived in reading.parser_result.warnings
+assert label.drawing_read
+assert not label.states_no_signal_word and not label.states_no_pictograms
+missing = Message("pictogram-not-found", {"pictogram": "GHS07"})
+assert missing in sheet_findings(sheet, reading.parser_result.warnings)
 ```
+
+`read_sheet` also returns what it saw in the drawing as
+`reading.label_images` (`LabelImages`), to keep beside the text
+([Stored texts](stored-texts.md)).
 
 ## A file that is not a sheet, or cannot be read
 
@@ -262,7 +274,7 @@ record = reading_to_dict(reading)
 assert record["verification"]["kind"] == "safety-data-sheet"
 assert record["sheet"]["sheet_required"] is True
 assert [s["code"] for s in record["statements"]] == ["H315", "P102"]
-assert record["findings"] == []
+assert [f["code"] for f in record["findings"]] == ["pictogram-not-found"]
 assert json.dumps(record)  # plain JSON types throughout
 ```
 

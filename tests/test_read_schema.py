@@ -165,7 +165,7 @@ def test_a_file_of_two_sheets_gives_each_sheet_beside_the_file_s_reading(
     assert not list(_validator().iter_errors(record))
     assert record["sheet_count"] == 2
     first, second = record["parts"]
-    assert set(first) == {"sheet", "statements", "warnings", "findings"}
+    assert set(first) == {"sheet", "statements", "clp_expected", "warnings", "findings"}
     assert set(first["sheet"]) == set(record["sheet"])
     assert first["sheet"]["hazard_statements"]["hazard_codes"] == ["H315"]
     assert first["sheet"]["hazard_statements"]["signal_word"] == "Achtung"
@@ -185,6 +185,39 @@ def test_a_file_of_two_sheets_gives_each_sheet_beside_the_file_s_reading(
     assert record["sheet"]["hazard_statements"]["signal_word"] == "Gefahr"
     assert record["sheet"]["revision_date"] == "2022-07-20"
     assert any(w["code"] == "several-sheets" for w in record["parser"]["warnings"])
+
+
+@pytest.mark.spec("SDW-48")
+def test_the_record_carries_what_the_codes_call_for_beside_the_reading(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    [record] = _read(capsys, str(_two_sheets(tmp_path / "kleber.pdf")))
+
+    first, second = record["parts"]
+    assert first["clp_expected"]["signal_word"] == "Achtung"
+    assert first["clp_expected"]["pictograms"] == ["GHS07"]
+    assert first["clp_expected"]["pictograms_missing"] == []
+    assert not first["clp_expected"]["signal_word_missing"]
+    assert second["clp_expected"]["pictograms"] == ["GHS05"]
+    # The file unites both labels: GHS07 for H315 gives way to GHS05.
+    assert record["clp_expected"]["signal_word"] == "Gefahr"
+    assert record["clp_expected"]["pictograms"] == ["GHS05"]
+    assert record["clp_expected"]["pictograms_left_out"] == ["GHS07"]
+    # Nothing of it enters the reading, which keeps both printed pictograms.
+    assert "expected_pictograms" not in record["sheet"]["hazard_statements"]
+    assert record["sheet"]["hazard_statements"]["pictograms"] == ["GHS05", "GHS07"]
+
+
+@pytest.mark.spec("SDW-48")
+def test_a_record_written_before_without_the_block_stays_valid(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    [record] = _read(capsys, str(_two_sheets(tmp_path / "kleber.pdf")))
+
+    del record["clp_expected"]
+    for part in record["parts"]:
+        del part["clp_expected"]
+    assert not list(_validator().iter_errors(record))
 
 
 @pytest.mark.spec("SDW-32")

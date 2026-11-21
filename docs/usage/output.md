@@ -110,16 +110,23 @@ The label always stands in the reading as the sheet prints it.
 | `precautionary_codes` | the codes of the precautionary statements (P) |
 | `supplemental_codes` | the codes of the supplemental statements (EUH) |
 | `signal_word` | `Gefahr` or `Achtung` as the label prints it, or nothing |
-| `expected_signal_word` | where the label says nothing about a signal word, the one its codes call for; otherwise nothing |
-| `pictograms` | the codes of the pictograms, `GHS01` to `GHS09` |
+| `pictograms` | the codes of the pictograms the label prints, `GHS01` to `GHS09`: those its text names and those it shows as pictures |
+| `drawing_read` | whether the label was looked at as drawn and every red diamond in it named |
+| `states_no_signal_word`, `states_no_pictograms` | whether the label states it has none ("Signalwort entfällt", "Gefahrenpiktogramme: keine") |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
 | `codes_from_wording` | the codes the label does not print: the sheet prints only the sentence, and the parser assigned the code; each also stands in its list above |
 
-The signal word is the printed one only. Where the label states none, the one
-the CLP Regulation assigns to its codes stands in `expected_signal_word`, and
-the finding `signal-word-not-found` says so. Pictograms the text does not name
-follow from the hazard statements; `parser.warnings` says so with
-`pictograms-derived`.
+The label holds only what the sheet prints. The signal word is the printed
+one. Pictograms are the printed ones: most sheets print them as pictures,
+and `read` looks at the label on the page for red diamonds and names each.
+Nothing is derived from the codes. Where the label differs from what its
+codes call for under the CLP Regulation, the findings say so
+(`signal-word-not-found`, `pictogram-not-found`, `pictogram-not-expected`,
+`pictogram-precedence`); a label that states it has none gets no finding
+that one was not found. Where the label could not be looked at (a scanned
+sheet, a label without the heading "Kennzeichnungselemente") or a diamond
+stayed unnamed, `parser.warnings` says so (`label-images-not-read`,
+`pictograms-not-recognised`) and `drawing_read` is false.
 
 ## The statements
 
@@ -134,6 +141,32 @@ follow from the hazard statements; `parser.warnings` says so with
 
 To show the statements as the sheet prints them, leave out the code of a
 statement whose `code_source` is `from_wording`.
+
+## What the regulation expects
+
+`clp_expected` stands beside the sheet and is not part of it: what the CLP
+Regulation expects of the label, worked out from its codes, and where the
+label as read differs. The label itself stays as printed under
+`sheet.hazard_statements`. Whether a difference matters is yours to decide:
+fill a gap with it, or check a label by it.
+
+| Field | Meaning |
+| --- | --- |
+| `signal_word` | `Gefahr`, `Achtung` or nothing: the word the H and EUH codes call for; never from the pictograms |
+| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 CLP |
+| `signal_word_missing` | the codes call for a signal word, and the label as read has none |
+| `signal_word_differs` | the label as read has a signal word other than the one the codes call for |
+| `pictograms_missing` | called for, and not in the label as read |
+| `pictograms_not_expected` | in the label as read, and no H code calls for them |
+| `pictograms_left_out` | in the label as read and called for, but Article 26 leaves them out beside another it has |
+
+Before calling something missing, look at `drawing_read`,
+`states_no_signal_word` and `states_no_pictograms` under
+`sheet.hazard_statements`: a label that could not be looked at as drawn may
+still show a pictogram, and one that states it has none has answered. The
+findings take both into account; this block does not. For a file of several
+sheets each entry of `parts` carries its own. A record written before has no
+such block.
 
 ## The findings
 
@@ -155,6 +188,9 @@ statement whose `code_source` is `from_wording`.
 | `different-products` | the file holds sheets of different products; `products` names them. See [Several sheets in one file](#several-sheets-in-one-file) |
 | `country-editions-differ` | the file holds the same product's sheets for different countries, and they differ in the `fields` named |
 | `wording-deviates` | a statement worded differently from the regulation |
+| `pictogram-not-found` | the H statements call for a pictogram the label does not print; only where `drawing_read` |
+| `pictogram-not-expected` | the label prints a pictogram none of its H statements calls for |
+| `pictogram-precedence` | the label prints GHS07 beside a pictogram Article 26 CLP lets it give way to |
 | `not-german` | the sheet is in another language |
 
 A finding is an observation about the document. What follows from it, such
@@ -238,7 +274,7 @@ For such a file the record gives two readings side by side:
   signal word, the newest date. The message `several-sheets` under
   `parser.warnings` says so.
 - `parts` lists each sheet read on its own, in the file's order, as if it
-  were a file by itself.
+  were a file by itself, each with its own `clp_expected`.
 - `oldest_sheet` names the sheet with the oldest date; see
   [The oldest sheet](#the-oldest-sheet).
 
@@ -348,7 +384,7 @@ display, not to one of its products.
 | Part | Holds |
 | --- | --- |
 | `file` | path, name and size of the file |
-| `parser.warnings` | what was noticed while reading the sheet, such as a pictogram that was derived; empty where nothing was |
+| `parser.warnings` | what was noticed while reading the sheet, such as a label that could not be looked at as drawn; empty where nothing was |
 | `warnings` | for a file that is no German sheet or could not be read: that nothing was read further; otherwise empty |
 | `errors` | for a file no text could be read from: the reason; otherwise empty |
 | `embedded_data` | for a PDF that carries an embedded file: see [The embedded file](embedded-file.md) |

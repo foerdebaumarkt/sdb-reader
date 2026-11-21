@@ -8,6 +8,7 @@ import pytest
 
 from sdb_reader import reading
 from sdb_reader.extraction import ExtractionError, ExtractionResult
+from sdb_reader.label_images import LabelImages, LabelImagesStatus
 from sdb_reader.messages import Message
 from sdb_reader.verification import DocumentKind
 
@@ -40,6 +41,11 @@ def test_a_sheet_is_read_judged_and_parsed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setattr(reading, "extract_pdf_text", lambda *a, **k: _extraction(SHEET))
+    monkeypatch.setattr(
+        reading,
+        "read_label_images",
+        lambda *a, **k: LabelImages("stage", LabelImagesStatus.NO_LABEL),
+    )
 
     result = reading.read_sheet(tmp_path / "a.pdf")
 

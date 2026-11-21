@@ -1,4 +1,5 @@
-"""The signal word as printed, and the one the codes call for (SDB-176 to SDB-178).
+"""The signal word as printed, and the one the codes call for (SDB-176, SDB-178,
+SDB-180, BIB-25).
 
 Every text here is invented.
 """
@@ -8,6 +9,7 @@ from __future__ import annotations
 import pytest
 
 from sdb_reader import (
+    clp_expected,
     extraction_from_dict,
     read_extraction,
     sheet_from_dict,
@@ -62,27 +64,28 @@ def _found(parsed: ParsedSheet) -> list[dict[str, str]]:
     ]
 
 
-@pytest.mark.spec("SDB-176")
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("SDB-176", "SDB-180", "BIB-25")
 def test_a_silent_label_has_no_signal_word() -> None:
     label = _parsed("").sheet.hazard_statements
     assert label.signal_word is None
-    assert label.expected_signal_word == "Gefahr"
+    assert not label.states_no_signal_word
+    assert clp_expected(label).signal_word == "Gefahr"
+    assert clp_expected(label).signal_word_missing
 
 
 @pytest.mark.spec("SDB-178")
-@pytest.mark.spec("SDW-44")
+@pytest.mark.spec("SDW-47")
 def test_the_signal_word_the_codes_call_for_is_a_finding() -> None:
     assert _found(_parsed("")) == [{"expected": "Gefahr"}]
 
 
-@pytest.mark.spec("SDB-176")
-@pytest.mark.spec("SDB-177")
-@pytest.mark.spec("SDB-178")
+@pytest.mark.spec("SDB-176", "SDB-178", "BIB-25")
 def test_a_printed_signal_word_gives_no_finding() -> None:
     parsed = _parsed("Signalwort: Gefahr\n")
     assert parsed.sheet.hazard_statements.signal_word == "Gefahr"
-    assert parsed.sheet.hazard_statements.expected_signal_word is None
+    expected = clp_expected(parsed.sheet.hazard_statements)
+    assert not expected.signal_word_missing
+    assert not expected.signal_word_differs
     assert _found(parsed) == []
 
 
@@ -101,16 +104,18 @@ def test_the_opening_of_euh211_is_no_signal_word() -> None:
     assert read_signal_word(label) == (None, False)
 
 
-@pytest.mark.spec("SDB-177")
-def test_a_label_that_says_it_has_none_expects_none() -> None:
-    """ "Kein Signalwort" is the sheet's answer: nothing is expected."""
+@pytest.mark.spec("SDB-178", "SDB-180")
+def test_a_label_that_says_it_has_none_gives_no_finding() -> None:
+    """ "Kein Signalwort" is the sheet's answer: the reading says so, and the
+    finding stays away; the expectation is the codes' all the same."""
     parsed = _parsed("Signalwort: Kein Signalwort\n")
-    assert parsed.sheet.hazard_statements.signal_word is None
-    assert parsed.sheet.hazard_statements.expected_signal_word is None
+    label = parsed.sheet.hazard_statements
+    assert label.signal_word is None
+    assert label.states_no_signal_word
+    assert clp_expected(label).signal_word_missing
     assert _found(parsed) == []
 
 
-@pytest.mark.spec("SDB-177")
 @pytest.mark.spec("SDB-178")
 def test_an_article_gets_no_finding() -> None:
     parsed = _parsed(
@@ -118,22 +123,27 @@ def test_an_article_gets_no_finding() -> None:
         "Dieses Produkt ist ein Erzeugnis, deshalb ist es nicht kennzeichnungspflichtig.\n",
     )
     assert parsed.sheet.stated_article
-    assert parsed.sheet.hazard_statements.expected_signal_word == "Gefahr"
+    assert clp_expected(parsed.sheet.hazard_statements).signal_word == "Gefahr"
     assert _found(parsed) == []
 
 
-@pytest.mark.spec("SDB-177")
-@pytest.mark.spec("SDW-44")
-def test_a_stored_reading_keeps_the_expected_signal_word() -> None:
-    extraction = _extraction("")
-    stored = sheet_to_dict(_parsed("").sheet, extraction)
-    assert stored["hazard_statements"]["signal_word"] is None
-    assert stored["hazard_statements"]["expected_signal_word"] == "Gefahr"
-    assert sheet_from_dict(stored).hazard_statements.expected_signal_word == "Gefahr"
+@pytest.mark.spec("SDB-180")
+@pytest.mark.spec("SDW-47")
+def test_a_stored_reading_keeps_what_the_label_states() -> None:
+    extraction = _extraction("Signalwort: Kein Signalwort\n")
+    stored = sheet_to_dict(_parsed("Signalwort: Kein Signalwort\n").sheet, extraction)
+    label = stored["hazard_statements"]
+    assert label["signal_word"] is None
+    assert label["states_no_signal_word"] is True
+    assert "expected_signal_word" not in label
+    assert sheet_from_dict(stored).hazard_statements.states_no_signal_word
 
 
-@pytest.mark.spec("SDW-44")
-def test_a_reading_stored_before_reads_back_with_none() -> None:
-    stored = sheet_to_dict(_parsed("Signalwort: Gefahr\n").sheet, _extraction(""))
-    del stored["hazard_statements"]["expected_signal_word"]
-    assert sheet_from_dict(stored).hazard_statements.expected_signal_word is None
+@pytest.mark.spec("SDW-47")
+def test_a_reading_stored_before_reads_back_without_a_statement() -> None:
+    stored = sheet_to_dict(_parsed("").sheet, _extraction(""))
+    del stored["hazard_statements"]["states_no_signal_word"]
+    del stored["hazard_statements"]["states_no_pictograms"]
+    back = sheet_from_dict(stored).hazard_statements
+    assert not back.states_no_signal_word
+    assert not back.states_no_pictograms

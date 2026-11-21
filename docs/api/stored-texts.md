@@ -9,9 +9,12 @@ from it again when a newer parser arrives, without touching the PDFs.
 
 ## Store a text and read from it
 
-`extract_pdf_text` reads only the text. `extraction_to_dict` gives it in a
-form to store as JSON, `extraction_from_dict` reads that back, and
-`read_extraction` gives the reading `read_sheet` would give for the file.
+`extract_pdf_text` reads only the text, `read_label_images` only the
+pictograms the label shows as pictures, which the text does not hold.
+`extraction_to_dict` and `label_images_to_dict` give them in a form to store
+as JSON, `extraction_from_dict` and `label_images_from_dict` read that back,
+and `read_extraction` gives the reading `read_sheet` would give for the
+file.
 
 ```python
 import json
@@ -21,19 +24,30 @@ from sdb_reader import (
     extraction_from_dict,
     extraction_stage,
     extraction_to_dict,
+    label_images_from_dict,
+    label_images_to_dict,
     read_extraction,
+    read_label_images,
     reading_to_dict,
 )
 
 stored = extraction_to_dict(extract_pdf_text(path, max_pages=None))
-kept = json.dumps(stored)  # store this beside your record of the file
+pictures = label_images_to_dict(read_label_images(path))
+kept = json.dumps({"text": stored, "pictures": pictures})  # beside your record
 
 # Later, without the PDF:
-stored = json.loads(kept)
-again = read_extraction(extraction_from_dict(stored))
+both = json.loads(kept)
+stored = both["text"]
+again = read_extraction(
+    extraction_from_dict(stored), label_images_from_dict(both["pictures"])
+)
 
 assert reading_to_dict(again) == reading_to_dict(reading)
 ```
+
+Without the pictures `read_extraction` has only the pictograms the text
+names, and the sheet's `drawing_read` is false: nothing then says that a
+pictogram is missing.
 
 One thing differs from `read_sheet`:
 
@@ -71,15 +85,16 @@ differ.
 
 ## When what you kept is out of date
 
-The library reads in two stages, and each has a version, a whole number that
-only ever rises:
+The library reads in three stages, and each has a version, a whole number
+that only ever rises:
 
 | Name | Rises when | What to do |
 | --- | --- | --- |
 | `EXTRACTION_VERSION` | the same PDF can give another text | read the PDF again |
-| `PARSER_VERSION` | the same text can give another reading | read again from the stored text |
+| `LABEL_IMAGES_VERSION` | the same PDF can give other pictures of its label | look at the PDF again (`read_label_images`) |
+| `PARSER_VERSION` | the same text and pictures can give another reading | read again from what you stored |
 
-Store both numbers with every reading you keep, and compare them with the
+Store all three numbers with every reading you keep, and compare them with the
 library's when you start.
 
 The text depends on the PDF library too. `extraction_stage()` names the
@@ -97,6 +112,15 @@ assert isinstance(PARSER_VERSION, int)
 
 The library's part of the value is the version of the module `pymupdf`,
 whichever distribution installed it (the package depends on `pymupdf-lite`).
+`label_images_stage()` does the same for the pictures, which `pymupdf` draws;
+stored pictures carry it as `stage`:
+
+```python
+from sdb_reader import LABEL_IMAGES_VERSION, label_images_stage
+
+assert both["pictures"]["stage"] == label_images_stage()
+assert label_images_stage().startswith(f"{LABEL_IMAGES_VERSION}+pymupdf-")
+```
 
 A text of another stage is read all the same; whether to use it is yours to
 decide by comparing. A text stored by an earlier version of the library can

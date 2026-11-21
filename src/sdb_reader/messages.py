@@ -65,7 +65,8 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "no-precautionary-codes": (),
     "euh-wording-outside-label": ("statement", "sentence"),
     "signal-word-not-taken": ("signal_word",),
-    "pictograms-derived": ("pictograms",),
+    "label-images-not-read": ("reason",),
+    "pictograms-not-recognised": ("count",),
     "precautionary-wording-unclear": ("codes",),
     "label-line-unassigned": ("line",),
     "statement-too-long": ("codes",),
@@ -89,6 +90,9 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "label-without-hazard-statement": (),
     "hazard-statement-not-in-label": ("statement",),
     "label-without-precautionary-statement": (),
+    "pictogram-not-found": ("pictogram",),
+    "pictogram-not-expected": ("pictogram",),
+    "pictogram-precedence": ("pictogram", "beside"),
     "signal-word-not-found": ("expected",),
     "different-products": ("products",),
     "country-editions-differ": ("fields",),
@@ -192,6 +196,7 @@ MESSAGE_COUNTS: Mapping[str, str] = {
     "no-text": "pages",
     "safety-information": "sections",
     "several-sheets": "count",
+    "pictograms-not-recognised": "count",
     "show-kind-sheet": "sheets",
     "show-notes": "notes",
 }
@@ -219,11 +224,11 @@ class Message:
     that code names, in types that can be written as JSON. A message carries
     no sentence: ``Catalog.render`` gives one in the language asked for.
 
-    >>> message = Message("pictograms-derived", {"pictograms": ["GHS07"]})
+    >>> message = Message("pictogram-not-found", {"pictogram": "GHS07"})
     >>> shipped_catalog("en").render(message)
-    'Pictograms derived from the H statements, the sheet names none: GHS07'
+    "The label's H statements call for the pictogram GHS07, and it was not found (CLP Article 19)."
     >>> shipped_catalog("de").render(message)
-    'Piktogramme aus den H-Sätzen abgeleitet, das Blatt nennt keine: GHS07'
+    'Die H-Sätze der Kennzeichnung verlangen das Piktogramm GHS07, und es wurde nicht gefunden (CLP Art. 19).'
     """
 
     code: str

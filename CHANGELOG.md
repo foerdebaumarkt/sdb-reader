@@ -16,25 +16,59 @@ Versions follow the tags of this repository.
   date, and an issue date in the future beside a revision date went without
   a finding (SDB-137, SDW-34). The `SafetyDataSheet` of the library keeps
   the date as read.
-- **The signal word only as printed.** Where the label says nothing about a
-  signal word, `signal_word` is now empty; before, it held the word the codes
-  call for, derived from them. That word now stands in `expected_signal_word`
-  (SDB-176, SDB-177). The parser warning `signal-word-derived` is gone. A
-  caller that showed `signal_word` shows what the sheet prints; one that
-  needs the word the codes call for reads `expected_signal_word`.
+- **The label only as printed.** `signal_word` and `pictograms` hold what the
+  label prints, and nothing derived from its codes any more (SDB-169).
+  Where the label says nothing about a signal word, `signal_word` is now
+  empty (SDB-176). `pictograms` holds the codes the label's text names and,
+  new, the pictograms it shows as pictures, read from the PDF (SDB-179); a
+  printed pictogram that Article 26 CLP would leave out stays. The parser
+  warnings `signal-word-derived` and `pictograms-derived` are gone. A caller
+  that needs what the codes call for asks `clp_expected` (below).
+- **`read_extraction` without the pictures** gives only the pictograms the
+  text names. A caller that keeps texts keeps the pictures beside them
+  (`label_images_to_dict`) and passes them back; see "Keeping texts".
 - **`PARSER_VERSION` is 21** (0.11.1: 20); a record of a file with several
-  sheets also carries new keys. `EXTRACTION_VERSION` stays 2; readings kept
-  from before should be made again from the stored texts.
+  sheets also carries new keys. `EXTRACTION_VERSION` stays 2:
+  stored texts stay valid, but the pictures have to be read from the PDFs
+  once, about a tenth of a second per sheet; readings kept from before
+  should be made again.
 
 ### Added
 
-- **`expected_signal_word`** under `hazard_statements`: the signal word the
-  label's codes call for where the label says nothing about one. A reading
-  stored before reads back without it (SDB-177, SDW-44).
+- **`clp_expected(label)` and `ClpExpected`** (BIB-25): the signal word the
+  label's H and EUH codes call for, the pictograms its H codes call for with
+  the precedence of Article 26, and where the reading differs from them, as
+  data. The signal word never follows from the pictograms. Use it to fill a
+  gap or to check a label; see "What the regulation expects".
+- **`clp_expected` in the record of `read`**, for the file and for each
+  entry of `parts`: what `clp_expected` returns, beside the reading and not
+  in it. Optional in the schema, so records written before stay valid
+  (SDW-48).
+- **A third stage for the label's drawing:** `read_label_images`,
+  `LabelImages`, `LabelImagesStatus`, `label_images_to_dict`,
+  `label_images_from_dict`, `LABEL_IMAGES_VERSION` (1) and
+  `label_images_stage()` (BIB-24). It finds the label on the pages, looks
+  for red-framed diamonds and names each by its likeness to references made
+  from the public-domain drawings of the nine pictograms; no model, no new
+  dependency. `SheetReading.label_images` holds what `read_sheet` saw.
+- **`drawing_read`, `states_no_signal_word` and `states_no_pictograms`**
+  under `hazard_statements`: whether the label was looked at as drawn, and
+  whether it states it has no signal word or no pictogram ("Signalwort
+  entfällt", "Gefahrenpiktogramme: keine"). A reading stored before reads
+  back without them (SDB-179, SDB-180, SDW-47).
 - **The finding `signal-word-not-found`** with the expected word: the codes
-  call for a signal word and none was found printed. Not for an article, a
-  classification under the old law or a label under the directives before
-  CLP on a sheet dated before 1 June 2015 (SDB-178).
+  call for a signal word and none was found printed (SDB-178).
+- **The findings `pictogram-not-found`, `pictogram-not-expected` and
+  `pictogram-precedence`** (SDB-181), and the warnings
+  `label-images-not-read` (with `reason`: `no-text-layer`,
+  `no-label-region`, `labels-not-paired`) and `pictograms-not-recognised`
+  (with `count`).
+- None of these findings says something was not found where the label
+  states it has none; `pictogram-not-found` comes only where the drawing was
+  read, and never for GHS04, which Article 33 CLP lets the transport label
+  stand in for. No finding for an article, a classification under the old
+  law or a label under the directives before CLP on a sheet dated before
+  1 June 2015.
 - **The oldest sheet of a file.** For a file with several sheets, `read`
   names under `oldest_sheet` the sheet with the oldest date (its number,
   the date, and whether it is the revision or the issue date), and `show`

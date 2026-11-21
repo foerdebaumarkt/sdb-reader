@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
+from dataclasses import asdict
 from datetime import date
 from typing import Any
 
@@ -17,6 +18,7 @@ from .compliance import (
     usable_dates,
 )
 from .embedded import EmbeddedData, differences
+from .expected import clp_expected
 from .extraction import ExtractionResult
 from .messages import Catalog, Message, shipped_catalog
 from .reading import SheetReading
@@ -97,7 +99,9 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
             "precautionary_text": sheet.hazard_statements.precautionary_text,
             "supplemental_text": sheet.hazard_statements.supplemental_text,
             "codes_from_wording": sheet.hazard_statements.codes_from_wording,
-            "expected_signal_word": sheet.hazard_statements.expected_signal_word,
+            "drawing_read": sheet.hazard_statements.drawing_read,
+            "states_no_signal_word": sheet.hazard_statements.states_no_signal_word,
+            "states_no_pictograms": sheet.hazard_statements.states_no_pictograms,
         },
         "contact_info": {
             "supplier_name": sheet.contact_info.supplier_name,
@@ -173,8 +177,10 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
                 supplemental_text=_optional_text(label["supplemental_text"]),
                 # Not in a reading stored before SDB-174.
                 codes_from_wording=_texts(label.get("codes_from_wording", [])),
-                # Not in a reading stored before SDB-177.
-                expected_signal_word=_optional_text(label.get("expected_signal_word")),
+                # Not in a reading stored before SDB-179 and SDB-180.
+                drawing_read=label.get("drawing_read", False) is True,
+                states_no_signal_word=label.get("states_no_signal_word", False) is True,
+                states_no_pictograms=label.get("states_no_pictograms", False) is True,
             ),
             contact_info=ContactInfo(
                 supplier_name=_optional_text(contact["supplier_name"]),
@@ -245,6 +251,12 @@ def verification_to_dict(
     }
 
 
+def _clp_expected(sheet: SafetyDataSheet) -> dict[str, Any]:
+    """What ``clp_expected`` says of *sheet*'s label, as the record holds it
+    (SDW-48)."""
+    return asdict(clp_expected(sheet.hazard_statements))
+
+
 def reading_to_dict(
     reading: SheetReading,
     *,
@@ -292,6 +304,8 @@ def reading_to_dict(
             }
             sheet = reading.parser_result.sheet
             record["statements"] = _statements(sheet)
+            # What the codes call for, apart from the reading (SDW-48).
+            record["clp_expected"] = _clp_expected(sheet)
             # How many sheets the file holds, and each one read on its own
             # where it holds several (SDW-32); the keys above are the file's.
             parts = reading.parser_result.parts
@@ -308,6 +322,7 @@ def reading_to_dict(
                             usable_dates(part.sheet, today),
                         ),
                         "statements": _statements(part.sheet),
+                        "clp_expected": _clp_expected(part.sheet),
                         "warnings": _shown(part.warnings, catalog),
                         # Each sheet's age on its own dates (SDW-46).
                         "findings": _shown(age_findings(part.sheet, today), catalog),

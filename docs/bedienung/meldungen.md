@@ -61,7 +61,8 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `no-precautionary-codes` | – | Die Kennzeichnung trägt keinen P-Satz. |
 | `euh-wording-outside-label` | `statement`, `sentence` | {statement} steht nur außerhalb der Kennzeichnung: {sentence} |
 | `signal-word-not-taken` | `signal_word` | Das Signalwort „{signal_word}“ wurde nicht übernommen: Abschnitt 2 nennt das Produkt nicht eingestuft, und die Kennzeichnung druckt keinen H-Satz. |
-| `pictograms-derived` | `pictograms` | Piktogramme aus den H-Sätzen abgeleitet, das Blatt nennt keine: {pictograms} |
+| `label-images-not-read` | `reason` | Die Kennzeichnung wurde nicht als Bild angesehen ({reason}); Piktogramme, die das Blatt nur als Bild druckt, fehlen in der Lesung. |
+| `pictograms-not-recognised` | `count` | Eine rote Raute in der Kennzeichnung wurde keinem Piktogramm zugeordnet. / {count} rote Rauten in der Kennzeichnung wurden keinem Piktogramm zugeordnet. |
 | `precautionary-wording-unclear` | `codes` | Ein Sicherheitshinweis ohne Code passt gleich gut zu {codes}; keiner davon wurde übernommen. |
 | `label-line-unassigned` | `line` | Eine Zeile der Kennzeichnung wurde nichts zugeordnet: {line} |
 | `statement-too-long` | `codes` | Der Satz {codes} ist nach 100 Zeilen abgeschnitten; was folgt, gehört zu keinem Satz. |
@@ -89,6 +90,9 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `label-without-hazard-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein H-Satz gefunden; die Einstufung verlangt ihre Gefahrenhinweise auf dem Etikett (CLP Art. 27). |
 | `label-without-precautionary-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein P-Satz gefunden; die Einstufung verlangt die einschlägigen Sicherheitshinweise auf dem Etikett (CLP Art. 22). |
 | `hazard-statement-not-in-label` | `statement` | Abschnitt 2.1 nennt {statement} zur Einstufung, und in der Kennzeichnung wurde der Satz nicht gefunden; die Einstufung verlangt ihn auf dem Etikett (CLP Art. 27). |
+| `pictogram-not-found` | `pictogram` | Die H-Sätze der Kennzeichnung verlangen das Piktogramm {pictogram}, und es wurde nicht gefunden (CLP Art. 19). |
+| `pictogram-not-expected` | `pictogram` | Die Kennzeichnung zeigt das Piktogramm {pictogram}, und keiner ihrer H-Sätze verlangt es. |
+| `pictogram-precedence` | `pictogram`, `beside` | Die Kennzeichnung zeigt {pictogram} neben {beside}; nach dem Vorrang des Art. 26 CLP entfällt {pictogram} dort. |
 | `signal-word-not-found` | `expected` | Die Codes der Kennzeichnung verlangen das Signalwort „{expected}“, und es wurde keines gefunden (CLP Art. 20). |
 | `different-products` | `products` | Die Datei enthält Sicherheitsdatenblätter verschiedener Produkte: {products} |
 | `country-editions-differ` | `fields` | Die Blätter desselben Produkts für verschiedene Länder weichen voneinander ab: {fields} |

@@ -10,6 +10,7 @@ only runs the command needs none of this and reads
 | [A reading and its parts](reading.md) | what `read_sheet` returns, for a sheet and for any other file; a reading as JSON |
 | [Messages and catalogs](messages.md) | warnings, errors and findings as codes; sentences in a language of your choice |
 | [Judging a sheet](judging.md) | findings, the classification, whether the product needs a sheet |
+| [What the regulation expects](expected.md) | the signal word and pictograms a label's codes call for, and where the reading differs |
 | [Statements and pictograms](statements.md) | the label's statements with the regulation's wording; pictograms from H codes |
 | [Keeping texts](stored-texts.md) | storing the text of a PDF, reading from it again, and the two stage versions |
 | [Which sheet is the current one](current-sheet.md) | choosing among several sheets of one product |

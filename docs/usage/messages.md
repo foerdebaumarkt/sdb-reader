@@ -61,7 +61,8 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `no-precautionary-codes` | – | The label carries no P statement. |
 | `euh-wording-outside-label` | `statement`, `sentence` | {statement} is printed only outside the label: {sentence} |
 | `signal-word-not-taken` | `signal_word` | The signal word '{signal_word}' was not taken: section 2 says the product is not classified, and the label prints no H statement. |
-| `pictograms-derived` | `pictograms` | Pictograms derived from the H statements, the sheet names none: {pictograms} |
+| `label-images-not-read` | `reason` | The label was not looked at as a picture ({reason}); pictograms the sheet prints only as pictures are missing from the reading. |
+| `pictograms-not-recognised` | `count` | A red diamond in the label was matched to no pictogram. / {count} red diamonds in the label were matched to no pictogram. |
 | `precautionary-wording-unclear` | `codes` | A precautionary statement without its code fits {codes} alike; none of them was taken. |
 | `label-line-unassigned` | `line` | A line of the label was assigned to nothing: {line} |
 | `statement-too-long` | `codes` | The statement {codes} is cut off after 100 lines; what follows belongs to no statement. |
@@ -89,6 +90,9 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `label-without-hazard-statement` | – | Section 2 classifies the product, and no H statement was found in the label; the classification requires its hazard statements on the label (CLP Article 27). |
 | `label-without-precautionary-statement` | – | Section 2 classifies the product, and no P statement was found in the label; the classification requires the relevant precautionary statements on the label (CLP Article 22). |
 | `hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label; the classification requires it on the label (CLP Article 27). |
+| `pictogram-not-found` | `pictogram` | The label's H statements call for the pictogram {pictogram}, and it was not found (CLP Article 19). |
+| `pictogram-not-expected` | `pictogram` | The label shows the pictogram {pictogram}, and none of its H statements calls for it. |
+| `pictogram-precedence` | `pictogram`, `beside` | The label shows {pictogram} beside {beside}; by the precedence of CLP Article 26, {pictogram} is left out there. |
 | `signal-word-not-found` | `expected` | The label's codes call for the signal word '{expected}', and none was found (CLP Article 20). |
 | `different-products` | `products` | The file holds safety data sheets of different products: {products} |
 | `country-editions-differ` | `fields` | The sheets of the same product for different countries differ in: {fields} |

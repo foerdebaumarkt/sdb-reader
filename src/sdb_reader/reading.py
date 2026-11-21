@@ -8,15 +8,26 @@ and knowing which file it belongs to, is the caller's (BIB-2).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from .extraction import ExtractionError, ExtractionResult, extract_pdf_text
+from .label_images import LabelImages, LabelImagesStatus, read_label_images
 from .messages import Message
 from .parser import ParsedSheet, SDSParser
+from .schema import SafetyDataSheet
 from .verification import DocumentKind, SDSVerifier, Verification
 
 LINE_TOO_LONG = "line-too-long"
+# The label was not looked at as a picture, and why (SDB-179).
+LABEL_IMAGES_NOT_READ = "label-images-not-read"
+# Red diamonds in the label that no reference matched (SDB-179).
+PICTOGRAMS_NOT_RECOGNISED = "pictograms-not-recognised"
+# Why the pictograms of a label's drawing are not in a sheet's reading, beside
+# the LabelImagesStatus values: a file's labels on the pages and its sheets do
+# not pair up.
+LABELS_NOT_PAIRED = "labels-not-paired"
 # The longest line a sheet prints, with room: the longest of the measured
 # collection has 837 characters (SDB-167).
 MAX_LINE_CHARACTERS = 2_000
@@ -31,6 +42,9 @@ class SheetReading:
     extraction: ExtractionResult | None = None
     # None unless the file is a German safety data sheet.
     parser_result: ParsedSheet | None = None
+    # What the label shows as pictures, where the PDF was looked at (SDB-179);
+    # a caller that keeps the text keeps this beside it.
+    label_images: LabelImages | None = None
     warnings: list[Message] = field(default_factory=list)
     errors: list[Message] = field(default_factory=list)
 
@@ -54,15 +68,21 @@ def read_sheet(path: Path, *, max_pages: int | None = None) -> SheetReading:
             warnings=[Message("unreadable")],
             errors=errors,
         )
-    return read_extraction(extraction)
+    return _read(extraction, lambda: read_label_images(path, max_pages=max_pages))
 
 
-def read_extraction(extraction: ExtractionResult) -> SheetReading:
+def read_extraction(
+    extraction: ExtractionResult, label_images: LabelImages | None = None
+) -> SheetReading:
     """Judge and parse a text that was read from a PDF before (BIB-3).
 
-    Gives what ``read_sheet`` gives for the file the text came from. Reading a
-    PDF's text takes nearly all the time of a reading; a caller that keeps the
-    text (``extraction_to_dict``) reads a sheet again in milliseconds.
+    Gives what ``read_sheet`` gives for the file the text came from, when
+    *label_images* is what ``read_label_images`` found in that file. Reading a
+    PDF takes nearly all the time of a reading; a caller that keeps the text
+    (``extraction_to_dict``) and the pictograms (``label_images_to_dict``)
+    reads a sheet again in milliseconds. Without *label_images* the reading
+    has only the pictograms the text names, and ``drawing_read`` says that
+    the label was not looked at as drawn.
 
     >>> from sdb_reader import extraction_from_dict
     >>> text = (
@@ -85,6 +105,14 @@ def read_extraction(extraction: ExtractionResult) -> SheetReading:
     >>> label.hazard_codes, label.signal_word
     (['H315'], 'Achtung')
     """
+    return _read(extraction, lambda: label_images)
+
+
+def _read(
+    extraction: ExtractionResult, label_images: Callable[[], LabelImages | None]
+) -> SheetReading:
+    """The reading of *extraction*; the label's drawing is looked at only for
+    a German safety data sheet."""
     checked, too_long = within_line_limit(extraction)
     verification = SDSVerifier().verify(checked)
     if verification.kind is not DocumentKind.SAFETY_DATA_SHEET:
@@ -95,11 +123,56 @@ def read_extraction(extraction: ExtractionResult) -> SheetReading:
         )
     parsed = SDSParser().parse(checked)
     parsed.warnings[:0] = too_long
+    images = label_images()
+    with_label_images(parsed, images)
     return SheetReading(
         verification=verification,
         extraction=extraction,
         parser_result=parsed,
+        label_images=images,
     )
+
+
+def with_label_images(parsed: ParsedSheet, images: LabelImages | None) -> None:
+    """Add to *parsed* the pictograms its labels show as pictures (SDB-179).
+
+    The file's reading gets those of every label on the pages; each sheet of a
+    file that holds several gets those of its own label, where the labels on
+    the pages are as many as the sheets, else a warning. Where the label could
+    not be looked at, a warning says why. Without *images* nothing changes.
+    """
+    if images is None:
+        return
+    if images.status is not LabelImagesStatus.READ:
+        reason = images.status.value
+        for warnings in (parsed.warnings, *(part.warnings for part in parsed.parts)):
+            warnings.append(Message(LABEL_IMAGES_NOT_READ, {"reason": reason}))
+        return
+    _add_pictograms(
+        parsed.sheet, set().union(*images.labels), read=not any(images.unrecognised)
+    )
+    if missed := sum(images.unrecognised):
+        parsed.warnings.append(Message(PICTOGRAMS_NOT_RECOGNISED, {"count": missed}))
+    if not parsed.parts:
+        return
+    if len(images.labels) != len(parsed.parts):
+        for part in parsed.parts:
+            part.warnings.append(
+                Message(LABEL_IMAGES_NOT_READ, {"reason": LABELS_NOT_PAIRED})
+            )
+        return
+    for part, codes, missed in zip(
+        parsed.parts, images.labels, images.unrecognised, strict=True
+    ):
+        _add_pictograms(part.sheet, set(codes), read=not missed)
+        if missed:
+            part.warnings.append(Message(PICTOGRAMS_NOT_RECOGNISED, {"count": missed}))
+
+
+def _add_pictograms(sheet: SafetyDataSheet, codes: set[str], *, read: bool) -> None:
+    label = sheet.hazard_statements
+    label.pictograms = sorted(set(label.pictograms) | codes)
+    label.drawing_read = read
 
 
 def within_line_limit(

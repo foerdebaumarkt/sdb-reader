@@ -38,8 +38,8 @@
 | --- | --- | --- |
 | ein Feld ist leer, obwohl das Blatt den Wert druckt | der Wert wurde in diesem Layout nicht gefunden | `parser.warnings` und den `section_text` des Abschnitts lesen; das Layout melden |
 | `countries` ist leer | das Blatt nennt kein Land | es zählt als Blatt für Ihr Land |
-| `pictograms`, obwohl das Blatt keine nennt | sie folgen aus den Gefahrenhinweisen | `parser.warnings` sagt es mit `pictograms-derived` |
-| `signal_word` ist leer, obwohl das Blatt H-Sätze trägt | das Blatt druckt kein Signalwort, oder es wurde nicht gefunden | `expected_signal_word` nennt das, das die Codes verlangen, und `findings` meldet `signal-word-not-found` |
+| `pictograms` ist leer, obwohl die Kennzeichnung Piktogramme zeigt | die Kennzeichnung ließ sich nicht als Bild ansehen (gescannt, keine Überschrift „Kennzeichnungselemente“), oder eine Raute blieb unbenannt | `parser.warnings` sagt, was (`label-images-not-read`, `pictograms-not-recognised`); `drawing_read` ist falsch |
+| `signal_word` ist leer, obwohl das Blatt H-Sätze trägt | das Blatt druckt kein Signalwort, oder es wurde nicht gefunden | `findings` meldet `signal-word-not-found` mit dem Wort, das die Codes verlangen, außer die Kennzeichnung gibt an, keines zu tragen (`states_no_signal_word`) |
 | ein Wert fehlt bei einem Blatt, das als Formular in zwei Spalten ohne Doppelpunkte gesetzt ist | außerhalb von Abschnitt 1 werden solche Zeilen als Tabelle gelesen, und Bezeichnung und Wert können auseinanderstehen | eine bekannte Grenze; `section_text` prüfen |
 | die Meldung `short-text` oder `short-sample` | die Datei hat wenig Text für ein Blatt | sie kann abgeschnitten oder teils gescannt sein; die Datei ansehen |
 | der Befund `wording-deviates` bei einem Satz, der richtig aussieht | der Wortlaut des Blatts weicht in einem Wort von dem der Verordnung ab | die beiden Wortlaute in den Angaben des Befunds vergleichen |

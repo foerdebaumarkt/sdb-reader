@@ -38,6 +38,8 @@ class HazardStatements:
     supplemental_codes: list[str] = field(default_factory=list)
     # The signal word the label prints (SDB-176); None where it prints none.
     signal_word: str | None = None
+    # The pictograms the label names in its text or shows as pictures
+    # (SDB-179), as printed.
     pictograms: list[str] = field(default_factory=list)
     hazard_text: str | None = None
     precautionary_text: str | None = None
@@ -45,9 +47,13 @@ class HazardStatements:
     # The codes the label does not print and the parser assigned to the
     # sentences it prints (SDB-174); every one of them also stands in its list.
     codes_from_wording: list[str] = field(default_factory=list)
-    # The signal word the label's codes call for where the label says nothing
-    # about one (SDB-177). Never the signal word of the reading.
-    expected_signal_word: str | None = None
+    # Whether the label was looked at as drawn and every red diamond in it was
+    # named (SDB-179): only then can a pictogram be said not to be printed.
+    drawing_read: bool = False
+    # Whether the label states that it has no signal word (SDB-176) or no
+    # pictogram (SDB-180): "Signalwort entfällt", "Piktogramme: keine".
+    states_no_signal_word: bool = False
+    states_no_pictograms: bool = False
 
 
 @dataclass(slots=True)
