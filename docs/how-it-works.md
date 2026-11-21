@@ -6,17 +6,39 @@ from here to the binding text in [specs/](../specs/README.md). The specs are
 in German; [Reading the specs](contributing/changes-and-specs.md#reading-the-specs-without-german)
 helps if you do not read it.
 
-## Principles
+## The philosophy behind the reader
 
-- **No model decides.** A sheet is read by a parser with written rules. A
-  language model can be asked for a second opinion; it never changes a
-  reading.
-- **The same file gives the same result**, on every machine and in every
-  run. Nothing depends on the machine's language, the file's name or the time.
-- **Every rule is written down.** What the reader does follows a numbered
-  rule, a change starts with its rule, and a test names the rule it holds.
-- **A reading never names its file.** The library judges content. Which file
-  a reading belongs to, and which product a file belongs to, is the caller's
+- **Read what is printed, nothing else.** A reading holds what the sheet
+  prints: its codes, its sentences, its dates, its supplier. The reader adds
+  nothing a sheet "should" carry and corrects nothing it gets wrong. Where a
+  label prints a statement only as a sentence, the reader names its code and
+  says that the code was assigned, not printed.
+- **Report, don't correct.** Where a sheet falls short of the CLP Regulation
+  or REACH, the reader says so as a finding beside the reading. The findings
+  name what its rules detect; they are a help, not a complete audit, and a
+  sheet without a finding is not thereby in order.
+- **Get the data right; leave the decision to the user.** The reader judges
+  one file. Whether a product may be sold, which of several sheets applies,
+  what to do about a finding: that is for whoever uses the reading, who knows
+  the product, the shop and the law that applies to them.
+- **Better missing than invented.** A rule reads only forms it can tell apart
+  without guessing. Where a sheet words something in a way no rule covers, the
+  reading leaves it out and says so ("not found"), instead of reading
+  something that is not there. A missing value is easy to spot; an invented
+  one looks right.
+- **No model decides.** A sheet is read by written rules. A language model can
+  be asked for a second opinion; it never changes a reading.
+- **The same file gives the same result**, on every machine and in every run.
+  Nothing depends on the machine's language, the file's name or the time,
+  except where a rule says so (a date in the future is judged against the day
+  of the run).
+- **Every rule is written down and measured.** What the reader does follows a
+  numbered rule; a change starts with its rule, a test names the rule it
+  holds, and every change is read over a large collection of sheets and
+  compared with the reading before. A case a rule reports is checked by hand
+  when the rule is built; at run time the reader is trusted.
+- **A reading never names its file.** The library judges content. Which file a
+  reading belongs to, and which product a file belongs to, is the caller's
   knowledge.
 - **The country, not the language.** What matters legally is the country a
   sheet is issued for; sheets for Germany, Austria and Switzerland are all in

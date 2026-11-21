@@ -84,6 +84,12 @@ Antwort neben der Lesung fest, sodass sich beide vergleichen lassen. Mehr dazu
 in [How it works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html)
 (Englisch).
 
+**Die Idee dahinter.** Der Leser gibt wieder, was ein Blatt druckt, und meldet
+getrennt davon, wo das Blatt hinter der Verordnung zurückbleibt; was daraus
+folgt, entscheidet, wer ihn benutzt. [How it
+works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html)
+(Englisch) beschreibt die Grundsätze dahinter.
+
 ## Dokumentation
 
 Die Dokumentation steht unter <https://foerdebaumarkt.github.io/sdb-reader/>,

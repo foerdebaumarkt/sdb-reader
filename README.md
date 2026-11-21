@@ -78,6 +78,12 @@ quickly.)
 beside the reading, so the two can be compared. [How it
 works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html) explains more.
 
+**The idea behind it.** The reader gives what a sheet prints and reports,
+separately, where the sheet falls short of the regulation; what to do about it
+stays with you. [How it
+works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html)
+describes the philosophy behind it.
+
 ## Documentation
 
 The documentation is at <https://foerdebaumarkt.github.io/sdb-reader/>, one
