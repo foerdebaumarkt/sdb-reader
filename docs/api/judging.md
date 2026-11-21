@@ -29,13 +29,15 @@ older = dataclasses.replace(sheet, revision_date=date(2019, 5, 2))
 assert finding == Message("predates-annex-ii", {"revised": "2019-05-02"})
 ```
 
-A date in the future cannot be right, but the library reads no clock. Pass
-the day as `today`, and a revision date after it (without one: an issue
-date) is reported and no longer counts for the sheet's age: the sheet is
-judged by its issue date where that is possible, else like a sheet without a
-date. The sheet's fields stay as read. Without `today` no date is
-questioned. `reading_to_dict` takes the same argument, and the command
-`read` passes the machine's date.
+A date in the future cannot be right and is no date, but the library reads
+no clock. Pass the day as `today`, and a revision or issue date after it is
+reported (`revised-in-future`, `issued-in-future`) and no longer counts for
+the sheet's age: the sheet is judged by its other date where that is
+possible, else like a sheet without a date. The `SafetyDataSheet` keeps the
+date as read; `reading_to_dict` takes the same argument and then gives no
+date in its place (`null`). For a file of several sheets each date is the
+newest one of its sheets names that is not in the future. Without `today` no
+date is questioned. The command `read` passes the machine's date.
 
 ```python
 misprinted = dataclasses.replace(sheet, revision_date=date(2028, 11, 28))
@@ -56,7 +58,8 @@ assert "revised-in-future" not in [
 | Code | Values | The sheet |
 | --- | --- | --- |
 | `predates-annex-ii` | `revised` | was revised before 2021-01-01 and cannot meet Annex II of REACH as amended in 2020 |
-| `revised-in-future` | `revised`, `today` | names a revision date (without one: an issue date) after the day given as `today` |
+| `revised-in-future` | `revised`, `today` | names a revision date after the day given as `today`; that date is no date |
+| `issued-in-future` | `issued`, `today` | names an issue date after the day given as `today`; that date is no date |
 | `old-format` | `revised` | was revised since, needs to be a sheet by law, and still lacks what the 2020 version added |
 | `undated` | – | carries no revision or issue date that can be read |
 | `old-classification` | – | classifies under the directives before CLP and carries no CLP label |

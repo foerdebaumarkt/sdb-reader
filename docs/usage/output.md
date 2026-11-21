@@ -144,7 +144,8 @@ statement whose `code_source` is `from_wording`.
 | --- | --- |
 | `predates-annex-ii` | revised before 2021, so it cannot follow today's rules for the content of a sheet |
 | `old-format` | revised since 2021 but still laid out as before |
-| `revised-in-future` | the revision date (or, without one, the issue date) lies after the day `read` ran; it cannot be right and does not count for the sheet's age, so the sheet is judged by its issue date if that is possible, else as undated; the date itself stays in the record as printed |
+| `revised-in-future` | the revision date lies after the day `read` ran; it cannot be right and is no date: `revision_date` is `null`, and the sheet is judged by its issue date if that is possible, else as undated |
+| `issued-in-future` | the same for the issue date: `issue_date` is `null` |
 | `undated` | no date of revision or issue that can be read |
 | `old-classification` | classified under the directives before CLP, without a CLP label |
 | `classification-undetermined` | the label says the classification is not determined |
@@ -279,8 +280,8 @@ sheet's text), `statements` and `warnings`, what was noticed while reading
 that sheet, and names its countries (`countries`, empty where none is
 recognised) and its product (`product_identifier`). Its `findings` hold
 the findings on that sheet's age, judged on its own dates as for a file
-that is this sheet: `revised-in-future`, `undated`, `predates-annex-ii` and
-`old-format`; the list is empty where there is none. There are no other
+that is this sheet: `revised-in-future`, `issued-in-future`, `undated`,
+`predates-annex-ii` and `old-format`; the list is empty where there is none. There are no other
 findings per sheet: a finding is about the product, and whether one sheet
 is the product the program does not know. A later sheet begins at the title "Sicherheitsdatenblatt" above
 its section 1, so that the date and version in the header of its first page

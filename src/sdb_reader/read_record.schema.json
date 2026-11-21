@@ -547,7 +547,7 @@
           "items": {
             "$ref": "#/$defs/message"
           },
-          "description": "The findings on this sheet's age, judged on its own dates as for a file that is this sheet: revised-in-future, undated, predates-annex-ii, old-format (SDW-46). Not required, so that a record written before stays valid."
+          "description": "The findings on this sheet's age, judged on its own dates as for a file that is this sheet: revised-in-future, issued-in-future, undated, predates-annex-ii, old-format (SDW-46). Not required, so that a record written before stays valid."
         }
       }
     },
@@ -564,6 +564,7 @@
                 "undated",
                 "predates-annex-ii",
                 "revised-in-future",
+                "issued-in-future",
                 "classification-undetermined",
                 "old-classification",
                 "old-format",
@@ -751,6 +752,7 @@
             "embedded-wrong-root",
             "euh-outside-label",
             "euh-wording-outside-label",
+            "issued-in-future",
             "label-before-clp",
             "label-line-unassigned",
             "label-not-found",

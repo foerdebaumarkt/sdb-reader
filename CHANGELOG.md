@@ -7,6 +7,15 @@ Versions follow the tags of this repository.
 
 ### Breaking
 
+- **A date in the future is no date.** With the day of the run (`today`,
+  which `read` passes), a revision or issue date after it stands in the
+  record as `null`, for the file and for each of its sheets; before, it
+  stood there as printed. The finding names it: `revised-in-future` the
+  revision date, and the new `issued-in-future` the issue date. Before,
+  `revised-in-future` named the issue date where the sheet had no revision
+  date, and an issue date in the future beside a revision date went without
+  a finding (SDB-137, SDW-34). The `SafetyDataSheet` of the library keeps
+  the date as read.
 - **The signal word only as printed.** Where the label says nothing about a
   signal word, `signal_word` is now empty; before, it held the word the codes
   call for, derived from them. That word now stands in `expected_signal_word`
@@ -47,6 +56,9 @@ Versions follow the tags of this repository.
 
 ### Fixed
 
+- **A date in the future no longer leaves a file of several sheets
+  undated.** Each of its dates is the newest one of its sheets names that is
+  not in the future (SDB-179).
 - **A signal word with an exclamation mark behind its label** ("Signalwort:
   Achtung!") is read; only a sentence that goes on after the mark on the
   same line is the opening of EUH211 or EUH212 (SDB-176).

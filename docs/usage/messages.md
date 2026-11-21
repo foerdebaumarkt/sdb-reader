@@ -78,7 +78,8 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `wording-deviates` | `statement`, `sheet`, `regulation` | {statement}: the sheet prints '{sheet}', the regulation says '{regulation}'. |
 | `undated` | – | The sheet carries no revision or issue date that can be read. |
 | `predates-annex-ii` | `revised` | Revised {revised}, before 2021-01-01: the sheet cannot meet Annex II of REACH as amended by Regulation (EU) 2020/878. |
-| `revised-in-future` | `revised`, `today` | Revised {revised}, after {today}, the day of the check: the date cannot be right and does not count for the sheet's age. |
+| `revised-in-future` | `revised`, `today` | Revised {revised}, after {today}, the day of the check: the date cannot be right and does not count. |
+| `issued-in-future` | `issued`, `today` | Issued {issued}, after {today}, the day of the check: the date cannot be right and does not count. |
 | `classification-undetermined` | – | The label says that the classification was not determined. |
 | `old-classification` | – | Section 2 classifies under Directive 67/548/EEC or 1999/45/EC (R phrases, hazard symbols) and carries no CLP label; mixtures have had to be classified under Regulation (EC) No 1272/2008 since 1 June 2015. |
 | `old-format` | `revised` | Revised {revised}, but laid out as before Regulation (EU) 2020/878: no endocrine-disrupting properties, no subsection 11.2, no subsection 12.7. |

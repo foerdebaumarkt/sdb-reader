@@ -816,16 +816,17 @@ class TestFutureDate:
         ]
 
     @pytest.mark.spec("SDB-137")
-    def test_an_issue_date_in_the_future_is_reported_where_it_is_the_date_that_counts(
-        self,
-    ) -> None:
+    def test_an_issue_date_in_the_future_is_reported_too(self) -> None:
         assert self.codes("Ausgabedatum: 28.11.2028\n", self.TODAY) == [
-            "revised-in-future",
+            "issued-in-future",
             "undated",
         ]
-        # Beside a possible revision date it plays no part.
+        # Beside a possible revision date it is reported and the sheet keeps
+        # its age by that date.
         header = "überarbeitet am: 10.01.2023\nAusgabedatum: 28.11.2028\n"
-        assert "revised-in-future" not in self.codes(header, self.TODAY)
+        findings = sheet_findings(read(header=header), [], today=self.TODAY)
+        assert [f.code for f in findings] == ["issued-in-future"]
+        assert findings[0].params == {"issued": "2028-11-28", "today": "2026-11-18"}
 
     @pytest.mark.spec("SDB-137")
     def test_the_day_itself_is_not_the_future(self) -> None:

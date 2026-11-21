@@ -339,8 +339,8 @@ def test_read_reports_a_revision_date_after_the_day_it_runs(
     assert "undated" in codes
     future = next(f for f in record["findings"] if f["code"] == "revised-in-future")
     assert future["params"] == {"revised": "2028-11-28", "today": "2026-11-18"}
-    # The date stays in the record as the sheet prints it.
-    assert record["sheet"]["revision_date"] == "2028-11-28"
+    # A date in the future is no date; only the finding names it.
+    assert record["sheet"]["revision_date"] is None
 
     monkeypatch.setattr(cli, "_today", lambda: date(2028, 11, 28))
     _, [record], _ = _run(capsys, str(path))
