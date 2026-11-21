@@ -190,8 +190,7 @@ Only a German safety data sheet goes on to the parser.
   information office's (SDB-136).
 - **Dates and version.** The newest revision and issue date the sheet names,
   and its version, in the many forms sheets print them (SDB-20, SDB-57,
-  SDB-90 to SDB-94, SDB-96 to SDB-98, SDB-100 to SDB-103, SDB-128 to
-  SDB-130). The date of a version the sheet only names, such as the one it
+  SDB-90, SDB-128, SDB-129). The date of a version the sheet only names, such as the one it
   replaces, is not its own; the day the version in hand was made is a
   revision date. A date after the day the caller names as today does not
   count for a sheet's age or for choosing the newest sheet, and is reported

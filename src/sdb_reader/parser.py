@@ -253,7 +253,7 @@ _MONTH_NAMES: dict[str, int] = {
     "dez": 12,
     "dec": 12,
 }
-# The separators may stand between spaces: "15 / 6 / 2010" (SDB-91).
+# The separators may stand between spaces: "15 / 6 / 2010" (SDB-57).
 _DATE_SEPARATOR = r"(?:[^\S\n]?[.\-/]\s*|\s)"
 _DATE_FRAGMENT = (
     rf"(\d{{1,2}}){_DATE_SEPARATOR}([A-Za-zÄÖÜäöüß]{{3,9}}|\d{{1,2}})"
@@ -315,19 +315,19 @@ REVISION_DATE_PATTERN = re.compile(
     r"|(?:version|rev\.?)\s*(?:nr\.?\s*)?(?::\s*)?\d+(?:[.,]\d+)*\s*vom"
     r"|(?<!ersetzt )(?:version|fassung|revision|rev\.?)\s*(?::\s*)?(?:nr\.?\s*)?(?:GHS\s*)?"
     r"\d+(?:[.,]\d+)*\.?\s*[(–—-]"
-    # "Durchsicht Nr. 3" / "vom 11/10/2023" (SDB-102).
+    # "Durchsicht Nr. 3" / "vom 11/10/2023" (SDB-57).
     r"|durchsicht\s+nr\.?\s*\d+\s+vom"
     r"|version\s+vom)"
     rf"\s*:?{_PAGE_MARKER}\s*{_DATED}",
     re.IGNORECASE | re.MULTILINE,
 )
 # "20/09/2021 (Version: 9.4)": the date first, its version behind it. Also
-# behind a comma, "20/11/2012, version 2." (SDB-98).
+# behind a comma, "20/11/2012, version 2." (SDB-57).
 REVISION_DATE_BEFORE_VERSION_PATTERN = re.compile(
     rf"{_DATED}(?:\s*\(Version\s*:|,[^\S\n]*Version[^\S\n]+\d)", re.IGNORECASE
 )
 # "23.04.2024 (Überarbeitungsdatum)": the date first, its label behind it in
-# brackets, in the footer of every page (SDB-97).
+# brackets, in the footer of every page (SDB-57).
 REVISION_DATE_BEFORE_LABEL_PATTERN = re.compile(
     rf"{_DATED}[^\S\n]*\((?:Überarbeitungsdatum|Revisionsdatum|überarbeitet\s+am)\)",
     re.IGNORECASE,
@@ -385,10 +385,10 @@ REVISION_DATE_GRID_PATTERN = re.compile(
 ISSUE_DATE_PATTERN = re.compile(
     r"(?:ausstellungsdatum|ausgabedatum|erstellungsdatum|erstelldatum"
     r"|erstellt(?:\s+am|\s*:)"
-    # "Erste Fassung: 15.12.2025" (SDB-93).
+    # "Erste Fassung: 15.12.2025" (SDB-57).
     r"|erste\s+fassung|erstfassung"
     r"|datum\s+der\s+erstellung|datum\s+ausgestellt|(?<![a-zäöüß])erstellung"
-    # "Datum der Ausstellung: 5/05/2022" (SDB-96), "Ausgestellt am" (SDB-101).
+    # "Datum der Ausstellung: 5/05/2022", "Ausgestellt am" (SDB-57).
     r"|datum\s+der\s+ausstellung|ausgestellt\s+am"
     # "Datum der Ausgabe: 06.01.2021" (SDB-161); not "Datum der letzten Ausgabe".
     r"|datum\s+der\s+ausgabe"
@@ -5090,7 +5090,7 @@ def _extract_issue_date(text: str) -> date | None:
     return _latest_dated_match(text, ISSUE_DATE_PATTERN)
 
 
-# A header table read column by column (SDB-92): the values first, each on a
+# A header table read column by column (SDB-90, step 1): the values first, each on a
 # line of its own, then their labels in the same order.
 #
 #     02.01.2013          Erstfassung
@@ -5141,12 +5141,12 @@ def _extract_date_from_columns(text: str) -> date | None:
     return max(found) if found else None
 
 
-# How many lines below its label a revision date may stand (SDB-103).
+# How many lines below its label a revision date may stand (SDB-90, step 2).
 _LABEL_REACH = 3
 
 
 def _extract_date_below_label(text: str) -> date | None:
-    """The revision date that stands a few lines below its label (SDB-103).
+    """The revision date that stands a few lines below its label (SDB-90, step 2).
 
     A header whose cells reach the text one after another: "Überarbeitet am:",
     "Artikel-Nr.: 2297PR", "Seite 1 von 6", "17.07.2020". The lines between
@@ -5174,7 +5174,7 @@ def _extract_date_below_label(text: str) -> date | None:
 # A month and a year (SDB-90): "STAND: 06/2022", "Stand: Februar 2003", or
 # "03 / 2012" alone on a line. Last of all, and narrow: the number of a
 # regulation looks the same ("Verordnung Nr. 8/1985", "NN 1/2021").
-# Also behind the revision label (SDB-94): "Überarbeitet am: März 2013",
+# Also behind the revision label: "Überarbeitet am: März 2013",
 # "Überarbeitet am: April/2017".
 _MONTH_YEAR_LABEL = (
     r"\b(?:Stand|Überarbeitet[^\S\n]+am|Überarbeitungsdatum|Revisionsdatum)"
@@ -5185,7 +5185,7 @@ MONTH_YEAR_PATTERN = re.compile(
     rf"|{_MONTH_YEAR_LABEL}([A-Za-zä]{{3,9}})\.?(?:[^\S\n]+|[^\S\n]?/[^\S\n]?)"
     r"((?:19|20)\d{2})\b"
     r"|^[^\S\n]*(0[1-9]|1[0-2])[^\S\n]?/[^\S\n]?((?:19|20)\d{2})[^\S\n]*\.?[^\S\n]*$"
-    # "Stand 10.2013" in a footer (SDB-100).
+    # "Stand 10.2013" in a footer.
     r"|^[^\S\n]*Stand[^\S\n]*:?[^\S\n]*(0[1-9]|1[0-2])\.((?:19|20)\d{2})\b",
     re.IGNORECASE | re.MULTILINE,
 )
