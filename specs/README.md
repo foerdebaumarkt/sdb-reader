@@ -9,6 +9,7 @@ Sicherheitsdatenblätter, und die Regeln nennen deren Wörter.
 | `sicherheitsdatenblatt.md` | wie die Bibliothek eine Datei liest, prüft und ihre Angaben ausgibt (SDB) |
 | `sdb-werkzeug.md` | was das Werkzeug `sdb-reader` ausgibt (SDW) |
 | `bibliothek.md` | was ein Programm, das die Bibliothek benutzt, erwarten kann (BIB) |
+| `historie.md` | die zurückgezogenen Regeln aller drei, mit ihrem alten Wortlaut |
 
 ## Aufbau einer Spec
 
@@ -22,13 +23,42 @@ Sicherheitsdatenblätter, und die Regeln nennen deren Wörter.
 - **Entscheidungsprotokoll:** was entschieden wurde und warum, mit Datum.
 - **Offene Fragen:** auch bekannte Grenzen.
 
-Eine Regel, die nicht mehr gilt, wird nicht gelöscht, sondern zurückgezogen:
-`- **SDW-12.** *Zurückgezogen 2026-11-16, ersetzt durch SDW-13:* <der alte Text>`.
+Eine Regel, die nicht mehr gilt, wird nicht gelöscht, sondern zurückgezogen
+und mit ihrem alten Wortlaut nach `historie.md` verschoben; ihre ID bleibt
+belegt. Sie nennt, was an ihre Stelle tritt:
+
+- **ersetzt durch:** eine neue Regel gilt statt ihrer:
+  `- **SDW-12.** *Zurückgezogen 2026-11-16, ersetzt durch SDW-13:* <der alte Text>`;
+- **aufgenommen in:** ihr Inhalt steht unverändert in einer anderen Regel, die
+  mehrere zusammenfasst und ihre ID behält, meist die am häufigsten genannte:
+  `- **SDB-91.** *Zurückgezogen 2026-11-21, aufgenommen in SDB-57:* <der alte Text>`;
+- **ohne Ersatz:** was sie sagte, gilt nicht mehr.
+
+## Eine Regel schreiben
+
+- **Eine Regel, ein Gegenstand:** was gilt, unter welcher Bedingung, mit
+  welchem Ergebnis. Eine Regel sagt, was gilt, nicht, was sie zusätzlich zu
+  einer anderen tut; „Ergänzend zu …“ nur, wo sie wirklich einen eigenen Fall
+  hinzufügt.
+- **Kurz:** Ziel unter 600 Zeichen. Wortformen stehen als Liste, nicht als
+  Kette von Sätzen.
+- **Beispiele** in „…“, mindestens eines je Fall; sie bleiben, wenn Regeln
+  zusammengefasst werden.
+- **Hintergrund** nur, wo die Regel ohne ihn nicht zu verstehen ist, etwa ihre
+  Rechtsgrundlage: als eigene Zeile `*Hintergrund:* …` unter der Regel,
+  höchstens zwei Sätze. Begründungen, Messungen und die Geschichte einer
+  Entscheidung gehören ins Entscheidungsprotokoll, nicht in den Regeltext.
+- **Erweitern statt anhängen:** Eine neue Wortform derselben Art (eine weitere
+  Bezeichnung des Datums, ein weiterer Satz für „nicht eingestuft“) kommt in die
+  Liste der Regel, zu der sie gehört, mit einem Eintrag im
+  Entscheidungsprotokoll und einem Test. Ändert sich, was eine Regel bedeutet,
+  wird sie zurückgezogen und ersetzt.
 
 ## Wie eine Änderung abläuft
 
 1. **Zuerst die Spec:** neue oder geänderte Regeln als Vorschlag, mit einem
-   Eintrag im Entscheidungsprotokoll.
+   Eintrag im Entscheidungsprotokoll. Eine neue Wortform in einer Liste braucht
+   keinen Vorschlag; sie kommt mit ihrem Test und dem Eintrag im Protokoll.
 2. **Dann die Umsetzung**, die die Regel in Kraft setzt und ihre ID nennt.
 3. **Reviews prüfen den Code gegen die Spec.** Code, der etwas tut, das keine
    Regel sagt, oder einer Regel widerspricht, ist ein Befund.
@@ -50,7 +80,8 @@ Der Marker kann an einer Testfunktion oder einer Testklasse stehen.
 
 ## Die Prüfung
 
-`tests/test_specs.py` liest jede `specs/*.md` und jeden `spec`-Marker unter
-`tests/`. Sie schlägt fehl, wenn eine geltende Regel keinen Test hat, wenn ein
-Test eine unbekannte, zurückgezogene oder nur vorgeschlagene ID nennt, oder wenn
-eine Spec eine ID zweimal festlegt.
+`tests/test_specs.py` liest jede `specs/*.md`, `historie.md` eingeschlossen,
+und jeden `spec`-Marker unter `tests/`. Sie schlägt fehl, wenn eine geltende
+Regel keinen Test hat, wenn ein Test eine unbekannte, zurückgezogene oder nur
+vorgeschlagene ID nennt, oder wenn eine Spec eine ID zweimal festlegt, auch
+eine zurückgezogene.

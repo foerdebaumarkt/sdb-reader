@@ -33,8 +33,11 @@ or contradicts one, is a finding.
 | `specs/sdb-werkzeug.md` | what the command line prints | SDW |
 | `specs/bibliothek.md` | what a program that uses the library can rely on | BIB |
 
-`specs/README.md` describes their form. An ID is never given out twice and
-never renumbered. Gaps in the SDB numbers belong to rules of a program the
+Withdrawn rules of all three are kept, with their old text, in
+`specs/historie.md`. `specs/README.md` describes their form and how a rule is
+written: one subject, short, word forms as lists, background only where the
+rule needs it, a new word form added to the list it belongs to. An ID is never
+given out twice and never renumbered. Gaps in the SDB numbers belong to rules of a program the
 library was once part of; they are not reused.
 
 ## Reading the specs without German
@@ -63,8 +66,10 @@ You can still work with them:
   | Marker | Meaning |
   | --- | --- |
   | `*Vorgeschlagen:*` | proposed: has its ID, is not in force, has no test |
-  | `*Zurückgezogen 2026-11-17:*` | withdrawn on that date; the old text stays behind the marker |
+  | `*Zurückgezogen 2026-11-17:*` | withdrawn on that date; the old text stays behind the marker, in `specs/historie.md` |
   | `*Zurückgezogen …, ersetzt durch SDB-87:*` | withdrawn and replaced by the rule named |
+  | `*Zurückgezogen …, aufgenommen in SDB-57:*` | withdrawn; its content now stands in the rule named, which sums up several |
+  | `*Hintergrund:*` | background: a note under a rule, mostly its legal basis; not a rule itself |
 
 - **Words that link rules:**
 
