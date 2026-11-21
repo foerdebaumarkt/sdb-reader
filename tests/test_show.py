@@ -694,9 +694,7 @@ def test_the_oldest_sheet_is_null_where_no_sheet_carries_a_date_that_counts() ->
 
 
 @pytest.mark.spec("SDW-45")
-def test_the_oldest_sheet_leaves_the_file_s_reading_and_findings_as_they_were() -> (
-    None
-):
+def test_the_oldest_sheet_leaves_the_file_s_reading_and_findings_as_they_were() -> None:
     record = _record(PAINT + _dated(HARDENER, "12.03.2014"))
 
     # The file is dated by the newest date it names (SDB-20).
