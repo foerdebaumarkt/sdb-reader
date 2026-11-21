@@ -165,28 +165,31 @@ jobs:
         GH_TOKEN: ${{ github.token }}
         TAG: ${{ github.ref_name }}
         VERSION: ${{ needs.build.outputs.version }}
+      # A re-run finds the release its first attempt created: it uploads the
+      # files again over the ones there and leaves the text as it is, so a
+      # re-run after a later job failed gets through to that job.
       run: |
         set -euo pipefail
-        gh release create "$TAG" \
-          --repo "$GITHUB_REPOSITORY" \
-          --verify-tag \
-          --title "sdb-reader ${VERSION}" \
-          --notes-file assets/notes.md \
-          dist/* \
-          "assets/sdb-reader-${VERSION}-docs.tar.gz"
+        files=(dist/* "assets/sdb-reader-${VERSION}-docs.tar.gz")
+        if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "${files[@]}"
+        else
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "sdb-reader ${VERSION}" \
+            --notes-file assets/notes.md \
+            "${files[@]}"
+        fi
 
   pages:
-    name: Deploy the documentation site
+    name: Put the documentation site together
     needs: [build, release]
     if: always() && needs.release.result == 'success' && needs.build.outputs.public == 'true' && github.event.repository.private == false
     runs-on: ubuntu-26.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      pages: read
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -220,7 +223,34 @@ jobs:
       with:
         path: build/pages
         name: github-pages-${{ github.run_attempt }}
+
+  # Deployed in a job of its own: the site's artifact, uploaded by the job
+  # before, is finished when this one starts. Deployed in the same job, it
+  # was at times not yet to be found ("No artifacts named …"), and the site
+  # of a release stayed out. Should it still not be found, the job waits and
+  # tries once more.
+  deploy:
+    name: Deploy the documentation site
+    needs: [build, pages]
+    if: always() && needs.pages.result == 'success' && needs.build.outputs.public == 'true' && github.event.repository.private == false
+    runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url || steps.again.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
     - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
       id: deploy
+      continue-on-error: true
+      with:
+        artifact_name: github-pages-${{ github.run_attempt }}
+    - name: Wait before trying again
+      if: steps.deploy.outcome == 'failure'
+      run: sleep 30
+    - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      id: again
+      if: steps.deploy.outcome == 'failure'
       with:
         artifact_name: github-pages-${{ github.run_attempt }}
