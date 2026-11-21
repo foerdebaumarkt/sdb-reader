@@ -72,7 +72,7 @@ assert "revised-in-future" not in [
 | `country-editions-differ` | `fields` | is a file holding one product's sheets for different countries that differ in these fields; only with `parts` |
 | `wording-deviates` | `statement`, `sheet`, `regulation` | words a statement differently from the regulation |
 | `signal-word-not-found` | `expected` | prints no signal word its codes call for; not where the label states it has none |
-| `pictogram-not-found` | `pictogram` | lacks a pictogram its H statements call for; only where the label was looked at as drawn (`drawing_read`), not where it states it has none, never GHS04 |
+| `pictogram-not-found` | `pictogram` | lacks a pictogram its H statements call for; only where the label was looked at as drawn (`drawing_read`), not where it states it has none |
 | `pictogram-not-expected` | `pictogram` | names or shows a pictogram none of its H statements calls for |
 | `pictogram-precedence` | `pictogram`, `beside` | shows GHS07 beside a pictogram that Article 26 CLP lets it give way to |
 

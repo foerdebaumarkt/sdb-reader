@@ -23,7 +23,7 @@ The example sheet prints "Achtung" and no pictogram. Its H315 calls for
 | Field | What it holds |
 | --- | --- |
 | `signal_word` | `Gefahr`, `Achtung` or None: the word Annex I gives the H codes and the EUH codes of the new hazard classes (EUH380, EUH381, EUH430, EUH431, EUH440, EUH441, EUH450, EUH451); `Gefahr` wins over `Achtung` |
-| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 (H315 beside H318 gives GHS05 only); no GHS05 where H290 is its only reason |
+| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 (H315 beside H318 gives GHS05 only); never GHS04, and no GHS05 where H290 is its only reason |
 | `signal_word_missing` | the codes call for a signal word, and the reading has none |
 | `signal_word_differs` | the reading has a signal word, and it is not the one the codes call for |
 | `pictograms_missing` | called for, and not in the reading |
@@ -31,11 +31,12 @@ The example sheet prints "Achtung" and no pictogram. Its H315 calls for
 | `pictograms_left_out` | in the reading and called for, but Article 26 leaves them out beside another pictogram the reading has |
 
 The signal word follows from the codes and never from the pictograms. A
-label without codes expects neither. GHS05 is not expected where H290 is
-its only reason (no H314, no H318), because Annex I 1.3.6 CLP makes it
-optional on a package for consumers; a label that prints it is right as
-well. GHS04 for H280 stays expected, though the findings do not call it
-missing (below).
+label without codes expects neither. What depends on the package, which a
+sheet does not show, is not claimed: GHS04 is never expected, because
+Article 33 CLP lets the transport label of a gas cylinder stand in for it,
+and GHS05 is not expected where H290 is its only reason (no H314, no
+H318), because Annex I 1.3.6 CLP makes it optional on a package for
+consumers. A label that prints either is right as well.
 
 ## Before you call something missing
 
@@ -81,9 +82,9 @@ A program that checks labels reads the differences. The findings
 (`pictogram-not-found`, `pictogram-not-expected`, `pictogram-precedence`,
 `signal-word-not-found`; [Judging a sheet](judging.md)) are one such check,
 with the exceptions the library applies: nothing where the label states it
-has none, no missing pictogram unless the drawing was read, no missing GHS04
-(Article 33 lets the transport label stand in for it), and nothing for an
-article or a label under the old law.
+has none, no missing pictogram unless the drawing was read, and nothing
+for an article or a label under the old law. Like the expectation, a
+finding comes only where the library is sure the sheet deviates.
 
 ```python
 label = HazardStatements(

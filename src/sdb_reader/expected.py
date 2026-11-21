@@ -48,11 +48,15 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
     """What the CLP Regulation expects of *label*, from its codes (BIB-25).
 
     The signal word follows from the H and EUH codes, never from the
-    pictograms; the pictograms from the H codes. GHS05 is not expected where
-    H290 is its only reason (no H314, no H318): Annex I 1.3.6 CLP makes it
-    optional on a package for consumers. A label that prints it then is
-    right as well, and beside it GHS07 for irritation gives way as Article 26
-    says. A label without codes expects neither.
+    pictograms; the pictograms from the H codes. Where the regulation lets
+    the package decide and the sheet does not show the package, nothing is
+    claimed (SDB-183): GHS04 is never expected, because Article 33 CLP lets
+    the transport label of a gas cylinder stand in for it; GHS05 is not
+    expected where H290 is its only reason (no H314, no H318), because Annex
+    I 1.3.6 CLP makes it optional on a package for consumers. A label that
+    prints either is right as well; beside a printed GHS05, GHS07 for
+    irritation gives way as Article 26 says. A label without codes expects
+    neither.
 
     >>> from sdb_reader import HazardStatements
     >>> expected = clp_expected(HazardStatements(
@@ -94,13 +98,16 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
 
 
 def _expected_pictograms(hazard_codes: set[str]) -> set[str]:
-    """The pictograms *hazard_codes* call for, with Article 26; without GHS05
-    where H290 is its only reason (Annex I 1.3.6 CLP, BIB-25)."""
+    """The pictograms *hazard_codes* call for, with Article 26; never GHS04
+    (Article 33 CLP), and without GHS05 where H290 is its only reason
+    (Annex I 1.3.6 CLP; BIB-25, SDB-183)."""
     if not hazard_codes:
         return set()
     without_h290 = hazard_codes - {"H290"}
     if "H290" in hazard_codes and "GHS05" not in pictograms_for(
         without_h290, apply_precedence=False
     ):
-        return pictograms_for(without_h290) if without_h290 else set()
-    return pictograms_for(hazard_codes)
+        expected = pictograms_for(without_h290) if without_h290 else set()
+    else:
+        expected = pictograms_for(hazard_codes)
+    return expected - {"GHS04"}

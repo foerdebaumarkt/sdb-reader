@@ -158,7 +158,7 @@ Kennzeichnung damit prüfen.
 | Feld | Bedeutung |
 | --- | --- |
 | `signal_word` | `Gefahr`, `Achtung` oder nichts: das Wort, das die H- und EUH-Codes verlangen; nie aus den Piktogrammen |
-| `pictograms` | die Piktogramme, die die H-Codes verlangen, mit dem Vorrang nach Art. 26 CLP; kein GHS05, wo H290 sein einziger Grund ist (Anhang I Nr. 1.3.6 CLP) |
+| `pictograms` | die Piktogramme, die die H-Codes verlangen, mit dem Vorrang nach Art. 26 CLP; nie GHS04 (Art. 33 CLP), kein GHS05, wo H290 sein einziger Grund ist (Anhang I Nr. 1.3.6 CLP) |
 | `signal_word_missing` | die Codes verlangen ein Signalwort, und die gelesene Kennzeichnung hat keines |
 | `signal_word_differs` | die gelesene Kennzeichnung hat ein anderes Signalwort, als die Codes verlangen |
 | `pictograms_missing` | verlangt, und nicht in der gelesenen Kennzeichnung |

@@ -65,10 +65,12 @@ Versions follow the tags of this repository.
   (with `count`).
 - None of these findings says something was not found where the label
   states it has none; `pictogram-not-found` comes only where the drawing was
-  read, and never for GHS04, which Article 33 CLP lets the transport label
-  stand in for. GHS05 is not expected where H290 is its only reason, which
-  Annex I 1.3.6 makes optional on a package for consumers. No finding for an article, a classification under the old
-  law or a label under the directives before CLP on a sheet dated before
+  read. A finding comes only where the library is sure the sheet deviates
+  (SDB-183): GHS04 is never expected, which Article 33 CLP lets the
+  transport label of a gas cylinder replace, and GHS05 not where H290 is
+  its only reason, which Annex I 1.3.6 makes optional on a package for
+  consumers; printed, neither is a finding. No finding for an article, a
+  classification under the old law or a label under the directives before CLP on a sheet dated before
   1 June 2015.
 - **The oldest sheet of a file.** For a file with several sheets, `read`
   names under `oldest_sheet` the sheet with the oldest date (its number,
