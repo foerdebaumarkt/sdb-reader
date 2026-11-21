@@ -107,6 +107,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "label-not-found",
             "label-without-hazard-statement",
             "label-without-precautionary-statement",
+            "hazard-statement-not-in-label",
             "different-products",
             "country-editions-differ",
             "euh-outside-label",
