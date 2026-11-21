@@ -101,3 +101,7 @@ class SafetyDataSheet:
     # Whether it calls the product an article: beside that sentence (SDB-142)
     # or by saying that as an article it needs no labelling (SDB-154).
     stated_article: bool = False
+    # The days one revision label names together on its line ("überarbeitet
+    # am: 30.04.2012 + 10.06.2016"); none of them is the revision date
+    # (SDB-129).
+    revision_dates_on_one_line: list[date] = field(default_factory=list)

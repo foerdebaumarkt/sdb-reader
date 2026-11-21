@@ -52,6 +52,7 @@ mitbringt. Prüfen Sie ein solches Blatt genauer.
 | --- | --- |
 | `product_identifier` | der Handelsname aus Abschnitt 1.1 |
 | `revision_date`, `issue_date` | Überarbeitungsdatum und Ausgabedatum, als Jahr-Monat-Tag; das jüngste, wo das Blatt mehrere nennt |
+| `revision_dates_on_one_line` | die Tage, die eine Bezeichnung des Überarbeitungsdatums zusammen auf ihrer Zeile nennt („überarbeitet am: 30.04.2012 + 10.06.2016“); keiner davon gilt als `revision_date`; eine leere Liste, wo es keine gibt |
 | `version` | die Versionsnummer des Blatts |
 | `countries` | die Länder, für die das Blatt ausgestellt ist, aus `DE`, `AT`, `CH`; leer, wo es keines nennt |
 | `stated_classification` | was Abschnitt 2 über die Einstufung sagt, siehe unten |
@@ -148,6 +149,7 @@ Befund ist eine [Meldung](#meldungen).
 | `old-format` | seit 2021 überarbeitet, aber noch aufgebaut wie davor |
 | `revised-in-future` | das Überarbeitungsdatum liegt nach dem Tag, an dem `read` lief; es kann nicht stimmen und ist kein Datum: `revision_date` ist `null`, und das Blatt wird nach seinem Ausgabedatum beurteilt, wenn dieses möglich ist, sonst als undatiert |
 | `issued-in-future` | dasselbe für das Ausgabedatum: `issue_date` ist `null` |
+| `revision-dates-on-one-line` | eine Bezeichnung des Überarbeitungsdatums nennt mehrere Tage auf ihrer Zeile („überarbeitet am: 30.04.2012 + 10.06.2016“); keiner davon ist das Überarbeitungsdatum, der Datensatz nennt sie unter `revision_dates_on_one_line` |
 | `undated` | kein lesbares Überarbeitungs- oder Ausgabedatum |
 | `old-classification` | nach den Richtlinien vor der CLP-Verordnung eingestuft, ohne Kennzeichnung nach CLP |
 | `classification-undetermined` | die Kennzeichnung sagt, die Einstufung sei nicht bestimmt |

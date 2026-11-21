@@ -60,6 +60,7 @@ assert "revised-in-future" not in [
 | `predates-annex-ii` | `revised` | was revised before 2021-01-01 and cannot meet Annex II of REACH as amended in 2020 |
 | `revised-in-future` | `revised`, `today` | names a revision date after the day given as `today`; that date is no date |
 | `issued-in-future` | `issued`, `today` | names an issue date after the day given as `today`; that date is no date |
+| `revision-dates-on-one-line` | `dates` | names several days behind one revision label on its line; none of them is the revision date (`revision_dates_on_one_line`) |
 | `old-format` | `revised` | was revised since, needs to be a sheet by law, and still lacks what the 2020 version added |
 | `undated` | – | carries no revision or issue date that can be read |
 | `old-classification` | – | classifies under the directives before CLP and carries no CLP label |

@@ -75,6 +75,10 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
         "revision_date": sheet.revision_date.isoformat()
         if sheet.revision_date
         else None,
+        # The days one revision label names together; none counts (SDB-129).
+        "revision_dates_on_one_line": [
+            day.isoformat() for day in sheet.revision_dates_on_one_line
+        ],
         "language": sheet.language,
         # The countries the sheet is issued for (SDB-69), what section 2 says
         # about the classification (SDB-75), and whether the product needs a
@@ -160,6 +164,12 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
             product_identifier=_optional_text(stored["product_identifier"]),
             issue_date=_stored_date(stored["issue_date"]),
             revision_date=_stored_date(stored["revision_date"]),
+            # Not in a reading stored before SDB-129 took them as no date.
+            revision_dates_on_one_line=[
+                day
+                for value in stored.get("revision_dates_on_one_line", [])
+                if (day := _stored_date(value)) is not None
+            ],
             version=_optional_text(stored["version"]),
             language=_text(stored["language"]),
             hazard_statements=HazardStatements(

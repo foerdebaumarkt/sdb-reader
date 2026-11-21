@@ -7,6 +7,12 @@ Versions follow the tags of this repository.
 
 ### Breaking
 
+- **Several days behind one revision label are no date.** Where a sheet
+  prints "überarbeitet am: 30.04.2012 + 10.06.2016", none of the days is its
+  `revision_date`; before, the newest was. They stand in the new key
+  `revision_dates_on_one_line`, and the new finding
+  `revision-dates-on-one-line` names them (SDB-129). Different revision
+  dates on different pages stay no error: the newest counts.
 - **A date in the future is no date.** With the day of the run (`today`,
   which `read` passes), a revision or issue date after it stands in the
   record as `null`, for the file and for each of its sheets; before, it

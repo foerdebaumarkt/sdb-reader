@@ -49,6 +49,7 @@ file holds [several sheets](#several-sheets-in-one-file).
 | --- | --- | --- |
 | `product_identifier` | str or None | the trade name from section 1.1 |
 | `revision_date`, `issue_date` | `date` or None | the newest date of each kind the sheet names |
+| `revision_dates_on_one_line` | list of `date` | the days one revision label names together on its line; none of them counts as `revision_date` |
 | `version` | str or None | the sheet's own version, as printed |
 | `language` | str | `de` |
 | `countries` | list of str | of `DE`, `AT`, `CH`; empty where the sheet names none |

@@ -321,6 +321,15 @@
           "type": "boolean",
           "description": "Whether the sheet says of itself that it is issued voluntarily or that no safety data sheet is prescribed for its product."
         },
+        "revision_dates_on_one_line": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "description": "The days one revision label names together on its line (\"überarbeitet am: 30.04.2012 + 10.06.2016\"); none of them is the revision date (SDB-129). Not required, so that a record written before stays valid."
+        },
         "stated_article": {
           "type": "boolean",
           "description": "Whether the sheet calls its product an article: beside the sentence that makes it voluntary, or by saying that as an article it is not subject to labelling."
@@ -547,7 +556,7 @@
           "items": {
             "$ref": "#/$defs/message"
           },
-          "description": "The findings on this sheet's age, judged on its own dates as for a file that is this sheet: revised-in-future, issued-in-future, undated, predates-annex-ii, old-format (SDW-46). Not required, so that a record written before stays valid."
+          "description": "The findings on this sheet's age, judged on its own dates as for a file that is this sheet: revised-in-future, issued-in-future, revision-dates-on-one-line, undated, predates-annex-ii, old-format (SDW-46). Not required, so that a record written before stays valid."
         }
       }
     },
@@ -565,6 +574,7 @@
                 "predates-annex-ii",
                 "revised-in-future",
                 "issued-in-future",
+                "revision-dates-on-one-line",
                 "classification-undetermined",
                 "old-classification",
                 "old-format",
@@ -805,6 +815,7 @@
             "read-by-ocr-no-text-layer",
             "read-by-ocr-single-characters",
             "revised-in-future",
+            "revision-dates-on-one-line",
             "safety-information",
             "several-sheets",
             "short-sample",

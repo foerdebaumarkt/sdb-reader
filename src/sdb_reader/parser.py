@@ -366,8 +366,8 @@ VERSION_CREATED_ABOVE_PATTERN = re.compile(
     r"[^\S\n]*Version[^\S\n]*:?[^\S\n]*V?\d",
     re.IGNORECASE | re.MULTILINE,
 )
-# "überarbeitet am: 30.04.2012 + 10.06.2016": revised twice, both days behind
-# the one label (SDB-129).
+# "überarbeitet am: 30.04.2012 + 10.06.2016": two days behind the one label,
+# which cannot both be the revision date (SDB-129).
 _FURTHER_DATE = re.compile(rf"[^\S\n]*(?:\+|und)[^\S\n]*{_DATED}", re.IGNORECASE)
 # SAP prints an older header as a grid of labels over a row of values, and the
 # reader gives the labels on one line: "Überarbeitet am: Druckdatum Datum der
@@ -1369,8 +1369,10 @@ class SDSParser:
         # section missed every sheet whose pagination put the footer elsewhere.
         version = _extract_version(extraction.text)
         revision_date = _extract_revision_date(extraction.text)
+        on_one_line = _revision_dates_on_one_line(extraction.text)
         issue_date = _extract_issue_date(extraction.text)
-        if revision_date is None and issue_date is None:
+        # Where a label names several days, no other date stands in for them.
+        if revision_date is None and issue_date is None and not on_one_line:
             # An undated sheet cannot be ranked against its own revisions, and
             # cannot be checked against the statutory cut-offs that decide
             # whether it is still a valid document. See EFFECTIVE_DATE_PATTERN.
@@ -1393,6 +1395,7 @@ class SDSParser:
             product_identifier=product_identifier,
             issue_date=issue_date,
             revision_date=revision_date,
+            revision_dates_on_one_line=on_one_line,
             version=version,
             language=self.language,
             hazard_statements=hazards,
@@ -5072,7 +5075,11 @@ def _date_of(match: re.Match[str]) -> date | None:
 
 
 def _extract_revision_date(text: str) -> date | None:
-    """Extract the revision date ("Überarbeitet am: 16.11.2020") from SDS text."""
+    """Extract the revision date ("Überarbeitet am: 16.11.2020") from SDS text.
+
+    A label that names several different days on its line gives none
+    (SDB-129; ``_revision_dates_on_one_line``).
+    """
     found = [
         parsed
         for pattern in (
@@ -5084,16 +5091,37 @@ def _extract_revision_date(text: str) -> date | None:
         )
         if (parsed := _latest_dated_match(text, pattern)) is not None
     ]
+    for days in _days_behind_revision_labels(text):
+        if len(set(days)) == 1:
+            found.extend(days)
+    return max(found) if found else None
+
+
+def _revision_dates_on_one_line(text: str) -> list[date]:
+    """The days of the first revision label that names several (SDB-129)."""
+    return next(
+        (
+            sorted(set(days))
+            for days in _days_behind_revision_labels(text)
+            if len(set(days)) > 1
+        ),
+        [],
+    )
+
+
+def _days_behind_revision_labels(text: str) -> Iterator[list[date]]:
+    """The days behind each revision label, with those joined by "+" or "und"."""
     for match in REVISION_DATE_PATTERN.finditer(text):
         if _dates_another_version(text, match):
             continue
+        days: list[date] = []
         dated: re.Match[str] | None = match
         while dated is not None:
             parsed = _date_of(dated)
             if parsed is not None:
-                found.append(parsed)
+                days.append(parsed)
             dated = _FURTHER_DATE.match(text, dated.end())
-    return max(found) if found else None
+        yield days
 
 
 def _dates_another_version(text: str, match: re.Match[str]) -> bool:

@@ -10,6 +10,7 @@ from datetime import date
 
 import pytest
 
+from sdb_reader.compliance import sheet_findings
 from sdb_reader.extraction import ExtractionResult
 from sdb_reader.parser import SDSParser
 from sdb_reader.schema import SafetyDataSheet
@@ -137,12 +138,37 @@ def test_the_version_s_day_goes_before_an_older_revision_named_elsewhere() -> No
 
 @pytest.mark.spec("SDB-129")
 @pytest.mark.parametrize("joined", ["+", "und"])
-def test_several_days_behind_one_label_all_count(joined: str) -> None:
+def test_several_days_behind_one_label_are_no_date(joined: str) -> None:
     sheet = read(
         f"überarbeitet am: 30.04.2012 {joined} 10.06.2016\nDruckdatum: 13.07.2018\n"
     )
 
+    assert sheet.revision_date is None
+    assert sheet.revision_dates_on_one_line == [date(2012, 4, 30), date(2016, 6, 10)]
+    findings = sheet_findings(sheet, [])
+    assert [f.code for f in findings][:2] == ["revision-dates-on-one-line", "undated"]
+    assert findings[0].params == {"dates": ["2012-04-30", "2016-06-10"]}
+    # No other date on the sheet stands in for them.
+    assert sheet.issue_date is None
+
+
+@pytest.mark.spec("SDB-129")
+def test_a_revision_date_elsewhere_still_counts() -> None:
+    sheet = read(
+        "überarbeitet am: 30.04.2012 + 10.06.2016\n",
+        section_16="Überarbeitet am: 12.03.2015\n",
+    )
+
+    assert sheet.revision_date == date(2015, 3, 12)
+    assert "revision-dates-on-one-line" in [f.code for f in sheet_findings(sheet, [])]
+
+
+@pytest.mark.spec("SDB-20")
+def test_one_day_repeated_behind_one_label_counts() -> None:
+    sheet = read("überarbeitet am: 10.06.2016 + 10.06.2016\n")
+
     assert sheet.revision_date == date(2016, 6, 10)
+    assert sheet.revision_dates_on_one_line == []
 
 
 @pytest.mark.spec("SDB-20")

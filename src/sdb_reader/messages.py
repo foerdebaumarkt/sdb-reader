@@ -80,6 +80,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "predates-annex-ii": ("revised",),
     "revised-in-future": ("revised", "today"),
     "issued-in-future": ("issued", "today"),
+    "revision-dates-on-one-line": ("dates",),
     "classification-undetermined": (),
     "old-classification": (),
     "old-format": ("revised",),
@@ -201,6 +202,7 @@ MESSAGE_DATES: Mapping[str, tuple[str, ...]] = {
     "predates-annex-ii": ("revised",),
     "revised-in-future": ("revised", "today"),
     "issued-in-future": ("issued", "today"),
+    "revision-dates-on-one-line": ("dates",),
     "old-format": ("revised",),
     "show-date": ("date",),
     "show-oldest-revised": ("date",),
@@ -295,6 +297,8 @@ class Catalog:
 
     def _date(self, value: Any) -> str:
         """An ISO date as this catalog writes dates; anything else as it is."""
+        if isinstance(value, (list, tuple)):
+            return ", ".join(self._date(item) for item in value)
         try:
             return date.fromisoformat(str(value)).strftime(self.date_format)
         except ValueError:

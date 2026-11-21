@@ -52,6 +52,7 @@ Check such a sheet more carefully.
 | --- | --- |
 | `product_identifier` | the trade name from section 1.1 |
 | `revision_date`, `issue_date` | date of revision and date of issue, as year-month-day; the newest where the sheet names several |
+| `revision_dates_on_one_line` | the days one revision label names together on its line ("überarbeitet am: 30.04.2012 + 10.06.2016"); none of them counts as `revision_date`; an empty list where there are none |
 | `version` | the sheet's own version number |
 | `countries` | the countries the sheet is issued for, of `DE`, `AT`, `CH`; empty where it names none |
 | `stated_classification` | what section 2 says about the classification, see below |
@@ -146,6 +147,7 @@ statement whose `code_source` is `from_wording`.
 | `old-format` | revised since 2021 but still laid out as before |
 | `revised-in-future` | the revision date lies after the day `read` ran; it cannot be right and is no date: `revision_date` is `null`, and the sheet is judged by its issue date if that is possible, else as undated |
 | `issued-in-future` | the same for the issue date: `issue_date` is `null` |
+| `revision-dates-on-one-line` | one revision label names several days on its line ("überarbeitet am: 30.04.2012 + 10.06.2016"); none of them is the revision date, the record lists them under `revision_dates_on_one_line` |
 | `undated` | no date of revision or issue that can be read |
 | `old-classification` | classified under the directives before CLP, without a CLP label |
 | `classification-undetermined` | the label says the classification is not determined |

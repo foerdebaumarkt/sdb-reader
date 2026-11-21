@@ -685,6 +685,17 @@ def _dated(
                     {"issued": printed_issue.isoformat(), "today": today.isoformat()},
                 )
             )
+    if sheet.revision_dates_on_one_line:
+        findings.append(
+            Message(
+                "revision-dates-on-one-line",
+                {
+                    "dates": [
+                        day.isoformat() for day in sheet.revision_dates_on_one_line
+                    ]
+                },
+            )
+        )
     if revised is None:
         findings.append(Message("undated"))
     elif predates_annex_ii(revised):

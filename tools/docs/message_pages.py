@@ -99,6 +99,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "predates-annex-ii",
             "revised-in-future",
             "issued-in-future",
+            "revision-dates-on-one-line",
             "classification-undetermined",
             "old-classification",
             "old-format",

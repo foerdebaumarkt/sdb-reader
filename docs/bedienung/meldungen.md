@@ -80,6 +80,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `predates-annex-ii` | `revised` | Überarbeitet am {revised}, vor dem 01.01.2021: Das Blatt kann Anhang II der REACH-Verordnung in der Fassung der Verordnung (EU) 2020/878 nicht erfüllen. |
 | `revised-in-future` | `revised`, `today` | Überarbeitet am {revised}, nach dem {today}, dem Tag der Prüfung: Das Datum kann nicht stimmen und gilt nicht. |
 | `issued-in-future` | `issued`, `today` | Ausgegeben am {issued}, nach dem {today}, dem Tag der Prüfung: Das Datum kann nicht stimmen und gilt nicht. |
+| `revision-dates-on-one-line` | `dates` | Das Blatt nennt hinter einer Bezeichnung des Überarbeitungsdatums mehrere Tage ({dates}): Keiner davon gilt als Überarbeitungsdatum. |
 | `classification-undetermined` | – | Die Kennzeichnung sagt, die Einstufung sei nicht bestimmt. |
 | `old-classification` | – | Abschnitt 2 stuft nach der Richtlinie 67/548/EWG oder 1999/45/EG ein (R-Sätze, Gefahrensymbole) und trägt keine Kennzeichnung nach der CLP-Verordnung; Gemische sind seit dem 1. Juni 2015 nach der Verordnung (EG) Nr. 1272/2008 einzustufen. |
 | `old-format` | `revised` | Überarbeitet am {revised}, aber aufgebaut wie vor der Verordnung (EU) 2020/878: keine endokrinschädlichen Eigenschaften, kein Unterabschnitt 11.2, kein Unterabschnitt 12.7. |
