@@ -5,6 +5,14 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.11.1 – 2026-11-21
+
+A documentation release: the README answers why one would not just give a
+PDF to a language model, and "How it works" sets out the philosophy behind
+the reader. The code is that of 0.11.0; `PARSER_VERSION` stays 20. The
+documentation site gets the edition of 0.11.0, which its release did not
+deploy, together with this one.
+
 ### Documentation
 
 - **Why written rules and not a language model.** The README (English and
@@ -15,6 +23,8 @@ Versions follow the tags of this repository.
   principles the reader follows: read what is printed, report and do not
   correct, leave the decision to the user, better missing than invented; the
   README points to them.
+- **The specs** keep their withdrawn rules in `specs/historie.md`, and
+  `specs/README.md` says how a rule is written.
 
 ## 0.11.0 – 2026-11-21
 
