@@ -14,7 +14,9 @@ Versions follow the tags of this repository.
   (`label-without-precautionary-statement`), the sheet gets a finding. The
   reading stays as the sheet prints it; nothing is added. Each finding says
   "not found": the sheet may lack it, or the parser may have missed it. Not
-  for an article or a classification under the old law (SDB-169 to SDB-172).
+  for an article, a classification under the old law, or a label under the
+  directives before CLP on a sheet dated before 1 June 2015; the parser notes
+  such a label (`label-before-clp`) (SDB-169 to SDB-172).
 
 ### Changed
 

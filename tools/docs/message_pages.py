@@ -73,6 +73,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "no-label-section",
             "several-sheets",
             "classified-before-clp",
+            "label-before-clp",
             "no-hazard-codes",
             "label-undetermined",
             "no-precautionary-codes",

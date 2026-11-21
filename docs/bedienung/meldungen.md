@@ -55,6 +55,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `no-label-section` | – | Abschnitt 2.2 (Kennzeichnungselemente) wurde nicht gefunden; stattdessen wurde der ganze Abschnitt 2 gelesen. |
 | `several-sheets` | `count` | Die Datei enthält {count} Sicherheitsdatenblätter; ihre Kennzeichnungen sind zusammengeführt. |
 | `classified-before-clp` | `basis` | Abschnitt 2 stuft nach den Richtlinien vor der CLP-Verordnung ein ({basis}); es wurde keine Kennzeichnung gelesen. |
+| `label-before-clp` | – | Die Kennzeichnung (2.2) folgt den Richtlinien vor der CLP-Verordnung: ohne H-, P- und EUH-Code, mit R- oder S-Sätzen, einem Gefahrensymbol oder dem Verweis auf die EG-Richtlinien. |
 | `no-hazard-codes` | – | Die Kennzeichnung trägt keinen H-Satz. |
 | `label-undetermined` | – | Die Kennzeichnung sagt, die Einstufung sei nicht bestimmt; das Blatt nennt für das Produkt keine Kennzeichnung. |
 | `no-precautionary-codes` | – | Die Kennzeichnung trägt keinen P-Satz. |

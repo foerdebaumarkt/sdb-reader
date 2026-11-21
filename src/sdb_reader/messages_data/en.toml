@@ -36,6 +36,7 @@
 "line-too-long" = "{count} lines of more than 2,000 characters were not read, the longest with {length}; a sheet prints no lines that long."
 "no-label-section" = "Section 2.2 (Kennzeichnungselemente) was not found; the whole of section 2 was read instead."
 "several-sheets" = "The file holds {count} safety data sheets; their labels are combined."
+"label-before-clp" = "The label (2.2) follows the directives before the CLP Regulation: no H, P or EUH code, but R or S phrases, a hazard symbol or a reference to the EC directives."
 "classified-before-clp" = "Section 2 classifies under the directives before CLP ({basis}); no label was read."
 "no-hazard-codes" = "The label carries no H statement."
 "label-undetermined" = "The label says that the classification was not determined; the sheet states no labelling for the product."

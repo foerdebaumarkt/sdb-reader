@@ -432,3 +432,41 @@ class TestLabelOfAClassifiedProduct:
     def test_a_complete_label_has_none(self) -> None:
         sheet = _sheet(hazards=self._FULL, stated=StatedClassification.CLASSIFIED)
         assert _kinds(sheet) == []
+
+
+class TestLabelUnderTheOldDirectives:
+    """A mixture could be labelled under the directives before CLP until
+    1 June 2015 (SDB-170): such a label gets none of the label findings."""
+
+    @pytest.mark.spec("SDB-170")
+    @pytest.mark.parametrize("revised", [date(2013, 9, 2), date(2015, 5, 31)])
+    def test_before_june_2015_no_finding(self, revised: date) -> None:
+        sheet = _sheet(
+            revised=revised,
+            hazards=HazardStatements(),
+            stated=StatedClassification.CLASSIFIED,
+        )
+        found = _kinds(sheet, [Message("label-before-clp")])
+        assert not {code for code in found if code.startswith("label-")}
+
+    @pytest.mark.spec("SDB-170")
+    def test_from_june_2015_the_findings_stay(self) -> None:
+        sheet = _sheet(
+            revised=date(2015, 6, 1),
+            hazards=HazardStatements(),
+            stated=StatedClassification.CLASSIFIED,
+        )
+        assert "label-without-hazard-statement" in _kinds(
+            sheet, [Message("label-before-clp")]
+        )
+
+    @pytest.mark.spec("SDB-170")
+    def test_without_a_date_the_findings_stay(self) -> None:
+        sheet = _sheet(
+            revised=None,
+            hazards=HazardStatements(),
+            stated=StatedClassification.CLASSIFIED,
+        )
+        assert "label-without-hazard-statement" in _kinds(
+            sheet, [Message("label-before-clp")]
+        )
