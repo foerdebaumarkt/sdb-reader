@@ -46,7 +46,15 @@ RESOURCE = "https://publications.europa.eu/resource/celex"
 QUERY_SERVICE = "https://publications.europa.eu/webapi/rdf/sparql"
 CELEX_CONSOLIDATED = "02008R1272"
 USER_AGENT = "sdb-reader (CLP label-element verification)"
-PDF_TYPES = ("pdfa2a", "pdfa1a", "pdfa1b", "pdf1x", "pdf")
+# The PDF types asked for in turn; the last asks for a PDF of any type, which
+# is how the consolidations from 2018-12 to 2023-12 are held.
+PDF_TYPES = (
+    "application/pdf;type=pdfa2a",
+    "application/pdf;type=pdfa1a",
+    "application/pdf;type=pdfa1b",
+    "application/pdf;type=pdf1x",
+    "application/pdf",
+)
 
 VERSIONS_QUERY = f"""
 PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
@@ -108,7 +116,7 @@ def fetch(version: str, language: str) -> bytes:
             payload = _get(
                 url,
                 {
-                    "Accept": f"application/pdf;type={pdf_type}",
+                    "Accept": pdf_type,
                     "Accept-Language": language.lower(),
                 },
             )

@@ -94,6 +94,16 @@ Versions follow the tags of this repository.
 
 ### Changed
 
+- **`wording-deviates` only where the sheet really deviates.** A statement
+  is no longer reported where the sheet prints a wording an earlier
+  consolidated version of the CLP Regulation gave it, a combination as the
+  wordings of its parts one after the other (P351 alone says "ausspülen",
+  P305+P351+P338 "spülen"), or a part in square brackets left out or given
+  with a slash ("abwaschen/duschen"). Case, punctuation and spacing still do
+  not count. On a set of about 13,000 sheets, of those not due for renewal
+  the finding drops from 698 sheets to 192. The earlier wordings come with
+  the package (`clp_earlier_wordings_de.json`, from 29 consolidations since
+  December 2010) and are made by `tools/clp/earlier_wordings.py` (SDW-50).
 - **The proposed rule to date a file by its oldest sheet is withdrawn.**
   The file's reading keeps the newest date; the oldest sheet stands beside
   it instead.

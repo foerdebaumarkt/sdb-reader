@@ -34,6 +34,7 @@ the newer text.
 
 from __future__ import annotations
 
+import itertools
 import json
 import re
 from collections.abc import Collection, Sequence
@@ -46,6 +47,8 @@ from .line_breaks import join_broken_words
 from .schema import HazardStatements
 
 DATA_PATH = Path(__file__).with_name("clp_statements_de.json")
+# The wordings earlier consolidations gave a statement (SDW-50).
+EARLIER_PATH = Path(__file__).with_name("clp_earlier_wordings_de.json")
 
 # "H315: Verursacht Hautreizungen." and the combination forms, with whatever
 # separator the sheet used between code and sentence.
@@ -1170,12 +1173,18 @@ def label_statements(hazards: HazardStatements) -> list[StatementWording]:
 
 
 def deviates_from_regulation(code: str, wording: str) -> bool:
-    """Whether the sheet's *wording* departs from the regulation's for *code* (SDW-6).
+    """Whether the sheet's *wording* departs from the regulation's for *code* (SDW-50).
 
-    Only a wording that begins with the regulation's first three words and then
-    does not hold it in full: one that begins otherwise is mostly text the
-    parser found under the code, and text after the complete wording mostly a
-    heading it read on into. Case, punctuation and spacing do not count.
+    Only a wording that begins with the regulation's first three words is
+    compared: one that begins otherwise is mostly text the parser found under
+    the code. It deviates where it begins with none of the code's official
+    forms (``_official_forms``); text after a complete form is mostly a
+    heading the parser read on into, and does not count.
+
+    >>> deviates_from_regulation("P243", "Maßnahmen gegen elektrostatische Aufladungen treffen.")
+    False
+    >>> deviates_from_regulation("P243", "Maßnahmen gegen elektrostatische Entladung treffen.")
+    True
     """
     canonical = canonical_text(code)
     if canonical is None or not wording.strip() or _holds_another(code, wording):
@@ -1184,7 +1193,8 @@ def deviates_from_regulation(code: str, wording: str) -> bool:
     official = _comparable(canonical).split()
     if printed[:_OPENING_WORDS] != official[:_OPENING_WORDS]:
         return False
-    return printed[: len(official)] != official
+    text = re.sub(r"^[\W_]+", "", _normalised(re.sub(r"\s+", " ", wording)))
+    return not any(form.match(text) for form in _official_forms(code))
 
 
 # Precautionary statements printed as wording only, in the forms Annex IV of
@@ -1261,8 +1271,16 @@ def _choices(token: str) -> str:
     return "(?:" + "|".join(selections) + ")"
 
 
-def _variant_pattern(wording: str) -> re.Pattern[str] | None:
-    """The forms Annex IV allows for *wording*, or None where they say too little."""
+def _variant_body(
+    wording: str, *, choice_for_brackets: bool = False
+) -> tuple[str, int]:
+    """The forms Annex IV allows for *wording* as a pattern, and how many of its
+    words are fixed.
+
+    With *choice_for_brackets*, a part in square brackets that begins with
+    "oder" may also stand without it, behind a slash: "Haut mit Wasser
+    abwaschen/duschen" for "abwaschen [oder duschen]" (SDW-50).
+    """
     text = _normalised(wording)
     text = re.sub(r"(\d+|…) o ([cf])\b", r"\1°\2", text)
     text = re.sub(r"\s*/\s*", "/", text)
@@ -1285,11 +1303,18 @@ def _variant_pattern(wording: str) -> re.Pattern[str] | None:
         if not pieces:
             continue
         joined = _GAP.join(pieces)
+        if optional and choice_for_brackets and len(pieces) > 1 and tokens[0] == "oder":
+            joined = f"(?:oder{_GAP})?" + _GAP.join(pieces[1:])
         parts.append(f"(?:{_GAP}{joined})?" if optional else _GAP + joined)
+    return "".join(parts).removeprefix(_GAP), fixed_words
+
+
+def _variant_pattern(wording: str) -> re.Pattern[str] | None:
+    """The forms Annex IV allows for *wording*, or None where they say too little."""
+    body, fixed_words = _variant_body(wording)
     if fixed_words < 2:
         return None
-    body = "".join(parts)
-    return re.compile(rf"(?<!\w){body.removeprefix(_GAP)}(?!\w)")
+    return re.compile(rf"(?<!\w){body}(?!\w)")
 
 
 @lru_cache(maxsize=1)
@@ -1308,6 +1333,51 @@ def _variant_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
         if pattern is not None:
             patterns.append((code, pattern))
     return tuple(patterns)
+
+
+def _earlier_wordings() -> dict[str, tuple[str, ...]]:
+    """Per code, the wordings earlier consolidations of the regulation gave it
+    and today's does not (SDW-50; tools/clp/earlier_wordings.py)."""
+    raw = json.loads(EARLIER_PATH.read_text(encoding="utf-8"))
+    return {
+        code: tuple(entry["text"] for entry in entries)
+        for code, entries in raw["statements"].items()
+    }
+
+
+@lru_cache(maxsize=1)
+def _wordings_ever() -> dict[str, tuple[str, ...]]:
+    """Per code, every wording the regulation gives it or gave it, today's first."""
+    earlier = _earlier_wordings()
+    return {
+        code: (wording, *earlier.get(code, ()))
+        for code, wording in _catalogue().items()
+    }
+
+
+@lru_cache(maxsize=256)
+def _official_forms(code: str) -> tuple[re.Pattern[str], ...]:
+    """What a sheet may print for *code* without deviating, as patterns (SDW-50).
+
+    Each wording the regulation gives or gave the code and, for a
+    combination, its parts' wordings one after the other, each part in any
+    of its own: P305+P351+P338 as "… mit Wasser ausspülen. … Weiter
+    ausspülen.", the wordings of P351 and P338. A form matches the start of
+    the normalised text, in the forms Annex IV allows (SDB-163), a bracketed
+    part also behind a slash (``_variant_body``).
+    """
+    ever = _wordings_ever()
+    # canonical_text first: it also words the lettered H360 and H361.
+    wordings = [canonical_text(code) or "", *ever.get(code, ())]
+    if "+" in code:
+        parts = [ever.get(part, ()) for part in code.split("+")]
+        if all(parts):
+            wordings.extend(" ".join(chosen) for chosen in itertools.product(*parts))
+    return tuple(
+        re.compile(_variant_body(wording, choice_for_brackets=True)[0] + r"(?!\w)")
+        for wording in dict.fromkeys(wordings)
+        if wording
+    )
 
 
 # A line that begins with a statement's code, behind a bullet or not. The

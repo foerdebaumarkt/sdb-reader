@@ -10,7 +10,7 @@ keep outdated readings without anybody noticing, so a test asks every time.
 | --- | --- | --- |
 | `EXTRACTION_VERSION` | the same PDF can give another text | `extraction.py`, `layout.py`, `line_breaks.py` |
 | `LABEL_IMAGES_VERSION` | the same PDF can give other pictograms from the drawing of its label | `label_images.py`, `pictogram_references.json` (made by `tools/pictograms/references.py`) |
-| `PARSER_VERSION` | the same text and pictograms can give another reading: the verdict, the sheet, the statements and their tables, the findings, the JSON form | `parser.py`, `verification.py`, `compliance.py`, `statements.py`, `pictograms.py`, `reading.py`, `schema.py`, `serialise.py`, `messages.py`, `clp_statements_de.json` |
+| `PARSER_VERSION` | the same text and pictograms can give another reading: the verdict, the sheet, the statements and their tables, the findings, the JSON form | `parser.py`, `verification.py`, `compliance.py`, `statements.py`, `pictograms.py`, `reading.py`, `schema.py`, `serialise.py`, `messages.py`, `clp_statements_de.json`, `clp_earlier_wordings_de.json` |
 
 A version never falls. Raising `EXTRACTION_VERSION` makes every caller read
 all its PDFs again, which for a large stock takes time; raising

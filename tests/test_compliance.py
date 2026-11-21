@@ -145,14 +145,14 @@ class TestSheetFindings:
     def test_a_current_clean_sheet_has_none(self) -> None:
         assert _kinds(_sheet()) == []
 
-    @pytest.mark.spec("SDW-6")
+    @pytest.mark.spec("SDW-50")
     def test_a_deviating_wording_names_the_code_and_both_wordings(self) -> None:
         hazards = HazardStatements(
             precautionary_codes=["P305", "P351", "P338"],
             precautionary_text=(
                 "P305+P351+P338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang "
-                "behutsam mit Wasser ausspülen. Eventuell vorhandene Kontaktlinsen "
-                "nach Möglichkeit entfernen. Weiter ausspülen."
+                "behutsam mit Wasser waschen. Eventuell vorhandene Kontaktlinsen "
+                "nach Möglichkeit entfernen. Weiter waschen."
             ),
         )
 
@@ -160,10 +160,10 @@ class TestSheetFindings:
 
         assert finding.code == "wording-deviates"
         assert finding.params["statement"] == "P305+P351+P338"
-        assert "ausspülen" in finding.params["sheet"]
+        assert "waschen" in finding.params["sheet"]
         assert "Weiter spülen." in finding.params["regulation"]
 
-    @pytest.mark.spec("SDW-6")
+    @pytest.mark.spec("SDW-50")
     def test_euh_statements_are_compared_too(self) -> None:
         hazards = HazardStatements(
             supplemental_codes=["EUH401"],
@@ -174,6 +174,19 @@ class TestSheetFindings:
         )
 
         assert _kinds(_sheet(hazards=hazards)) == ["wording-deviates"]
+
+    @pytest.mark.spec("SDW-50")
+    def test_a_combination_in_its_parts_wordings_is_no_finding(self) -> None:
+        hazards = HazardStatements(
+            precautionary_codes=["P305", "P351", "P338"],
+            precautionary_text=(
+                "P305+P351+P338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang "
+                "behutsam mit Wasser ausspülen. Eventuell vorhandene Kontaktlinsen "
+                "nach Möglichkeit entfernen. Weiter ausspülen."
+            ),
+        )
+
+        assert _kinds(_sheet(hazards=hazards)) == []
 
     @pytest.mark.spec("SDW-7")
     def test_a_sheet_revised_before_2021(self) -> None:

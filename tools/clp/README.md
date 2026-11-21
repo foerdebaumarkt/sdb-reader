@@ -5,9 +5,10 @@ Two things in the library are copies of Regulation (EC) No 1272/2008 (CLP):
 | In the library | From the regulation |
 | --- | --- |
 | `src/sdb_reader/clp_statements_de.json`, the German wording of the H, EUH and P statements | Annex III and Annex IV |
+| `src/sdb_reader/clp_earlier_wordings_de.json`, the wordings earlier consolidations gave a statement where today's differs | Annex III and Annex IV of each earlier consolidation |
 | the signal words in `src/sdb_reader/pictograms.py` | the label-element tables of Annex I |
 
-The regulation is amended about once a year. The three tools in this
+The regulation is amended about once a year. The four tools in this
 directory keep the copies in line with it. They are run by hand from the
 repository's directory, with its environment (`make venv`); they are not part
 of the installed package, and nobody who only reads sheets needs them.
@@ -16,6 +17,7 @@ of the installed package, and nobody who only reads sheets needs them.
 | --- | --- |
 | `fetch_regulation.py` | downloads the consolidated regulation as a PDF from the EU's Publications Office into `data/clp/` |
 | `extract_statements.py` | reads the German wording of every H, EUH and P statement from Annex III and IV and rewrites `clp_statements_de.json` |
+| `earlier_wordings.py` | reads the same from every earlier consolidation under `data/clp/` and rewrites `clp_earlier_wordings_de.json` with each wording that differs from today's, and the versions that hold it |
 | `verify_tables.py` | compares the signal words `pictograms.py` derives with the label-element tables of Annex I, category by category, and reports each difference |
 
 ```bash
@@ -24,6 +26,19 @@ of the installed package, and nobody who only reads sheets needs them.
 .venv/bin/python tools/clp/extract_statements.py        # rewrite clp_statements_de.json
 .venv/bin/python tools/clp/verify_tables.py             # signal words against Annex I
 ```
+
+The earlier wordings (SDW-50) need every consolidation; fetching them is
+about 400 MB, reading them six minutes:
+
+```bash
+for v in $(.venv/bin/python tools/clp/fetch_regulation.py --list | grep -Eo '^  [0-9]{8}$'); do
+    .venv/bin/python tools/clp/fetch_regulation.py --version "$v"
+done
+.venv/bin/python tools/clp/earlier_wordings.py
+```
+
+The first consolidation, of 20 January 2009, is not held as a PDF and its
+download fails; its wordings stand unchanged in the one of 1 December 2010.
 
 `data/` is not in git: the regulation is 12 MB and is fetched when needed.
 
@@ -35,7 +50,11 @@ of the installed package, and nobody who only reads sheets needs them.
 2. `extract_statements.py`, then look at `git diff` of the JSON file. Every
    changed wording is a change to what the library gives for a statement:
    raise `PARSER_VERSION`.
-3. `verify_tables.py`. It exits with 1 when a signal word
+3. Fetch the consolidation that was current before, if it is not under
+   `data/clp/`, and run `earlier_wordings.py`: a wording the new one
+   replaces becomes an earlier one. Raise `PARSER_VERSION` where the file
+   changed.
+4. `verify_tables.py`. It exits with 1 when a signal word
    `pictograms.py` derives differs from the regulation's. It only reports; what the
    table should say goes into a reviewed commit.
 

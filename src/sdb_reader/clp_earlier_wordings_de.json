@@ -1,0 +1,719 @@
+{
+  "current": "CELEX_02008R1272-20260701_DE.pdf",
+  "versions": [
+    "20101201",
+    "20110419",
+    "20131201",
+    "20150101",
+    "20150601",
+    "20160101",
+    "20160401",
+    "20170101",
+    "20170601",
+    "20180301",
+    "20181201",
+    "20190726",
+    "20191201",
+    "20200101",
+    "20200501",
+    "20201017",
+    "20201028",
+    "20201114",
+    "20210510",
+    "20211001",
+    "20220301",
+    "20221217",
+    "20230420",
+    "20230731",
+    "20231201",
+    "20241210",
+    "20250201",
+    "20250901",
+    "20260501"
+  ],
+  "statements": {
+    "EUH440": [
+      {
+        "text": "Anreicherung in der Umwelt und in lebenden Organismen einschließlich Menschen",
+        "versions": [
+          "20230420",
+          "20230731",
+          "20231201"
+        ]
+      }
+    ],
+    "EUH441": [
+      {
+        "text": "Starke Anreicherung in der Umwelt und in lebenden Organismen einschließlich Menschen",
+        "versions": [
+          "20230420",
+          "20230731",
+          "20231201"
+        ]
+      }
+    ],
+    "H281": [
+      {
+        "text": "Enthält tiefkaltes Gas; kann Kälteverbrennungen oder -Verletzungen verursachen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P210": [
+      {
+        "text": "Von Hitze/Funken/offener Flamme/heißen Oberflächen fernhalten. Nicht rauchen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P220": [
+      {
+        "text": "Von Kleidung/…/brennbaren Materialien fernhalten/entfernt aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P222": [
+      {
+        "text": "Kontakt mit Luft nicht zulassen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P223": [
+      {
+        "text": "Kontakt mit Wasser wegen heftiger Reaktion und möglichem Aufflammen unbedingt verhindern.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P231": [
+      {
+        "text": "Unter inertem Gas handhaben.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P231+P232": [
+      {
+        "text": "Unter inertem Gas handhaben. Vor Feuchtigkeit schützen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P234": [
+      {
+        "text": "Nur im Originalbehälter aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P241": [
+      {
+        "text": "Explosionsgeschützte elektrische Betriebsmittel/Lüftungsanlagen/Beleuchtung/… verwenden.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      },
+      {
+        "text": "Explosionsgeschützte elektrische Geräte/Lüftungsanlagen/Beleuchtungsanlagen/… verwenden.",
+        "versions": [
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P242": [
+      {
+        "text": "Nur funkenfreies Werkzeug verwenden.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P243": [
+      {
+        "text": "Maßnahmen gegen elektrostatische Aufladungen treffen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P244": [
+      {
+        "text": "Druckminderer frei von Fett und Öl halten.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P251": [
+      {
+        "text": "Behälter steht unter Druck: Nicht durchstechen oder verbrennen, auch nicht nach der Verwendung.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P263": [
+      {
+        "text": "Kontakt während der Schwangerschaft/und der Stillzeit vermeiden.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P282": [
+      {
+        "text": "Schutzhandschuhe/Gesichtsschild/Augenschutz mit Kälteisolierung tragen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401"
+        ]
+      },
+      {
+        "text": "Schutzhandschuhe mit Kälteisolierung/Gesichtsschild/Augenschutz tragen.",
+        "versions": [
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P283": [
+      {
+        "text": "Schwer entflammbare/flammhemmende Kleidung tragen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P284": [
+      {
+        "text": "Atemschutz tragen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P301+P310": [
+      {
+        "text": "BEI VERSCHLUCKEN: Sofort GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P301+P312": [
+      {
+        "text": "BEI VERSCHLUCKEN: Bei Unwohlsein GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P302+P334": [
+      {
+        "text": "BEI KONTAKT MIT DER HAUT: In kaltes Wasser tauchen/nassen Verband anlegen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      },
+      {
+        "text": "BEI BERÜHRUNG MIT DER HAUT: In kaltes Wasser tauchen/nassen Verband anlegen.",
+        "versions": [
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P302+P352": [
+      {
+        "text": "BEI KONTAKT MIT DER HAUT: Mit viel Wasser und Seife waschen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P303+P361+P353": [
+      {
+        "text": "BEI KONTAKT MIT DER HAUT (oder dem Haar): Alle beschmutzten, getränkten Kleidungsstücke sofort ausziehen. Haut mit Wasser abwaschen/duschen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      },
+      {
+        "text": "BEI BERÜHRUNG MIT DER HAUT (oder dem Haar): Alle kontaminierten Kleidungsstücke sofort ausziehen. Haut mit Wasser abwaschen/duschen.",
+        "versions": [
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P304+P340": [
+      {
+        "text": "BEI EINATMEN: An die frische Luft bringen und in einer Position ruhigstellen, die das Atmen erleichtert.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P305+P351+P338": [
+      {
+        "text": "BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser spülen. Vorhandene Kontaktlinsen nach Möglichkeit entfernen. Weiter spülen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P306": [
+      {
+        "text": "BEI KONTAMINIERTER KLEIDUNG:",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P310": [
+      {
+        "text": "Sofort GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P311": [
+      {
+        "text": "GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P312": [
+      {
+        "text": "Bei Unwohlsein GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P334": [
+      {
+        "text": "In kaltes Wasser tauchen/nassen Verband anlegen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P340": [
+      {
+        "text": "Die betroffene Person an die frische Luft bringen und in einer Position ruhigstellen, die das Atmen erleichtert.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P342+P311": [
+      {
+        "text": "Bei Symptomen der Atemwege: GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P352": [
+      {
+        "text": "Mit viel Wasser und Seife waschen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P353": [
+      {
+        "text": "Haut mit Wasser abwaschen/duschen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P362": [
+      {
+        "text": "Kontaminierte Kleidung ausziehen und vor erneutem Tragen waschen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P372": [
+      {
+        "text": "Explosionsgefahr bei Brand.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P381": [
+      {
+        "text": "Alle Zündquellen entfernen, wenn gefahrlos möglich.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P401": [
+      {
+        "text": "… aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P402+P404": [
+      {
+        "text": "In einem geschlossenen Behälter an einem trockenen Ort aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P403+P233": [
+      {
+        "text": "Behälter dicht verschlossen an einem gut belüfteten Ort aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P403+P235": [
+      {
+        "text": "Kühl an einem gut belüfteten Ort aufgewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P406": [
+      {
+        "text": "In korrosionsbeständigem/… Behälter mit korrosionsbeständiger Auskleidung aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      },
+      {
+        "text": "In korrosionsbeständigem/… Behälter mit widerstandsfähiger Innenauskleidung aufbewahren.",
+        "versions": [
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P407": [
+      {
+        "text": "Luftspalt zwischen Stapeln/Paletten lassen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P410+P403": [
+      {
+        "text": "Vor Sonnenbestrahlung geschützt an einem gut belüfteten Ort aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P410+P412": [
+      {
+        "text": "Vor Sonnenbestrahlung schützen und nicht Temperaturen von mehr als 50 o C aussetzen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P411": [
+      {
+        "text": "Bei Temperaturen von nicht mehr als … o C/…aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P412": [
+      {
+        "text": "Nicht Temperaturen von mehr als 50 o C aussetzen.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P413": [
+      {
+        "text": "Schüttgut in Mengen von mehr als … kg bei Temperaturen von nicht mehr als … o C aufbewahren",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101"
+        ]
+      }
+    ],
+    "P420": [
+      {
+        "text": "Von anderen Materialien entfernt aufbewahren.",
+        "versions": [
+          "20101201",
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ],
+    "P502": [
+      {
+        "text": "Informationen zur Wiederverwendung/Wiederverwertung beim Hersteller/Lieferanten erfragen",
+        "versions": [
+          "20110419",
+          "20131201",
+          "20150101",
+          "20150601",
+          "20160101",
+          "20160401",
+          "20170101",
+          "20170601"
+        ]
+      }
+    ]
+  }
+}

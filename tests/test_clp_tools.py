@@ -53,3 +53,33 @@ def test_a_table_cell_becomes_one_line_without_the_journals_marks() -> None:
     assert extract._cell_text("Dampf/\nAerosol nicht einatmen.") == (
         "Dampf/Aerosol nicht einatmen."
     )
+
+
+@pytest.mark.spec("SDW-50")
+def test_an_earlier_wording_is_kept_once_with_its_versions() -> None:
+    """Punctuation alone makes no earlier wording; one that differs is kept
+    once, as the newest version wrote it, with every version holding it."""
+    earlier = _tool("earlier_wordings").earlier_wordings(
+        {"P243": "Maßnahmen gegen elektrostatische Entladungen treffen."},
+        {
+            "20101201": {
+                "P243": "Maßnahmen gegen elektrostatische Aufladungen treffen"
+            },
+            "20131201": {
+                "P243": "Maßnahmen gegen elektrostatische Aufladungen treffen."
+            },
+            "20180301": {
+                "P243": "Maßnahmen gegen elektrostatische Entladungen treffen"
+            },
+            "20200101": {"P999": "Ein Satz, den es heute nicht gibt."},
+        },
+    )
+
+    assert earlier == {
+        "P243": [
+            {
+                "text": "Maßnahmen gegen elektrostatische Aufladungen treffen.",
+                "versions": ["20101201", "20131201"],
+            }
+        ]
+    }
