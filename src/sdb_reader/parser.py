@@ -2079,6 +2079,18 @@ def _parse_hazard_statements(
         signal_word=_strongest_signal_word(r.signal_word for r in readings),
         pictograms=sorted(set().union(*(r.pictograms for r in readings))),
     )
+    # A code one sheet's label prints is printed, even where another sheet of
+    # the file only prints its sentence (SDB-174).
+    printed_somewhere = set().union(
+        *(
+            (r.hazard_codes | r.precautionary_codes | r.supplemental) - r.from_wording
+            for r in readings
+        )
+    )
+    from_wording = (
+        set().union(*(r.from_wording for r in readings))
+        | {code for code, _ in worded_supplemental}
+    ) - printed_somewhere
     # The text has to say what the codes say. The codes are read off the label;
     # the text is cut from the whole hazards section, which also holds 2.1's
     # classification and, where a heading goes unread, the section 3 ingredient
@@ -2153,6 +2165,12 @@ def _parse_hazard_statements(
                 supplemental.add(code.group(0).upper())
         supplemental_text = "\n".join(kept) or None
         hazard_statements.supplemental_codes = sorted(supplemental)
+        # A code kept by its wording here is printed in the text (SDB-124).
+        from_wording -= {
+            code.group(0).upper()
+            for line in kept
+            if (code := SUPPLEMENTAL_CODE_PATTERN.match(line)) is not None
+        }
     if supplemental_text:
         supplemental_text = _with_substances_before_the_code(
             supplemental_text, sections.get(Section.HAZARDS, "")
@@ -2173,6 +2191,12 @@ def _parse_hazard_statements(
         )
         or None
     )
+    on_label = {
+        *hazard_statements.hazard_codes,
+        *hazard_statements.precautionary_codes,
+        *hazard_statements.supplemental_codes,
+    }
+    hazard_statements.codes_from_wording = sorted(from_wording & on_label)
     _without_trailing_pictograms(hazard_statements)
     warnings.extend(Message(STATEMENT_TOO_LONG, {"codes": codes}) for codes in too_long)
     # What the label holds that nothing above read (SDB-165): a measure of
@@ -2548,6 +2572,9 @@ class _LabelReading:
     # The sheet's sentence read as P501 by SDB-166, where the label prints no
     # P501 code.
     disposal: str | None = None
+    # The codes the parser assigned to sentences the label prints without
+    # them (SDB-174): SDB-6, SDB-28, SDB-163, SDB-166.
+    from_wording: set[str] = field(default_factory=set)
 
 
 def _strongest_signal_word(words: Iterable[str | None]) -> str | None:
@@ -2627,6 +2654,9 @@ def _read_label(
     hazard_section_text = _LABEL_DECLINED.sub("", hazard_section_text)
 
     hazard_codes = sorted(printed_hazard_codes(hazard_section_text))
+    # Which list came from the sentences rather than printed codes (SDB-174).
+    hazard_by_wording = False
+    precautionary_by_wording: set[str] = set()
     if not hazard_codes and classification is not None:
         hazard_codes = sorted(
             {lettered_code(code) for code in LABEL_HAZARD_CODE.findall(classification)}
@@ -2657,6 +2687,7 @@ def _read_label(
             # "H", not "not EUH": EUH statements have their own field, and P
             # statements are somebody else's list entirely.
             hazard_codes = sorted(c for c in by_wording if c.startswith("H"))
+            hazard_by_wording = bool(hazard_codes)
         if not precautionary_codes:
             by_variants: set[str] = set()
             # And in the forms Annex IV allows for its choices, details and
@@ -2673,6 +2704,7 @@ def _read_label(
             precautionary_codes = sorted(
                 {c for c in by_wording if c.startswith("P")} | by_variants
             )
+            precautionary_by_wording = set(precautionary_codes)
     # P501 by the words many suppliers use for it, also beside other P codes
     # (SDB-166); never on a label by the rules before CLP (SDB-120).
     disposal = None
@@ -2687,6 +2719,7 @@ def _read_label(
         disposal = _disposal_sentence(hazard_section_text)
         if disposal is not None:
             precautionary_codes = sorted({*precautionary_codes, "P501"})
+            precautionary_by_wording.add("P501")
     supplemental = sorted(
         set(
             code.upper()
@@ -2747,6 +2780,9 @@ def _read_label(
         pictograms=set(pictograms),
         warnings=warnings,
         disposal=disposal,
+        from_wording=(h_code_set if hazard_by_wording else set())
+        | precautionary_by_wording
+        | {code for code, _ in worded_supplemental},
     )
 
 

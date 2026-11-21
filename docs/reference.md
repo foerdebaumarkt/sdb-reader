@@ -135,6 +135,8 @@ See [Statements and pictograms](api/statements.md).
 
 .. autofunction:: canonical_text
 
+.. autofunction:: as_printed
+
 .. autofunction:: normalize_statements
 
 .. autofunction:: tidy_statements
