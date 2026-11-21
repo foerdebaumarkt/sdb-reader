@@ -7,6 +7,14 @@ Versions follow the tags of this repository.
 
 ## 0.11.0 – 2026-11-21
 
+This release reads the label strictly as the sheet prints it and reports,
+separately, where it falls short of the CLP Regulation: a classified product
+without a label, without hazard or precautionary statements, or without a
+hazard statement its classification names. Some sheets print a statement's
+wording without its code; the reading now says which codes the sheet prints
+and which the parser assigned from the wording, so a user can show the label
+exactly as printed. `PARSER_VERSION` rises to 20.
+
 ### Breaking
 
 - **`PARSER_VERSION` is 20** (0.10.0: 19): findings are part of the reading.

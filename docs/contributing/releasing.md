@@ -20,9 +20,12 @@ uploads a package by hand.
 2. **Open a pull request** that sets `version` in `pyproject.toml`, refreshes
    `uv.lock` (`uv lock`) and turns the changelog's "Unreleased" section into
    the release's: a new heading `## <version> – <date>` under an empty
-   "Unreleased". Name every breaking change under "Breaking" and every rise
-   of a stage version, with what a caller has to do about texts and readings
-   it kept. Where a page names a version as an example, move it along.
+   "Unreleased". Directly under the heading, one short paragraph says what
+   the release is about as a whole, so that a reader of the release text
+   understands the changes below it in their context. Name every breaking
+   change under "Breaking" and every rise of a stage version, with what a
+   caller has to do about texts and readings it kept. Where a page names a
+   version as an example, move it along.
 3. **Merge it**, and wait for the checks on `main`.
 4. **Tag the merge commit** and push the tag:
 
@@ -37,6 +40,17 @@ uploads a package by hand.
 A tag cannot be released twice, and a version once on the index cannot be
 replaced. If a release is wrong, fix it and release the next patch version.
 
+**A change to the documentation alone** goes out as a patch version too
+(0.11.0 to 0.11.1): the documentation site holds one edition per release,
+built from its tag, so a page changes on the site only with a release. The
+changelog's section for such a version says so in its paragraph and lists the
+pages under "Documentation"; code, `PARSER_VERSION` and `EXTRACTION_VERSION`
+stay as they are. It goes through the same steps, the package index included.
+
+**A re-run of the workflow** gets through to a job that failed: the `release`
+job finds the release an earlier attempt created, uploads its files again and
+leaves its text as it is.
+
 ## What the workflow does
 
 | Job | Does | Runs |
@@ -44,7 +58,8 @@ replaced. If a release is wrong, fix it and release the next patch version.
 | `build` | checks the tag, runs the tests, builds the source distribution and the wheel (`make dist`), installs the wheel by itself (`make package-check`), builds the documentation site (`make docs`) | always |
 | `pypi` | publishes the distributions on the Python Package Index | only for a public repository |
 | `release` | creates the GitHub release: the changelog's section as its text; the distributions and the built documentation as its files | when `build` passed and `pypi` passed or was skipped |
-| `pages` | puts the documentation of every release together and deploys it to GitHub Pages | only for a public repository |
+| `pages` | puts the documentation of every release together and uploads it as the site's artifact | only for a public repository |
+| `deploy` | deploys that artifact to GitHub Pages, in a job of its own so that the artifact is complete; if it is not found, it waits 30 seconds and tries once more | only for a public repository |
 
 **The tag is checked before anything is built** (`tools/release.py check`).
 It is released only if
@@ -58,7 +73,7 @@ It is released only if
 A tag that fails one of these releases nothing; delete it and set it right.
 
 **Nothing leaves a private repository.** `build` asks GitHub whether the
-repository is public, and `pypi` and `pages` run only if it is. In a private
+repository is public, and `pypi`, `pages` and `deploy` run only if it is. In a private
 repository a tag gives a GitHub release with the built files and nothing
 else. The package index is a second lock: it takes a package only from this
 workflow in this repository (see below).
@@ -92,7 +107,7 @@ files (`tools/docs/assemble_site.py`), not built again from the tags. So an
 edition is exactly what its release built and never changes, and a release
 never fails because the documentation of an old tag no longer builds. To
 take an edition off the site, delete that file from its release and run the
-`pages` job of the newest release again.
+`pages` and `deploy` jobs of the newest release again.
 
 The pages are written to be read on GitHub too. What the site needs beyond
 that:

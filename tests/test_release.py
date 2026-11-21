@@ -283,7 +283,7 @@ class TestARelease:
         )
         outward = {
             "pypi": "pypa/gh-action-pypi-publish@",
-            "pages": "actions/deploy-pages@",
+            "deploy": "actions/deploy-pages@",
         }
         jobs = re.findall(r"^  (\w+):\n", RELEASE.split("\njobs:\n", 1)[1], re.M)
         assert set(outward) < set(jobs)
