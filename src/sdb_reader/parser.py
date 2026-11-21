@@ -560,9 +560,12 @@ PICTOGRAM_PATTERN = re.compile(r"\bGHS\d{1,2}\b", re.IGNORECASE)
 # the signal word without punctuation, which makes the "!" diagnostic: it never
 # belongs to the label element, only to the sentence that quotes it.
 SIGNAL_WORD_PATTERN = re.compile(r"\b(Gefahr|Achtung)\b(?!\s*!)", re.IGNORECASE)
-# The word behind its own label: "Signalwort: Achtung" (SDB-157).
+# The word behind its own label: "Signalwort: Achtung" (SDB-157). Behind its
+# label the word may carry an exclamation mark that ends its line ("Signalwort:
+# Achtung!", SDB-176): EUH211 and EUH212 go on after theirs on the same line.
 _SIGNAL_WORD_NAMED = re.compile(
-    r"\bSignalwort[^\S\n]*[:\-–]?\s*(Gefahr|Achtung)\b(?!\s*!)", re.IGNORECASE
+    r"\bSignalwort[^\S\n]*[:\-–]?\s*(Gefahr|Achtung)\b(?![^\S\n]*![^\S\n]*\S)",
+    re.IGNORECASE,
 )
 
 # How a sheet classifies under Directive 67/548/EEC or 1999/45/EC, the rules
