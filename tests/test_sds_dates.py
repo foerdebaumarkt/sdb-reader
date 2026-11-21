@@ -1,4 +1,4 @@
-"""What the parser reads as a sheet's dates and version (SDB-57, SDB-128 to SDB-130).
+"""What the parser reads as a sheet's dates and version (SDB-20, SDB-57, SDB-128, SDB-129).
 
 The sheets are invented; each shows one form a comparison over a body of
 sheets turned up.
@@ -145,7 +145,7 @@ def test_several_days_behind_one_label_all_count(joined: str) -> None:
     assert sheet.revision_date == date(2016, 6, 10)
 
 
-@pytest.mark.spec("SDB-130")
+@pytest.mark.spec("SDB-20")
 def test_a_day_is_no_version() -> None:
     sheet = read(
         "Revision: 11\nDatum: 13.03.2024\nLetzte Version: 06.03.2023\n",
@@ -157,12 +157,12 @@ def test_a_day_is_no_version() -> None:
     assert sheet.revision_date == date(2024, 3, 13)
 
 
-@pytest.mark.spec("SDB-130")
+@pytest.mark.spec("SDB-20")
 def test_a_sheet_whose_only_version_is_a_day_has_none() -> None:
     assert read("Grenzwert: 5 mg/m3\nVersion: 02.07.2021\n").version is None
 
 
-@pytest.mark.spec("SDB-130")
+@pytest.mark.spec("SDB-20")
 def test_the_number_behind_the_day_is_the_version() -> None:
     sheet = read(
         "Überarbeitet am / Version: 31.05.2012 / 0007\n"

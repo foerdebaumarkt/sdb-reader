@@ -190,16 +190,16 @@ def test_extract_version_prefers_the_repeated_running_header() -> None:
     assert _extract_version(text) == "1.2"
 
 
-@pytest.mark.spec("SDB-90", "SDB-94", "SDB-100")
+@pytest.mark.spec("SDB-90")
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
         ("mit AGM und GEL Technologie\nSTAND: 06/2022\n", date(2022, 6, 1)),
         ("____________ Stand: Februar 2003\n\n1. STOFF", date(2003, 2, 1)),
-        # Behind the revision label (SDB-94).
+        # Behind the revision label.
         ("Version: 2.0/CZ\nÜberarbeitet am: März 2013\nDruckdatum:", date(2013, 3, 1)),
         ("Überarbeitet am: April/2017\nDruckdatum: 18. Oktober", date(2017, 4, 1)),
-        # In a footer, without a colon and with a dot (SDB-100).
+        # In a footer, without a colon and with a dot.
         ("Seite 1/4\nStand 10.2013\n5. Massnahmen", date(2013, 10, 1)),
         # One supplier: alone on a line of the page header.
         ("ISO 11014 – 1)\n03 / 2012 .\nName: Spray", date(2012, 3, 1)),
@@ -215,7 +215,7 @@ def test_a_month_and_a_year_date_a_sheet(text: str, expected: date | None) -> No
     assert _extract_month_year_date(text) == expected
 
 
-@pytest.mark.spec("SDB-92")
+@pytest.mark.spec("SDB-90")
 class TestAHeaderTableSetInColumns:
     """The values of the header table come before their labels."""
 
@@ -243,22 +243,22 @@ class TestAHeaderTableSetInColumns:
         assert _extract_date_from_columns(text) is None
 
 
-@pytest.mark.spec("SDB-93")
+@pytest.mark.spec("SDB-57")
 def test_the_date_of_the_first_version_is_an_issue_date() -> None:
     text = "Nummer der Fassung: 1.0 Erste Fassung: 15.12.2025\nDeutschland: de Seite: 1 / 21"
     assert _extract_issue_date(text) == date(2025, 12, 15)
     assert _extract_revision_date(text) is None
-    # The label alone, its value elsewhere, is left to SDB-92.
+    # The label alone, its value elsewhere, is left to SDB-90.
     assert _extract_issue_date("Erstfassung\nÜberarbeitet am\nVersion") is None
 
 
-@pytest.mark.spec("SDB-96")
+@pytest.mark.spec("SDB-57")
 def test_the_date_of_issue_spelled_out() -> None:
     text = "Datum der Ausstellung: 5/05/2022\nDruckdatum: 05/05/2022"
     assert _extract_issue_date(text) == date(2022, 5, 5)
 
 
-@pytest.mark.spec("SDB-97")
+@pytest.mark.spec("SDB-57")
 def test_a_revision_date_with_its_label_behind_it() -> None:
     text = (
         "Verursacht Hautreizungen.\n\n23.04.2024 (Überarbeitungsdatum)\nDE - de\n1/11"
@@ -267,19 +267,19 @@ def test_a_revision_date_with_its_label_behind_it() -> None:
     assert _extract_revision_date("28.02.2022 (Druckdatum)") is None
 
 
-@pytest.mark.spec("SDB-98")
+@pytest.mark.spec("SDB-57")
 def test_a_date_with_its_version_behind_a_comma() -> None:
     text = "Sicherheitsdatenblatt\nINSEKTENSPRAY 150 mL.\n\n20/11/2012, version 2.\n"
     assert _extract_revision_date(text) == date(2012, 11, 20)
 
 
-@pytest.mark.spec("SDB-101")
+@pytest.mark.spec("SDB-57", "SDB-90")
 def test_issued_on_labels_a_date() -> None:
     assert _extract_issue_date("Ausgestellt am 05.12.2016") == date(2016, 12, 5)
     assert _extract_short_year_date("- Ausgestellt am 05.12.16\n") == date(2016, 12, 5)
 
 
-@pytest.mark.spec("SDB-102")
+@pytest.mark.spec("SDB-57")
 def test_the_date_of_a_review_not_of_the_version_it_replaces() -> None:
     text = (
         "Durchsicht Nr. 3\nvom 11/10/2023\nGedruckt am 11/10/2023\nYtong FIX N202\n"
@@ -289,7 +289,7 @@ def test_the_date_of_a_review_not_of_the_version_it_replaces() -> None:
     assert _extract_revision_date(text.split("Gedruckt")[1]) is None
 
 
-@pytest.mark.spec("SDB-103")
+@pytest.mark.spec("SDB-90")
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
@@ -313,7 +313,7 @@ def test_a_revision_date_a_few_lines_below_its_label(
     assert _extract_date_below_label(text) == expected
 
 
-@pytest.mark.spec("SDB-91")
+@pytest.mark.spec("SDB-57")
 def test_a_date_with_spaces_around_its_separators() -> None:
     text = "Durchgesehene Ausgabe Nr : 0\nDatum : 15 / 6 / 2010\n\nErsetzt : 0 / 0 / 0"
     assert _latest_dated_match(text, PLAIN_DATE_PATTERN) == date(2010, 6, 15)
