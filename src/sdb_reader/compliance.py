@@ -627,7 +627,7 @@ def usable_dates(
     today: date | None = None,
     parts: Sequence[SheetPart] = (),
 ) -> tuple[date | None, date | None]:
-    """The revision and the issue date that can be right (SDB-137, SDB-179).
+    """The revision and the issue date that can be right (SDB-137, SDB-182).
 
     Without *today* the dates as read. With it, a date after that day is
     no date; for a file of several sheets (*parts*), each is the newest that
@@ -753,7 +753,7 @@ def sheet_findings(
     the sheet's age: the sheet is judged by its issue date where that is no
     later than *today*, else like a sheet without a date (SDB-137). A file
     of several sheets is judged by the newest date one of them names that
-    is not after *today* (SDB-179). Without *today* no date is questioned.
+    is not after *today* (SDB-182). Without *today* no date is questioned.
 
     *parser_warnings* are the warnings of the parser's result for the sheet.
     Each finding is a message; where it concerns one statement, its values

@@ -58,7 +58,7 @@ Versions follow the tags of this repository.
 
 - **A date in the future no longer leaves a file of several sheets
   undated.** Each of its dates is the newest one of its sheets names that is
-  not in the future (SDB-179).
+  not in the future (SDB-182).
 - **A signal word with an exclamation mark behind its label** ("Signalwort:
   Achtung!") is read; only a sentence that goes on after the mark on the
   same line is the opening of EUH211 or EUH212 (SDB-176).
