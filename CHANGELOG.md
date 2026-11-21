@@ -5,6 +5,14 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.11.0 – 2026-11-21
+
+### Breaking
+
+- **`PARSER_VERSION` is 20** (0.10.0: 19): findings are part of the reading.
+  `EXTRACTION_VERSION` stays 2; readings kept from before should be made
+  again from the stored texts.
+
 ### Added
 
 - **Whether the label prints a statement's code.** Each statement of the
@@ -39,12 +47,6 @@ Versions follow the tags of this repository.
   as "3. Zusammensetzung …" is, when the title fits the number; before, section
   2 ran on into section 3, and an ingredient's classification counted as the
   product's (SDB-175).
-
-### Changed
-
-- **`PARSER_VERSION` is 20** (0.10.0: 19): findings are part of the reading.
-  `EXTRACTION_VERSION` stays 2; readings kept from before should be made
-  again from the stored texts.
 
 ## 0.10.0 – 2026-11-20
 

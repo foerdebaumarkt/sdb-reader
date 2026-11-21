@@ -27,8 +27,8 @@ uploads a package by hand.
 4. **Tag the merge commit** and push the tag:
 
    ```bash
-   git tag -a v0.10.0 -m "sdb-reader 0.10.0" <commit on main>
-   git push origin v0.10.0
+   git tag -a v0.11.0 -m "sdb-reader 0.11.0" <commit on main>
+   git push origin v0.11.0
    ```
 
 5. **Watch the run** of `release` under Actions. The jobs that publish wait
