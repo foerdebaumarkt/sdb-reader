@@ -58,6 +58,15 @@ exactly as printed. `PARSER_VERSION` rises to 20.
 
 ## 0.10.0 – 2026-11-20
 
+This release makes the reader more exact on sheets from many sources and
+harder to slow down: H360 and H361 keep the letters of their effect,
+precautionary statements printed as sentences are read in the forms the CLP
+Regulation allows, codes printed with a space are read, and lines of the label
+the parser assigns to nothing are named. Eight reading errors found on sheets
+from outside the original collection are fixed, an embedded eSDScom file is
+parsed safely, and what a reading takes in is bounded. `PARSER_VERSION` rises
+to 19.
+
 ### Breaking
 
 - **H360 and H361 keep the letters of their effect.** A label's `H360D`,
