@@ -4921,6 +4921,29 @@ class TestTheEmergencyNumber:
         assert contact.supplier_phone == "+49 555 0142-0"
 
 
+@pytest.mark.spec("SDB-175")
+def test_a_heading_may_number_its_section_with_a_colon() -> None:
+    text = (
+        "Sicherheitsdatenblatt\n"
+        "ABSCHNITT 1: Bezeichnung des Gemischs und des Unternehmens\n"
+        "Handelsname: Musterdünger\n"
+        "ABSCHNITT 2: Mögliche Gefahren\n"
+        "Das Gemisch ist nach CLP-Verordnung nicht eingestuft.\n"
+        "3: Zusammensetzung / Angaben zu den Bestandteilen\n"
+        "Eisen(II)sulfat Monohydrat (2,5-5 %)\n"
+        "Akute Toxizität oral, Kategorie 4, H302\n"
+    )
+
+    sections = split_sections(text)
+
+    assert "H302" not in sections[Section.HAZARDS]
+    assert sections[Section.COMPOSITION].startswith("Eisen(II)sulfat")
+    assert read_numbered_section_heading("3: Zusammensetzung") == 3
+    # The title still has to agree with the number.
+    assert read_numbered_section_heading("4: Zusammensetzung") is None
+    assert read_numbered_section_heading("1: Kategorie 2") is None
+
+
 @pytest.mark.spec("SDB-152")
 @pytest.mark.parametrize("mark", ["!", "*"])
 def test_a_heading_may_carry_the_mark_of_a_changed_section(mark: str) -> None:

@@ -183,9 +183,10 @@ SUBSECTION_TITLES: dict[int, re.Pattern[str]] = {
 # The dot after the number is optional: "3 Zusammensetzung" is as common as
 # "3. Zusammensetzung", and both are headings. Section numbers stop at 16.
 # A mark for a changed section may stand in front (SDB-152): "* 1 Bezeichnung
-# des …", "! 2. Mögliche Gefahren".
+# des …", "! 2. Mögliche Gefahren". A colon may stand for the dot (SDB-175):
+# "3: Zusammensetzung / Angaben zu den Bestandteilen".
 NUMBERED_SECTION_PATTERN = re.compile(
-    r"^(?:[*!]\s*)?0?(1[0-6]|[1-9])\s*\.?\s+(\S.{3,79}?)\s*$"
+    r"^(?:[*!]\s*)?0?(1[0-6]|[1-9])\s*[.:]?\s+(\S.{3,79}?)\s*$"
 )
 # Suppliers state the document's own version several ways: "Version 8.2",
 # "Version: 1.1", "Versionsnummer 1", "Nummer der Fassung: 1.0" and
@@ -1371,8 +1372,9 @@ class SDSParser:
 def read_numbered_section_heading(line: str) -> int | None:
     """Return the section number of a plainly numbered heading, else None.
 
-    Recognises "2. Mögliche Gefahren" and "2 Mögliche Gefahren", the two forms
-    that carry no "Abschnitt" for SECTION_HEADER_PATTERN to find. The title must
+    Recognises "2. Mögliche Gefahren", "2: Mögliche Gefahren" and "2 Mögliche
+    Gefahren", the forms that carry no "Abschnitt" for SECTION_HEADER_PATTERN
+    to find. The title must
     agree with the number: see SECTION_TITLE_PATTERNS for why the number alone
     is not enough.
     """

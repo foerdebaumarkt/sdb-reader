@@ -18,6 +18,14 @@ Versions follow the tags of this repository.
   directives before CLP on a sheet dated before 1 June 2015; the parser notes
   such a label (`label-before-clp`) (SDB-169 to SDB-172).
 
+### Fixed
+
+- **A section heading numbered with a colon starts its section.** "3:
+  Zusammensetzung / Angaben zu den Bestandteilen" is the heading of section 3
+  as "3. Zusammensetzung …" is, when the title fits the number; before, section
+  2 ran on into section 3, and an ingredient's classification counted as the
+  product's (SDB-175).
+
 ### Changed
 
 - **`PARSER_VERSION` is 20** (0.10.0: 19): findings are part of the reading.
