@@ -19,7 +19,6 @@ from .messages import Message
 from .parser import (
     CLASSIFIED_BEFORE_CLP,
     EUH_WORDING_OUTSIDE_LABEL,
-    LABEL_BEFORE_CLP,
     LABEL_HEADING_PATTERN,
     LABEL_UNDETERMINED,
     NO_LABEL_SECTION,
@@ -274,8 +273,7 @@ def label_not_found(
     The reading stays as it is: these are findings beside it, and each says
     "not found", which is true whether the sheet lacks it or the parser missed
     it. Only for a product classified under CLP (SDB-75); not under the old
-    law (SDB-73), not for a label under the old directives on a sheet dated
-    before 1 June 2015, and not for an article, which is not labelled under
+    law (SDB-73), and not for an article, which is not labelled under
     CLP (SDB-142, SDB-154). A label counts as found where the parser found its
     block (SDB-4), or, without one, read any element of a label in section 2.
 
@@ -318,8 +316,7 @@ def label_not_found(
 
 def _label_is_judged(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
     """Whether the label findings apply to *sheet* (SDB-170): a product
-    classified under CLP, no article, no classification under the old law, and
-    no label under the old directives on a sheet dated before 1 June 2015.
+    classified under CLP, no article and no classification under the old law.
     *noted* are the codes of the parser's warnings."""
     if sheet.stated_classification is not StatedClassification.CLASSIFIED:
         return False
@@ -327,14 +324,10 @@ def _label_is_judged(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
 
 
 def _label_is_exempt(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
-    """Whether *sheet* is not labelled under CLP (SDB-170): an article, a
-    classification under the old law, or a label under the old directives on a
-    sheet dated before 1 June 2015."""
-    if sheet.stated_article or CLASSIFIED_BEFORE_CLP in noted:
-        return True
-    # A mixture could be labelled under the old directives until 1 June 2015.
-    dated = sheet.revision_date or sheet.issue_date
-    return LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES
+    """Whether *sheet* is not labelled under CLP (SDB-170): an article or a
+    classification under the old law. A label under the old directives stands
+    on sheets before 2021, which get no label findings (SDW-49)."""
+    return sheet.stated_article or CLASSIFIED_BEFORE_CLP in noted
 
 
 # The pictogram that makes Article 26 leave out GHS07, in the order
@@ -355,8 +348,7 @@ def pictogram_findings(
     ``pictogram-not-expected`` for each pictogram the label names or shows
     that none of its H codes calls for; ``pictogram-precedence`` for a
     pictogram the label shows although Article 26 CLP leaves it out beside
-    another. Not for an article, a classification under the old law, or a
-    label under the old directives on a sheet dated before 1 June 2015
+    another. Not for an article or a classification under the old law
     (SDB-170), and nothing where the label carries no H code.
 
     >>> from sdb_reader import HazardStatements
@@ -405,9 +397,8 @@ def signal_word_not_found(
     printed (SDB-178), with the word under ``expected``, from ``clp_expected``
     (BIB-25).
 
-    Not where the label states it has none (SDB-176), and not for an article,
-    a classification under the old law, or a label under the old directives
-    on a sheet dated before 1 June 2015 (SDB-170).
+    Not where the label states it has none (SDB-176), and not for an article
+    or a classification under the old law (SDB-170).
 
     >>> from sdb_reader import HazardStatements
     >>> label = HazardStatements(hazard_codes=["H225"])
@@ -797,6 +788,11 @@ def oldest_sheet(
     return best
 
 
+# The findings that say a sheet has to be renewed: revised before 2021, or
+# since then in the layout from before 2020/878 (SDW-49).
+_RENEWAL_DUE = frozenset({"predates-annex-ii", "old-format"})
+
+
 def sheet_findings(
     sheet: SafetyDataSheet,
     parser_warnings: Sequence[Message],
@@ -805,6 +801,10 @@ def sheet_findings(
     parts: Sequence[SheetPart] = (),
 ) -> list[Message]:
     """What is wrong with *sheet* as a document (SDW-6, SDW-7, SDW-9).
+
+    A sheet that has to be renewed anyway (revised before 2021, or since in
+    the layout from before 2020/878) gets only the findings on its age and
+    those on a file of several sheets (SDW-49).
 
     *parts* are the sheets of a file that holds several
     (``ParsedSheet.parts``); with them, what they say about each other
@@ -841,6 +841,13 @@ def sheet_findings(
     >>> [finding.code for finding in sheet_findings(result.sheet, result.warnings)]
     ['undated']
     """
+    revised = counted_date(sheet, today, parts)
+    age = [*_dated(sheet, today, revised), *_old_format(sheet, revised)]
+    if any(finding.code in _RENEWAL_DUE for finding in age):
+        # A sheet that has to be renewed anyway gets only the findings on its
+        # age; what else it lacks is the new edition's to put right (SDW-49).
+        return [*age, *several_sheets_findings(parts)]
+
     findings: list[Message] = []
     for statement in label_statements(sheet.hazard_statements):
         if (
@@ -859,8 +866,7 @@ def sheet_findings(
                 )
             )
 
-    revised = counted_date(sheet, today, parts)
-    findings.extend(_dated(sheet, today, revised))
+    findings.extend(age)
 
     hazards = sheet.hazard_statements
     state = classification(hazards.hazard_codes, hazards.signal_word, parser_warnings)
@@ -868,7 +874,6 @@ def sheet_findings(
         findings.append(Message("classification-undetermined"))
     if state is Classification.OLD_SYSTEM:
         findings.append(Message("old-classification"))
-    findings.extend(_old_format(sheet, revised))
 
     if (
         state is Classification.NOT_CLASSIFIED

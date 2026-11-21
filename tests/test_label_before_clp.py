@@ -12,7 +12,7 @@ _SECTION_2 = (
     "Sicherheitsdatenblatt\n"
     "ABSCHNITT 1: Bezeichnung des Stoffs bzw. des Gemischs\n"
     "Handelsname: Musterspray\n"
-    "Überarbeitet am: 02.09.2013\n"
+    "{dated}"
     "ABSCHNITT 2: Mögliche Gefahren\n"
     "2.1 Einstufung des Stoffs oder Gemischs\n"
     "Einstufung gemäß Verordnung (EG) Nr. 1272/2008\n"
@@ -25,11 +25,13 @@ _SECTION_2 = (
 )
 
 
-def _read(label: str) -> tuple[list[str], list[str]]:
+def _read(
+    label: str, dated: str = "Überarbeitet am: 02.09.2013\n"
+) -> tuple[list[str], list[str]]:
     result = read_extraction(
         extraction_from_dict(
             {
-                "text": _SECTION_2.format(label=label),
+                "text": _SECTION_2.format(label=label, dated=dated),
                 "extractor": "pymupdf",
                 "pages_sampled": 1,
                 "warnings": [],
@@ -59,8 +61,10 @@ def test_an_old_label_is_noted_and_gets_no_label_finding(label: str) -> None:
 
 @pytest.mark.spec("SDB-170", "SDB-171")
 def test_a_clp_label_without_hazard_statements_is_not_an_old_one() -> None:
+    # Without a date the sheet is not due for renewal, so the label is judged.
     warnings, findings = _read(
-        "Signalwort: Achtung\nP102 Darf nicht in die Hände von Kindern gelangen."
+        "Signalwort: Achtung\nP102 Darf nicht in die Hände von Kindern gelangen.",
+        dated="",
     )
     assert "label-before-clp" not in warnings
     assert "label-without-hazard-statement" in findings

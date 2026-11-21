@@ -171,7 +171,10 @@ such block.
 ## The findings
 
 `findings` lists what is wrong with the sheet as a document. Each is a
-[message](#messages).
+[message](#messages). A sheet that has to be renewed anyway
+(`predates-annex-ii`, `old-format`) gets only the findings on its age and
+those on a file of several sheets: what else it lacks is for its new edition
+to put right.
 
 | `code` | Meaning |
 | --- | --- |

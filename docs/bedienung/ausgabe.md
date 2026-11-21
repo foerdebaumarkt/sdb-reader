@@ -176,7 +176,10 @@ geschriebener Datensatz hat keinen solchen Block.
 ## Die Befunde
 
 `findings` führt auf, was an dem Blatt als Dokument zu beanstanden ist. Jeder
-Befund ist eine [Meldung](#meldungen).
+Befund ist eine [Meldung](#meldungen). Ein Blatt, das ohnehin erneuert werden
+muss (`predates-annex-ii`, `old-format`), bekommt nur die Befunde zu seinem
+Alter und die zu einer Datei mit mehreren Blättern: Was ihm sonst fehlt, ist
+Sache seiner neuen Fassung.
 
 | `code` | Bedeutung |
 | --- | --- |
