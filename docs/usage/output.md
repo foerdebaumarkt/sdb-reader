@@ -192,7 +192,7 @@ to put right.
 | `country-editions-differ` | the file holds the same product's sheets for different countries, and they differ in the `fields` named |
 | `wording-deviates` | a statement worded differently from the regulation |
 | `pictogram-not-found` | the H statements call for a pictogram the label does not print; only where `drawing_read` |
-| `pictogram-not-expected` | the label prints a pictogram none of its H statements calls for |
+| `pictogram-not-expected` | the label prints a pictogram none of its H statements calls for; not GHS08 on an aerosol, where it may stand for the aspiration hazard (Annex I 1.3.3 CLP) |
 | `pictogram-precedence` | the label prints GHS07 beside a pictogram Article 26 CLP lets it give way to |
 | `not-german` | the sheet is in another language |
 

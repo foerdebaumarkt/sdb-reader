@@ -94,6 +94,13 @@ Versions follow the tags of this repository.
 
 ### Changed
 
+- **No `pictogram-not-expected` for GHS08 on an aerosol.** Annex I 1.3.3
+  CLP lets an aerosol leave out the aspiration hazard, and GHS08 may stand
+  for it where the label leaves out H304, so the library is not sure the
+  sheet deviates (SDB-181, SDB-183). An aerosol is what SDB-173 takes for
+  one: "Aerosol 1" to "3" in section 2, or H222, H223 or H229.
+  `clp_expected` is unchanged and still lists GHS08 as not expected. On the
+  same set the finding goes from 2 sheets.
 - **`wording-deviates` only where the sheet really deviates.** A statement
   is no longer reported where the sheet prints a wording an earlier
   consolidated version of the CLP Regulation gave it, a combination as the
@@ -116,6 +123,20 @@ Versions follow the tags of this repository.
 
 ### Fixed
 
+- **Pictograms printed above the label's heading** belong to the label.
+  Where a sheet sets "Gefahrenpiktogramme" and nothing but the codes
+  directly above "2.2 Kennzeichnungselemente", the codes are read and the
+  drawing is looked at from that line (SDB-187). On a set of about 14,500
+  sheets 3 readings gain their pictograms and lose `pictogram-not-found`.
+- **A second line naming the label elements starts no second label in the
+  drawing.** "Kennzeichnungselemente (CLP):" under "2.2.
+  Kennzeichnungselemente", or "ergänzende Kennzeichnungselemente" further
+  down, is a line of the same label; only another heading numbered 2.2
+  starts one, as the text's label runs to its end (SDB-179, SDB-4). A file
+  of two sheets so printed found four labels in its drawing and gave neither
+  sheet its pictograms (`labels-not-paired`); on the same set 10 such files
+  now read each sheet's drawing. `LABEL_IMAGES_VERSION` stays 1, unreleased:
+  label images kept from this stage before should be read again.
 - **Statement texts read through a label's column.** A heading of the
   label set between a statement's lines ("EUH Sätze", "Sicherheitshinweise")
   no longer cuts the statement short, a cell of the classification table

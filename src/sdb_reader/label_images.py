@@ -3,8 +3,9 @@
 Most sheets print their pictograms as pictures, not as text: the text of a
 sheet then holds no ``GHS07`` the parser could read. This stage looks at the
 label as it is drawn. It finds the label on the PDF's pages by its text
-positions, from the line with "Kennzeichnungselemente" to the next
-subsection, renders that band, looks for the red-framed diamonds every GHS
+positions, from the line with "Kennzeichnungselemente" (or a block of
+pictograms just above it) to the next subsection, renders that band, looks
+for the red-framed diamonds every GHS
 pictogram has, and names each by comparing its inside with references made
 from the public-domain drawings of the nine pictograms.
 
@@ -34,6 +35,17 @@ from .versions import label_images_stage
 # Where a label begins and ends on the page: the heading of 2.2, and the next
 # subsection or the section after it.
 _LABEL_START = re.compile(r"Kennzeichnungselemente", re.IGNORECASE)
+# Inside a label only the heading with its number begins another, as the text
+# parser reads one label from "2.2 Kennzeichnungselemente" to its end (SDB-4):
+# "Kennzeichnungselemente (CLP):" under it, or "ergänzende
+# Kennzeichnungselemente" further down, is a line of the label.
+_LABEL_HEADING = re.compile(r"2\s*\.\s*2\s*\.?\s*Kennzeichnungselemente", re.IGNORECASE)
+# A block of pictograms set directly above that heading belongs to the label
+# (SDB-187): its title, then nothing but the codes printed under the pictures.
+_PICTOGRAMS_TITLE = re.compile(
+    r"(?:[·•∙*]\s*)?(?:Gefahren)?piktogramm\w*\s*:?", re.IGNORECASE
+)
+_PICTOGRAM_CODES = re.compile(r"(?:GHS\s?0?\d{1,2}[\s,;]*)+", re.IGNORECASE)
 _LABEL_END = re.compile(
     r"^\s*(?:·\s*)?(?:2\.3\.?\s|ABSCHNITT\s*3\b|3\.?\s+Zusammensetzung|Sonstige Gefahren)",
     re.IGNORECASE,
@@ -175,6 +187,18 @@ def _lines(page: pymupdf.Page) -> list[tuple[float, str]]:
     return [(float(top), text) for top, _, text in found]
 
 
+def _pictograms_above(lines: Sequence[tuple[float, str]], heading: int) -> float:
+    """The top of the label whose heading is *lines[heading]*: that of a block
+    of pictograms directly above it on the page, else the heading's (SDB-187).
+    Lines beside the heading, at its height, stand between neither."""
+    y = lines[heading][0]
+    for top, text in reversed(lines[:heading]):
+        if top >= y or _PICTOGRAM_CODES.fullmatch(text):
+            continue
+        return top if _PICTOGRAMS_TITLE.fullmatch(text) else y
+    return y
+
+
 def _label_regions(document: pymupdf.Document, pages: range) -> list[list[_Band]]:
     """Each label of the file as the bands of the pages it covers."""
     labels: list[list[_Band]] = []
@@ -182,14 +206,22 @@ def _label_regions(document: pymupdf.Document, pages: range) -> list[list[_Band]
     for number in pages:
         page = document[number]
         top: float | None = 0.0 if current is not None else None
-        for y, text in _lines(page):
+        lines = _lines(page)
+        for index, (y, text) in enumerate(lines):
             if _LABEL_START.search(text) and (
-                current is None or top is None or y > top
+                current is None
+                or top is None
+                or (y > top and _LABEL_HEADING.search(text) is not None)
             ):
+                start = (
+                    _pictograms_above(lines, index)
+                    if _LABEL_HEADING.search(text)
+                    else y
+                )
                 if current is not None and top is not None:
-                    current.append((number, top, y))
+                    current.append((number, top, start))
                     labels.append(current)
-                current, top = [], y
+                current, top = [], start
                 continue
             if (
                 current is not None
