@@ -622,34 +622,69 @@ def _edition_differences(one: SafetyDataSheet, other: SafetyDataSheet) -> list[s
     return names
 
 
-def counted_date(sheet: SafetyDataSheet, today: date | None = None) -> date | None:
-    """The date a sheet's age is judged by (SDW-7, SDW-34).
+def usable_dates(
+    sheet: SafetyDataSheet,
+    today: date | None = None,
+    parts: Sequence[SheetPart] = (),
+) -> tuple[date | None, date | None]:
+    """The revision and the issue date that can be right (SDB-137, SDB-179).
 
-    Its revision date, else its issue date; with *today*, neither of them
-    when it lies after that day (SDB-137).
+    Without *today* the dates as read. With it, a date after that day is
+    no date; for a file of several sheets (*parts*), each is the newest that
+    the file or one of its sheets names and that is not after that day.
     """
-    return next(
-        (
-            day
-            for day in (sheet.revision_date, sheet.issue_date)
-            if day is not None and (today is None or day <= today)
-        ),
-        None,
+    if today is None:
+        return sheet.revision_date, sheet.issue_date
+    sheets = [sheet, *(part.sheet for part in parts)]
+
+    def newest(days: list[date | None]) -> date | None:
+        possible = [day for day in days if day is not None and day <= today]
+        return max(possible) if possible else None
+
+    return (
+        newest([one.revision_date for one in sheets]),
+        newest([one.issue_date for one in sheets]),
     )
 
 
-def _dated(sheet: SafetyDataSheet, today: date | None) -> list[Message]:
-    """A date in the future, and the sheet's age: undated or before 2021."""
+def counted_date(
+    sheet: SafetyDataSheet,
+    today: date | None = None,
+    parts: Sequence[SheetPart] = (),
+) -> date | None:
+    """The date a sheet's age is judged by (SDW-7, SDW-34).
+
+    Its revision date, else its issue date, of those that can be right
+    (``usable_dates``).
+    """
+    revision, issue = usable_dates(sheet, today, parts)
+    return revision or issue
+
+
+def _dated(
+    sheet: SafetyDataSheet, today: date | None, revised: date | None
+) -> list[Message]:
+    """A date in the future, and the age by *revised*: undated or before 2021."""
     findings: list[Message] = []
-    stated = sheet.revision_date or sheet.issue_date
-    if today is not None and stated is not None and stated > today:
-        findings.append(
-            Message(
-                "revised-in-future",
-                {"revised": stated.isoformat(), "today": today.isoformat()},
+    if today is not None:
+        printed_revision, printed_issue = sheet.revision_date, sheet.issue_date
+        if printed_revision is not None and printed_revision > today:
+            findings.append(
+                Message(
+                    "revised-in-future",
+                    {
+                        "revised": printed_revision.isoformat(),
+                        "today": today.isoformat(),
+                    },
+                )
             )
-        )
-    revised = counted_date(sheet, today)
+        if printed_issue is not None and printed_issue > today:
+            findings.append(
+                Message(
+                    "issued-in-future",
+                    {"issued": printed_issue.isoformat(), "today": today.isoformat()},
+                )
+            )
     if revised is None:
         findings.append(Message("undated"))
     elif predates_annex_ii(revised):
@@ -675,7 +710,8 @@ def age_findings(sheet: SafetyDataSheet, today: date | None = None) -> list[Mess
     The same as for a file that is this sheet: a date in the future,
     undated, revised before 2021, or the layout before 2020/878.
     """
-    return [*_dated(sheet, today), *_old_format(sheet, counted_date(sheet, today))]
+    revised = counted_date(sheet, today)
+    return [*_dated(sheet, today, revised), *_old_format(sheet, revised)]
 
 
 def oldest_sheet(
@@ -715,8 +751,9 @@ def sheet_findings(
     clock of its own. With it, a revision date (or, where the sheet names
     none, an issue date) after that day is reported and does not count for
     the sheet's age: the sheet is judged by its issue date where that is no
-    later than *today*, else like a sheet without a date (SDB-137). Without
-    *today* no date is questioned.
+    later than *today*, else like a sheet without a date (SDB-137). A file
+    of several sheets is judged by the newest date one of them names that
+    is not after *today* (SDB-179). Without *today* no date is questioned.
 
     *parser_warnings* are the warnings of the parser's result for the sheet.
     Each finding is a message; where it concerns one statement, its values
@@ -759,8 +796,8 @@ def sheet_findings(
                 )
             )
 
-    findings.extend(_dated(sheet, today))
-    revised = counted_date(sheet, today)
+    revised = counted_date(sheet, today, parts)
+    findings.extend(_dated(sheet, today, revised))
 
     hazards = sheet.hazard_statements
     state = classification(hazards.hazard_codes, hazards.signal_word, parser_warnings)

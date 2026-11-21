@@ -9,7 +9,13 @@ from collections.abc import Mapping
 from datetime import date
 from typing import Any
 
-from .compliance import age_findings, oldest_sheet, requires_sheet, sheet_findings
+from .compliance import (
+    age_findings,
+    oldest_sheet,
+    requires_sheet,
+    sheet_findings,
+    usable_dates,
+)
 from .embedded import EmbeddedData, differences
 from .extraction import ExtractionResult
 from .messages import Catalog, Message, shipped_catalog
@@ -275,6 +281,12 @@ def reading_to_dict(
             record["sheet"] = sheet_to_dict(
                 reading.parser_result.sheet, reading.extraction
             )
+            _dates_that_can_be_right(
+                record["sheet"],
+                usable_dates(
+                    reading.parser_result.sheet, today, reading.parser_result.parts
+                ),
+            )
             record["parser"] = {
                 "warnings": _shown(reading.parser_result.warnings, catalog)
             }
@@ -291,7 +303,10 @@ def reading_to_dict(
             if parts:
                 record["parts"] = [
                     {
-                        "sheet": _sheet_fields(part.sheet, _text_hash(part.text)),
+                        "sheet": _dates_that_can_be_right(
+                            _sheet_fields(part.sheet, _text_hash(part.text)),
+                            usable_dates(part.sheet, today),
+                        ),
                         "statements": _statements(part.sheet),
                         "warnings": _shown(part.warnings, catalog),
                         # Each sheet's age on its own dates (SDW-46).
@@ -323,6 +338,20 @@ def reading_to_dict(
     if embedded is not None:
         record["embedded_data"] = _embedded_to_dict(embedded, reading, catalog)
     return record
+
+
+def _dates_that_can_be_right(
+    fields: dict[str, Any], dates: tuple[date | None, date | None]
+) -> dict[str, Any]:
+    """*fields* with the revision and issue date that can be right (SDB-137).
+
+    A date after the day of the run is no date; the finding
+    ``revised-in-future`` names it as printed.
+    """
+    revision, issue = dates
+    fields["revision_date"] = revision.isoformat() if revision else None
+    fields["issue_date"] = issue.isoformat() if issue else None
+    return fields
 
 
 def _statements(sheet: SafetyDataSheet) -> list[dict[str, Any]]:

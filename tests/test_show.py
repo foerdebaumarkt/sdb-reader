@@ -704,6 +704,24 @@ def test_the_oldest_sheet_leaves_the_file_s_reading_and_findings_as_they_were() 
     assert "oldest_sheet" not in _record(PAINT)
 
 
+@pytest.mark.spec("SDB-179")
+def test_a_date_in_the_future_does_not_leave_a_file_of_several_sheets_undated() -> None:
+    record = _record(_dated(PAINT, "12.03.2027") + _dated(HARDENER, "12.03.2014"))
+
+    # The date in the future is no date: the file's is the newest that can
+    # be right, the hardener's, and a finding names the other.
+    assert record["sheet"]["revision_date"] == "2014-03-12"
+    assert record["parts"][0]["sheet"]["revision_date"] is None
+    codes = [f["code"] for f in record["findings"]]
+    assert "revised-in-future" in codes
+    assert "undated" not in codes
+    assert "predates-annex-ii" in codes
+
+    # Where no sheet names such a date, the file stays undated.
+    none = _record(_dated(PAINT, "12.03.2027") + _dated(HARDENER, "01.01.2028"))
+    assert "undated" in {f["code"] for f in none["findings"]}
+
+
 @pytest.mark.spec("SDW-46")
 def test_each_sheet_of_a_file_carries_the_findings_on_its_own_age() -> None:
     record = _record(PAINT + _dated(HARDENER, "12.03.2014"))

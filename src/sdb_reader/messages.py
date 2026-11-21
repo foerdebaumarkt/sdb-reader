@@ -79,6 +79,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "undated": (),
     "predates-annex-ii": ("revised",),
     "revised-in-future": ("revised", "today"),
+    "issued-in-future": ("issued", "today"),
     "classification-undetermined": (),
     "old-classification": (),
     "old-format": ("revised",),
@@ -199,6 +200,7 @@ MESSAGE_COUNTS: Mapping[str, str] = {
 MESSAGE_DATES: Mapping[str, tuple[str, ...]] = {
     "predates-annex-ii": ("revised",),
     "revised-in-future": ("revised", "today"),
+    "issued-in-future": ("issued", "today"),
     "old-format": ("revised",),
     "show-date": ("date",),
     "show-oldest-revised": ("date",),

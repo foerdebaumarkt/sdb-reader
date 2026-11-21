@@ -146,7 +146,8 @@ Befund ist eine [Meldung](#meldungen).
 | --- | --- |
 | `predates-annex-ii` | vor 2021 überarbeitet; das Blatt kann den heutigen Vorgaben für den Inhalt eines Blatts nicht folgen |
 | `old-format` | seit 2021 überarbeitet, aber noch aufgebaut wie davor |
-| `revised-in-future` | das Überarbeitungsdatum (ohne ein solches: das Ausgabedatum) liegt nach dem Tag, an dem `read` lief; es kann nicht stimmen und zählt nicht für das Alter des Blatts, das dann nach seinem Ausgabedatum beurteilt wird, wenn dieses möglich ist, sonst als undatiert; das Datum selbst steht im Datensatz, wie es gedruckt ist |
+| `revised-in-future` | das Überarbeitungsdatum liegt nach dem Tag, an dem `read` lief; es kann nicht stimmen und ist kein Datum: `revision_date` ist `null`, und das Blatt wird nach seinem Ausgabedatum beurteilt, wenn dieses möglich ist, sonst als undatiert |
+| `issued-in-future` | dasselbe für das Ausgabedatum: `issue_date` ist `null` |
 | `undated` | kein lesbares Überarbeitungs- oder Ausgabedatum |
 | `old-classification` | nach den Richtlinien vor der CLP-Verordnung eingestuft, ohne Kennzeichnung nach CLP |
 | `classification-undetermined` | die Kennzeichnung sagt, die Einstufung sei nicht bestimmt |
@@ -285,8 +286,8 @@ Texts dieses Blatts), `statements` und `warnings`, was beim Lesen dieses
 Blatts auffiel, und nennt seine Länder (`countries`, leer, wo keines erkannt
 ist) und sein Produkt (`product_identifier`). Unter `findings` stehen die
 Befunde zum Alter dieses Blatts, beurteilt an seinen eigenen Daten wie bei
-einer Datei mit diesem einen Blatt: `revised-in-future`, `undated`,
-`predates-annex-ii` und `old-format`; die Liste steht auch leer da. Andere
+einer Datei mit diesem einen Blatt: `revised-in-future`, `issued-in-future`,
+`undated`, `predates-annex-ii` und `old-format`; die Liste steht auch leer da. Andere
 Befunde je Blatt gibt es nicht: Ein Befund gilt dem Produkt, und ob ein
 Blatt für sich das Produkt ist, weiß das Programm nicht. Ein späteres Blatt beginnt am Titel „Sicherheitsdatenblatt“ über
 seinem Abschnitt 1, damit Datum und Version im Kopf seiner ersten Seite für
