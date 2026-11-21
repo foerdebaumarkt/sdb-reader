@@ -375,7 +375,9 @@ class TestLabelOfAClassifiedProduct:
 
     @pytest.mark.spec("SDW-42", "SDB-170")
     def test_no_label_at_all(self) -> None:
-        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        sheet = _sheet(
+            hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED
+        )
         assert _kinds(sheet, [Message("no-label-section")]) == ["label-not-found"]
 
     @pytest.mark.spec("SDB-170")
@@ -388,7 +390,9 @@ class TestLabelOfAClassifiedProduct:
 
     @pytest.mark.spec("SDB-171", "SDB-172")
     def test_a_label_found_empty_names_both(self) -> None:
-        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        sheet = _sheet(
+            hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED
+        )
         assert _kinds(sheet) == [
             "label-without-hazard-statement",
             "label-without-precautionary-statement",
@@ -412,7 +416,9 @@ class TestLabelOfAClassifiedProduct:
 
     @pytest.mark.spec("SDB-170")
     def test_not_where_section_2_classifies_by_the_old_law(self) -> None:
-        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        sheet = _sheet(
+            hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED
+        )
         warnings = [Message("classified-before-clp", {"basis": "R36/38"})]
         assert "label-not-found" not in _kinds(sheet, warnings)
         assert "label-without-hazard-statement" not in _kinds(sheet, warnings)
