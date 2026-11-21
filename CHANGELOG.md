@@ -11,6 +11,10 @@ Versions follow the tags of this repository.
   German) answers why one would not just give a PDF to a language model,
   with what a test on difficult sheets showed about current models, and
   "How it works" explains the reasons in a section of its own.
+- **The philosophy behind the reader.** "How it works" opens with the
+  principles the reader follows: read what is printed, report and do not
+  correct, leave the decision to the user, better missing than invented; the
+  README points to them.
 
 ## 0.11.0 – 2026-11-21
 
