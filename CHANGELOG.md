@@ -103,7 +103,11 @@ Versions follow the tags of this repository.
   brackets left out or given with a slash ("abwaschen/duschen"). Case,
   punctuation and spacing still do not count. On a set of about 13,000
   sheets, of those not due for renewal the finding drops from 698 sheets to
-  16. The earlier wordings come with
+  16. Articles and auxiliaries ("der", "die", "das", "ist", "sind") may be
+  left out or added, and an infinitive may carry "zu" ("einzuhalten" for
+  "einhalten"); every other word must stand, a negation exactly as in the
+  regulation, so "Darf in die Hände …" still deviates. That takes the
+  finding off 12 more of those sheets. The earlier wordings come with
   the package (`clp_earlier_wordings_de.json`, from 29 consolidations since
   December 2010) and are made by `tools/clp/earlier_wordings.py` (SDW-50).
 - **The proposed rule to date a file by its oldest sheet is withdrawn.**

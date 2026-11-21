@@ -168,8 +168,8 @@ class TestSheetFindings:
         hazards = HazardStatements(
             supplemental_codes=["EUH401"],
             supplemental_text=(
-                "EUH401 Zur Vermeidung von Risiken für Mensch und Umwelt ist die "
-                "Gebrauchsanleitung einzuhalten."
+                "EUH401 Zur Vermeidung von Risiken für Mensch und Umwelt die "
+                "Gebrauchsanweisung einhalten."
             ),
         )
 
