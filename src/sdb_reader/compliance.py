@@ -19,6 +19,7 @@ from .parser import (
     CLASSIFIED_BEFORE_CLP,
     EUH_WORDING_OUTSIDE_LABEL,
     LABEL_UNDETERMINED,
+    NO_LABEL_SECTION,
     SheetPart,
 )
 from .schema import HazardStatements, SafetyDataSheet, Section, StatedClassification
@@ -253,6 +254,60 @@ def contradicts_label(sheet: SafetyDataSheet) -> bool:
     )
 
 
+def label_not_found(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    """What the label of a product section 2 classifies should carry and the
+    parser did not find in it (SDB-169 to SDB-172).
+
+    The reading stays as it is: these are findings beside it, and each says
+    "not found", which is true whether the sheet lacks it or the parser missed
+    it. Only for a product classified under CLP (SDB-75); not under the old
+    law (SDB-73), and not for an article, which is not labelled under CLP
+    (SDB-142, SDB-154). A label counts as found where the parser found its
+    block (SDB-4), or, without one, read any element of a label in section 2.
+
+    >>> from sdb_reader import HazardStatements
+    >>> def sheet(label, stated=StatedClassification.CLASSIFIED):
+    ...     return SafetyDataSheet(
+    ...         None, None, None, None, "de", hazard_statements=label,
+    ...         stated_classification=stated,
+    ...     )
+    >>> [m.code for m in label_not_found(sheet(HazardStatements()),
+    ...                                  [Message(NO_LABEL_SECTION)])]
+    ['label-not-found']
+    >>> [m.code for m in label_not_found(
+    ...     sheet(HazardStatements(signal_word="Achtung", precautionary_codes=["P210"])),
+    ...     [])]
+    ['label-without-hazard-statement']
+    >>> label_not_found(sheet(HazardStatements(), StatedClassification.NOT_STATED), [])
+    []
+    """
+    if sheet.stated_classification is not StatedClassification.CLASSIFIED:
+        return []
+    if sheet.stated_article:
+        return []
+    noted = {warning.code for warning in parser_warnings}
+    if CLASSIFIED_BEFORE_CLP in noted:
+        return []
+    label = sheet.hazard_statements
+    read_any = bool(
+        label.hazard_codes
+        or label.precautionary_codes
+        or label.supplemental_codes
+        or label.signal_word
+        or label.pictograms
+    )
+    if NO_LABEL_SECTION in noted and not read_any:
+        return [Message("label-not-found")]
+    findings: list[Message] = []
+    if not label.hazard_codes:
+        findings.append(Message("label-without-hazard-statement"))
+    if not label.precautionary_codes:
+        findings.append(Message("label-without-precautionary-statement"))
+    return findings
+
+
 class Classification(StrEnum):
     """What a sheet's label states about the product's classification."""
 
@@ -468,6 +523,7 @@ def sheet_findings(
     ...     "Verordnung (EG) Nr. 1907/2006\\n"
     ...     "Signalwort: Achtung\\n"
     ...     "H315: Verursacht Hautreizungen.\\n"
+    ...     "P280: Schutzhandschuhe tragen.\\n"
     ... )
     >>> result = read_extraction(
     ...     extraction_from_dict(
@@ -539,6 +595,8 @@ def sheet_findings(
 
     if contradicts_label(sheet):
         findings.append(Message("classification-contradicts-label"))
+
+    findings.extend(label_not_found(sheet, parser_warnings))
 
     findings.extend(
         Message("euh-outside-label", dict(outside.params))

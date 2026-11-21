@@ -5,6 +5,23 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Added
+
+- **Findings for the label of a classified product.** Where section 2
+  classifies the product under CLP and the label (2.2) is not found
+  (`label-not-found`), carries no H statement
+  (`label-without-hazard-statement`) or no P statement
+  (`label-without-precautionary-statement`), the sheet gets a finding. The
+  reading stays as the sheet prints it; nothing is added. Each finding says
+  "not found": the sheet may lack it, or the parser may have missed it. Not
+  for an article or a classification under the old law (SDB-169 to SDB-172).
+
+### Changed
+
+- **`PARSER_VERSION` is 20** (0.10.0: 19): findings are part of the reading.
+  `EXTRACTION_VERSION` stays 2; readings kept from before should be made
+  again from the stored texts.
+
 ## 0.10.0 – 2026-11-20
 
 ### Breaking

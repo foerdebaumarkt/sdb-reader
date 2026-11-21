@@ -111,7 +111,9 @@ _BEFORE_2020 = {
     Section.TOXICOLOGY: "11.1 Angaben zu toxikologischen Wirkungen\nAkute Toxizität: keine Daten",
     Section.ECOLOGY: "12.1 Toxizität\n12.5 Ergebnisse der PBT- und vPvB-Beurteilung\n12.6 Andere schädliche Wirkungen",
 }
-_LABELLED = HazardStatements(hazard_codes=["H315"], signal_word="Achtung")
+_LABELLED = HazardStatements(
+    hazard_codes=["H315"], precautionary_codes=["P280"], signal_word="Achtung"
+)
 
 
 def _stating(
@@ -264,7 +266,11 @@ class TestSheetFindings:
             sections=_BEFORE_2020,
             stated=StatedClassification.CLASSIFIED,
         )
-        assert _kinds(sheet) == ["old-format"]
+        assert _kinds(sheet) == [
+            "old-format",
+            "label-without-hazard-statement",
+            "label-without-precautionary-statement",
+        ]
 
     @pytest.mark.spec("SDW-8", "SDB-75")
     def test_a_sheet_that_states_no_classification_and_no_label(self) -> None:
@@ -339,3 +345,84 @@ class TestWhatCallsForASheet:
         self, hazards: dict[str, object], stated: str | None, required: bool
     ) -> None:
         assert requires_sheet(_stating(hazards, stated)) is required
+
+
+class TestLabelOfAClassifiedProduct:
+    """What the label of a product section 2 classifies should carry and the
+    parser did not find: reported beside the reading, never added to it."""
+
+    _FULL = HazardStatements(
+        hazard_codes=["H315"], precautionary_codes=["P280"], signal_word="Achtung"
+    )
+
+    @pytest.mark.spec("SDB-169", "SDB-171")
+    def test_a_missing_hazard_statement_is_reported_and_not_added(self) -> None:
+        """An aerosol whose label prints its signal word and P statements, but not
+        the H229 its section 2.1 names."""
+        label = HazardStatements(
+            precautionary_codes=["P210", "P251", "P410", "P412"],
+            signal_word="Achtung",
+        )
+        sheet = _sheet(hazards=label, stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet) == ["label-without-hazard-statement"]
+        assert sheet.hazard_statements.hazard_codes == []
+
+    @pytest.mark.spec("SDW-42", "SDB-172")
+    def test_a_label_with_hazard_statements_only(self) -> None:
+        label = HazardStatements(hazard_codes=["H412"])
+        sheet = _sheet(hazards=label, stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet) == ["label-without-precautionary-statement"]
+
+    @pytest.mark.spec("SDW-42", "SDB-170")
+    def test_no_label_at_all(self) -> None:
+        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet, [Message("no-label-section")]) == ["label-not-found"]
+
+    @pytest.mark.spec("SDB-170")
+    def test_label_elements_without_their_heading_count_as_a_label(self) -> None:
+        label = HazardStatements(precautionary_codes=["P102"])
+        sheet = _sheet(hazards=label, stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet, [Message("no-label-section")]) == [
+            "label-without-hazard-statement"
+        ]
+
+    @pytest.mark.spec("SDB-171", "SDB-172")
+    def test_a_label_found_empty_names_both(self) -> None:
+        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet) == [
+            "label-without-hazard-statement",
+            "label-without-precautionary-statement",
+        ]
+
+    @pytest.mark.spec("SDB-170", "SDB-171", "SDB-172")
+    @pytest.mark.parametrize(
+        "stated",
+        [
+            StatedClassification.NOT_CLASSIFIED,
+            StatedClassification.NOT_STATED,
+            StatedClassification.OLD_SYSTEM,
+        ],
+    )
+    def test_only_a_product_classified_under_clp(
+        self, stated: StatedClassification
+    ) -> None:
+        sheet = _sheet(hazards=HazardStatements(), stated=stated)
+        found = _kinds(sheet, [Message("no-label-section")])
+        assert not {code for code in found if code.startswith("label-")}
+
+    @pytest.mark.spec("SDB-170")
+    def test_not_where_section_2_classifies_by_the_old_law(self) -> None:
+        sheet = _sheet(hazards=HazardStatements(), stated=StatedClassification.CLASSIFIED)
+        warnings = [Message("classified-before-clp", {"basis": "R36/38"})]
+        assert "label-not-found" not in _kinds(sheet, warnings)
+        assert "label-without-hazard-statement" not in _kinds(sheet, warnings)
+
+    @pytest.mark.spec("SDB-170")
+    def test_not_for_an_article(self) -> None:
+        sheet = _stating({}, "classified", article=True)
+        found = _kinds(sheet, [Message("no-label-section")])
+        assert not {code for code in found if code.startswith("label-")}
+
+    def test_a_complete_label_has_none(self) -> None:
+        sheet = _sheet(hazards=self._FULL, stated=StatedClassification.CLASSIFIED)
+        assert _kinds(sheet) == []

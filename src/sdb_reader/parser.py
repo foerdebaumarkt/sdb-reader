@@ -50,6 +50,8 @@ LABEL_UNDETERMINED = "label-undetermined"
 LABEL_LINE_UNASSIGNED = "label-line-unassigned"
 EUH_WORDING_OUTSIDE_LABEL = "euh-wording-outside-label"
 CLASSIFIED_BEFORE_CLP = "classified-before-clp"
+# No block "2.2 Kennzeichnungselemente" was found in section 2 (SDB-4).
+NO_LABEL_SECTION = "no-label-section"
 STATEMENT_TOO_LONG = "statement-too-long"
 # How many lines a statement of the hint texts spans at most (SDB-168): the
 # longest a sheet of the measured collection prints has 37.
@@ -1979,7 +1981,7 @@ def _parse_hazard_statements(
     ]
     labels = [label for _, label in labelled]
     if not labels and full_text:
-        warnings.append(Message("no-label-section"))
+        warnings.append(Message(NO_LABEL_SECTION))
     if len(labels) > 1:
         warnings.append(Message("several-sheets", {"count": len(labels)}))
 
