@@ -23,7 +23,7 @@ The example sheet prints "Achtung" and no pictogram. Its H315 calls for
 | Field | What it holds |
 | --- | --- |
 | `signal_word` | `Gefahr`, `Achtung` or None: the word Annex I gives the H codes and the EUH codes of the new hazard classes (EUH380, EUH381, EUH430, EUH431, EUH440, EUH441, EUH450, EUH451); `Gefahr` wins over `Achtung` |
-| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 (H315 beside H318 gives GHS05 only) |
+| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 (H315 beside H318 gives GHS05 only); no GHS05 where H290 is its only reason |
 | `signal_word_missing` | the codes call for a signal word, and the reading has none |
 | `signal_word_differs` | the reading has a signal word, and it is not the one the codes call for |
 | `pictograms_missing` | called for, and not in the reading |
@@ -31,7 +31,11 @@ The example sheet prints "Achtung" and no pictogram. Its H315 calls for
 | `pictograms_left_out` | in the reading and called for, but Article 26 leaves them out beside another pictogram the reading has |
 
 The signal word follows from the codes and never from the pictograms. A
-label without codes expects neither.
+label without codes expects neither. GHS05 is not expected where H290 is
+its only reason (no H314, no H318), because Annex I 1.3.6 CLP makes it
+optional on a package for consumers; a label that prints it is right as
+well. GHS04 for H280 stays expected, though the findings do not call it
+missing (below).
 
 ## Before you call something missing
 

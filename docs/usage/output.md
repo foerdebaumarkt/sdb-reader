@@ -153,7 +153,7 @@ fill a gap with it, or check a label by it.
 | Field | Meaning |
 | --- | --- |
 | `signal_word` | `Gefahr`, `Achtung` or nothing: the word the H and EUH codes call for; never from the pictograms |
-| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 CLP |
+| `pictograms` | the pictograms the H codes call for, with the precedence of Article 26 CLP; no GHS05 where H290 is its only reason (Annex I 1.3.6 CLP) |
 | `signal_word_missing` | the codes call for a signal word, and the label as read has none |
 | `signal_word_differs` | the label as read has a signal word other than the one the codes call for |
 | `pictograms_missing` | called for, and not in the label as read |

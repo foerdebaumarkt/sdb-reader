@@ -13,6 +13,7 @@ import pymupdf
 import pytest
 
 from sdb_reader import (
+    HazardStatements,
     LabelImages,
     LabelImagesStatus,
     clp_expected,
@@ -431,3 +432,73 @@ def test_a_missing_gas_cylinder_is_no_finding(tmp_path: Path) -> None:
 
     assert clp_expected(parsed.sheet.hazard_statements).pictograms_missing == ["GHS04"]
     assert _findings(parsed) == []
+
+
+def _corrosive_sheet(path: Path, codes: list[str], shown: list[str]) -> Path:
+    classes = {
+        "H290": "Met. Corr. 1, H290",
+        "H318": "Eye Dam. 1, H318",
+        "H319": "Eye Irrit. 2, H319",
+    }
+    head = [*_HEAD[:6], "; ".join(classes[c] for c in codes), *_HEAD[7:]]
+    tail = [
+        "Signalwort: Achtung",
+        *(f"{c} Gefahrenhinweis." for c in codes),
+        "P234 Nur in Originalverpackung aufbewahren.",
+        *_TAIL[-3:],
+    ]
+    return _sheet(path, shown, head=head, tail=tail)
+
+
+@pytest.mark.spec("BIB-25")
+@pytest.mark.parametrize(
+    ("codes", "pictograms"),
+    [
+        (["H290"], []),
+        (["H290", "H319"], ["GHS07"]),
+        (["H290", "H314"], ["GHS05"]),
+        (["H290", "H318"], ["GHS05"]),
+    ],
+)
+def test_h290_alone_calls_for_no_ghs05(codes: list[str], pictograms: list[str]) -> None:
+    """Annex I 1.3.6 CLP makes GHS05 optional on a package for consumers where
+    the product is corrosive to metals only."""
+    assert clp_expected(HazardStatements(hazard_codes=codes)).pictograms == pictograms
+
+
+@pytest.mark.spec("BIB-25", "SDB-181")
+def test_a_label_without_ghs05_for_h290_alone_gets_no_finding(tmp_path: Path) -> None:
+    parsed = _parsed(
+        _corrosive_sheet(tmp_path / "sheet.pdf", ["H290", "H319"], ["GHS07"])
+    )
+
+    assert clp_expected(parsed.sheet.hazard_statements).pictograms_missing == []
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("BIB-25", "SDB-181")
+def test_ghs05_printed_for_h290_alone_gets_no_finding(tmp_path: Path) -> None:
+    parsed = _parsed(_corrosive_sheet(tmp_path / "sheet.pdf", ["H290"], ["GHS05"]))
+
+    expected = clp_expected(parsed.sheet.hazard_statements)
+    assert expected.pictograms == []
+    assert expected.pictograms_not_expected == []
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("BIB-25", "SDB-181")
+def test_ghs05_printed_for_h290_takes_the_place_of_ghs07(tmp_path: Path) -> None:
+    """Printed, GHS05 applies: GHS07 for irritation is not missing beside it."""
+    parsed = _parsed(
+        _corrosive_sheet(tmp_path / "sheet.pdf", ["H290", "H319"], ["GHS05"])
+    )
+
+    assert clp_expected(parsed.sheet.hazard_statements).pictograms_missing == []
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("SDB-181")
+def test_a_missing_ghs05_beside_h318_is_a_finding(tmp_path: Path) -> None:
+    parsed = _parsed(_corrosive_sheet(tmp_path / "sheet.pdf", ["H290", "H318"], []))
+
+    assert _findings(parsed) == [("pictogram-not-found", {"pictogram": "GHS05"})]

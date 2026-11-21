@@ -66,7 +66,8 @@ Versions follow the tags of this repository.
 - None of these findings says something was not found where the label
   states it has none; `pictogram-not-found` comes only where the drawing was
   read, and never for GHS04, which Article 33 CLP lets the transport label
-  stand in for. No finding for an article, a classification under the old
+  stand in for. GHS05 is not expected where H290 is its only reason, which
+  Annex I 1.3.6 makes optional on a package for consumers. No finding for an article, a classification under the old
   law or a label under the directives before CLP on a sheet dated before
   1 June 2015.
 - **The oldest sheet of a file.** For a file with several sheets, `read`

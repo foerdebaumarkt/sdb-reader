@@ -48,8 +48,11 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
     """What the CLP Regulation expects of *label*, from its codes (BIB-25).
 
     The signal word follows from the H and EUH codes, never from the
-    pictograms; the pictograms from the H codes. A label without codes
-    expects neither.
+    pictograms; the pictograms from the H codes. GHS05 is not expected where
+    H290 is its only reason (no H314, no H318): Annex I 1.3.6 CLP makes it
+    optional on a package for consumers. A label that prints it then is
+    right as well, and beside it GHS07 for irritation gives way as Article 26
+    says. A label without codes expects neither.
 
     >>> from sdb_reader import HazardStatements
     >>> expected = clp_expected(HazardStatements(
@@ -62,24 +65,42 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
     ...     hazard_codes=["H315", "H318"], pictograms=["GHS05", "GHS07"])
     ... ).pictograms_left_out
     ['GHS07']
+    >>> clp_expected(HazardStatements(hazard_codes=["H290", "H319"])).pictograms
+    ['GHS07']
     """
     hazard_codes = with_effects_joined(set(label.hazard_codes))
     codes = hazard_codes | set(label.supplemental_codes)
     signal_word = get_signal_word(codes) if codes else None
-    expected = pictograms_for(hazard_codes) if hazard_codes else set()
+    printed = set(label.pictograms)
+    expected = _expected_pictograms(hazard_codes)
+    # A GHS05 the label prints for H290 alone applies all the same: GHS07 for
+    # irritation then gives way to it (Article 26).
+    called_for = suppress_pictograms(expected | (printed & {"GHS05"}), hazard_codes)
     allowed = (
         pictograms_for(hazard_codes, apply_precedence=False) if hazard_codes else set()
     )
-    printed = set(label.pictograms)
     return ClpExpected(
         signal_word=signal_word,
         pictograms=sorted(expected),
         signal_word_missing=signal_word is not None and label.signal_word is None,
         signal_word_differs=label.signal_word is not None
         and label.signal_word != signal_word,
-        pictograms_missing=sorted(expected - printed),
+        pictograms_missing=sorted(called_for - printed),
         pictograms_not_expected=sorted(printed - allowed),
         pictograms_left_out=sorted(
             (printed & allowed) - suppress_pictograms(printed, hazard_codes)
         ),
     )
+
+
+def _expected_pictograms(hazard_codes: set[str]) -> set[str]:
+    """The pictograms *hazard_codes* call for, with Article 26; without GHS05
+    where H290 is its only reason (Annex I 1.3.6 CLP, BIB-25)."""
+    if not hazard_codes:
+        return set()
+    without_h290 = hazard_codes - {"H290"}
+    if "H290" in hazard_codes and "GHS05" not in pictograms_for(
+        without_h290, apply_precedence=False
+    ):
+        return pictograms_for(without_h290) if without_h290 else set()
+    return pictograms_for(hazard_codes)
