@@ -213,8 +213,7 @@ class TestSheetFindings:
     @pytest.mark.spec("SDW-9", "SDB-73")
     def test_a_sheet_classified_under_the_old_system(self) -> None:
         warnings = [Message("classified-before-clp", {"basis": "Xi - Reizend"})]
-        assert _kinds(_sheet(revised=date(2012, 7, 24)), warnings) == [
-            "predates-annex-ii",
+        assert _kinds(_sheet(revised=date(2023, 7, 24)), warnings) == [
             "old-classification",
         ]
 
@@ -266,11 +265,8 @@ class TestSheetFindings:
             sections=_BEFORE_2020,
             stated=StatedClassification.CLASSIFIED,
         )
-        assert _kinds(sheet) == [
-            "old-format",
-            "label-without-hazard-statement",
-            "label-without-precautionary-statement",
-        ]
+        # Due for renewal: the findings on its age only (SDW-49).
+        assert _kinds(sheet) == ["old-format"]
 
     @pytest.mark.spec("SDW-8", "SDB-75")
     def test_a_sheet_that_states_no_classification_and_no_label(self) -> None:
@@ -434,39 +430,37 @@ class TestLabelOfAClassifiedProduct:
         assert _kinds(sheet) == []
 
 
-class TestLabelUnderTheOldDirectives:
-    """A mixture could be labelled under the directives before CLP until
-    1 June 2015 (SDB-170): such a label gets none of the label findings."""
+class TestSheetDueForRenewal:
+    """A sheet revised before 2021, or since then in the layout from before
+    2020/878, gets the findings on its age and no other (SDW-49)."""
 
-    @pytest.mark.spec("SDB-170")
-    @pytest.mark.parametrize("revised", [date(2013, 9, 2), date(2015, 5, 31)])
-    def test_before_june_2015_no_finding(self, revised: date) -> None:
+    @pytest.mark.spec("SDW-49")
+    @pytest.mark.parametrize("revised", [date(2013, 9, 2), date(2020, 12, 31)])
+    def test_before_2021_only_the_age(self, revised: date) -> None:
         sheet = _sheet(
             revised=revised,
             hazards=HazardStatements(),
             stated=StatedClassification.CLASSIFIED,
         )
-        found = _kinds(sheet, [Message("label-before-clp")])
-        assert not {code for code in found if code.startswith("label-")}
+        assert _kinds(sheet, [Message("label-before-clp")]) == ["predates-annex-ii"]
 
-    @pytest.mark.spec("SDB-170")
-    def test_from_june_2015_the_findings_stay(self) -> None:
+    @pytest.mark.spec("SDW-49")
+    def test_in_the_old_layout_only_the_age(self) -> None:
         sheet = _sheet(
-            revised=date(2015, 6, 1),
+            revised=date(2023, 3, 1),
             hazards=HazardStatements(),
+            sections=_BEFORE_2020,
             stated=StatedClassification.CLASSIFIED,
         )
-        assert "label-without-hazard-statement" in _kinds(
-            sheet, [Message("label-before-clp")]
-        )
+        assert _kinds(sheet) == ["old-format"]
 
-    @pytest.mark.spec("SDB-170")
+    @pytest.mark.spec("SDW-49", "SDB-170")
     def test_without_a_date_the_findings_stay(self) -> None:
         sheet = _sheet(
             revised=None,
             hazards=HazardStatements(),
             stated=StatedClassification.CLASSIFIED,
         )
-        assert "label-without-hazard-statement" in _kinds(
-            sheet, [Message("label-before-clp")]
-        )
+        found = _kinds(sheet, [Message("label-before-clp")])
+        assert "undated" in found
+        assert "label-without-hazard-statement" in found

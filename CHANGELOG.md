@@ -7,6 +7,14 @@ Versions follow the tags of this repository.
 
 ### Breaking
 
+- **A sheet that has to be renewed anyway gets only the findings on its
+  age.** Where a sheet was revised before 2021 (`predates-annex-ii`) or
+  since then in the layout from before Regulation (EU) 2020/878
+  (`old-format`), its findings are those on its age and those on a file of
+  several sheets, no other (SDW-49). An undated sheet keeps all its
+  findings. With it the exception for a label under the directives before
+  CLP on a sheet dated before 1 June 2015 is gone: such a sheet gets no label
+  finding anyway. The parser warning `label-before-clp` stays.
 - **A date in the future is no date.** With the day of the run (`today`,
   which `read` passes), a revision or issue date after it stands in the
   record as `null`, for the file and for each of its sheets; before, it
@@ -69,9 +77,8 @@ Versions follow the tags of this repository.
   (SDB-183): GHS04 is never expected, which Article 33 CLP lets the
   transport label of a gas cylinder replace, and GHS05 not where H290 is
   its only reason, which Annex I 1.3.6 makes optional on a package for
-  consumers; printed, neither is a finding. No finding for an article, a
-  classification under the old law or a label under the directives before CLP on a sheet dated before
-  1 June 2015.
+  consumers; printed, neither is a finding. No finding for an article or a
+  classification under the old law.
 - **The oldest sheet of a file.** For a file with several sheets, `read`
   names under `oldest_sheet` the sheet with the oldest date (its number,
   the date, and whether it is the revision or the issue date), and `show`
