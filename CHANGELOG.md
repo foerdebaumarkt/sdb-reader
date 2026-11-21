@@ -13,8 +13,9 @@ Versions follow the tags of this repository.
   (SDB-176, SDB-177). The parser warning `signal-word-derived` is gone. A
   caller that showed `signal_word` shows what the sheet prints; one that
   needs the word the codes call for reads `expected_signal_word`.
-- **`PARSER_VERSION` is 21** (0.11.1: 20). `EXTRACTION_VERSION` stays 2;
-  readings kept from before should be made again from the stored texts.
+- **`PARSER_VERSION` is 21** (0.11.1: 20); a record of a file with several
+  sheets also carries new keys. `EXTRACTION_VERSION` stays 2; readings kept
+  from before should be made again from the stored texts.
 
 ### Added
 
@@ -25,6 +26,24 @@ Versions follow the tags of this repository.
   call for a signal word and none was found printed. Not for an article, a
   classification under the old law or a label under the directives before
   CLP on a sheet dated before 1 June 2015 (SDB-178).
+- **The oldest sheet of a file.** For a file with several sheets, `read`
+  names under `oldest_sheet` the sheet with the oldest date (its number,
+  the date, and whether it is the revision or the issue date), and `show`
+  names it under "Die Datei als Ganzes". The file's reading still carries the
+  newest date the file names, so a file that holds a hardener from 2014
+  beside a new resin was not reported as old; which sheet's date counts is
+  for the user to decide.
+- **Findings on each sheet's age.** Each entry of `parts` carries
+  `findings`: `revised-in-future`, `undated`, `predates-annex-ii` and
+  `old-format`, judged on that sheet's own dates. `show` lists them with the
+  sheet's notes. The file's findings stay as they were. Both keys are
+  optional in the schema, so records written before stay valid.
+
+### Changed
+
+- **The proposed rule to date a file by its oldest sheet is withdrawn.**
+  The file's reading keeps the newest date; the oldest sheet stands beside
+  it instead.
 
 ### Fixed
 

@@ -149,6 +149,9 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "show-line-cover-page-display": ("term",),
     "show-sheet-of": ("number", "count"),
     "show-whole-file": (),
+    "show-oldest-revised": ("number", "date"),
+    "show-oldest-issued": ("number", "date"),
+    "show-oldest-none": (),
     "show-label-product": (),
     "show-label-supplier": (),
     "show-label-contact": (),
@@ -198,6 +201,8 @@ MESSAGE_DATES: Mapping[str, tuple[str, ...]] = {
     "revised-in-future": ("revised", "today"),
     "old-format": ("revised",),
     "show-date": ("date",),
+    "show-oldest-revised": ("date",),
+    "show-oldest-issued": ("date",),
 }
 
 DEFAULT_LANGUAGE = "de"

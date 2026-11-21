@@ -80,17 +80,25 @@ set.pdf
     Produkt        Musterkleber Komponente B
     …
 
+    Hinweise
+      - Überarbeitet am 12.03.2014, vor dem 01.01.2021: Das Blatt kann Anhang II der REACH-Verordnung in der Fassung der Verordnung (EU) 2020/878 nicht erfüllen.
+
   Die Datei als Ganzes
     Braucht ein Sicherheitsdatenblatt: ja
+    Ältestes Blatt: Blatt 2, überarbeitet am 12.03.2014
 
     Hinweise
       - Die Datei enthält 2 Sicherheitsdatenblätter; ihre Kennzeichnungen sind zusammengeführt.
 ```
 
 Each sheet is shown on its own, in the order of the file, with the notes
-that belong to it. The last block is about the file: whether the product
-needs a sheet when all sheets are taken together, and the notes that compare
-the sheets or concern the file. A cover page in front of the sheets is named
+that belong to it, among them the findings on its own age. The last block is
+about the file: whether the product needs a sheet when all sheets are taken
+together, which sheet carries the oldest date (revised, else issued), and the
+notes that compare the sheets or concern the file. A note that a sheet
+carries is not repeated for the file. The file's own date is the newest it
+names, so a file that holds an old sheet beside a new one is old only by
+that sheet. A cover page in front of the sheets is named
 and not read; if it names a display, the word is shown.
 
 ## A file that is no sheet

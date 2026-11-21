@@ -161,6 +161,9 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `show-line-cover-page-display` | `term` | with a cover page (display: '{term}') |
 | `show-sheet-of` | `number`, `count` | Sheet {number} of {count} |
 | `show-whole-file` | – | The file as a whole |
+| `show-oldest-revised` | `number`, `date` | Oldest sheet: sheet {number}, revised {date} |
+| `show-oldest-issued` | `number`, `date` | Oldest sheet: sheet {number}, issued {date} |
+| `show-oldest-none` | – | Oldest sheet: none carries a date |
 | `show-label-product` | – | Product |
 | `show-label-supplier` | – | Supplier |
 | `show-label-contact` | – | Contact |

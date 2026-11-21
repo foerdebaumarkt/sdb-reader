@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from datetime import date
 from typing import Any
 
-from .compliance import requires_sheet, sheet_findings
+from .compliance import age_findings, oldest_sheet, requires_sheet, sheet_findings
 from .embedded import EmbeddedData, differences
 from .extraction import ExtractionResult
 from .messages import Catalog, Message, shipped_catalog
@@ -294,9 +294,23 @@ def reading_to_dict(
                         "sheet": _sheet_fields(part.sheet, _text_hash(part.text)),
                         "statements": _statements(part.sheet),
                         "warnings": _shown(part.warnings, catalog),
+                        # Each sheet's age on its own dates (SDW-46).
+                        "findings": _shown(age_findings(part.sheet, today), catalog),
                     }
                     for part in parts
                 ]
+                # The sheet with the oldest date, for whoever judges the
+                # file by it (SDW-45); the file's own date stays the newest.
+                oldest = oldest_sheet(parts, today)
+                record["oldest_sheet"] = (
+                    None
+                    if oldest is None
+                    else {
+                        "sheet": oldest[0],
+                        "date": oldest[1].isoformat(),
+                        "dated_by": oldest[2],
+                    }
+                )
             record["findings"] = _shown(
                 sheet_findings(
                     sheet, reading.parser_result.warnings, today=today, parts=parts

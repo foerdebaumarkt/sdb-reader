@@ -243,6 +243,8 @@ Für eine solche Datei gibt der Datensatz zwei Lesungen nebeneinander aus:
   `several-sheets` unter `parser.warnings` sagt das.
 - `parts` nennt jedes Blatt für sich gelesen, in der Reihenfolge der Datei,
   als wäre es eine eigene Datei.
+- `oldest_sheet` nennt das Blatt mit dem ältesten Datum; siehe
+  [Das älteste Blatt](#das-älteste-blatt).
 
 ```json
 {
@@ -252,14 +254,17 @@ Für eine solche Datei gibt der Datensatz zwei Lesungen nebeneinander aus:
     {
       "sheet": {"product_identifier": "Harz", "revision_date": "2022-07-20", "hazard_statements": {"hazard_codes": ["H315"], "signal_word": "Achtung"}},
       "statements": [{"code": "H315", "sheet": "Verursacht Hautreizungen.", "regulation": "Verursacht Hautreizungen."}],
-      "warnings": []
+      "warnings": [],
+      "findings": []
     },
     {
       "sheet": {"product_identifier": "Härter", "revision_date": "2021-05-03", "hazard_statements": {"hazard_codes": ["H318"], "signal_word": "Gefahr"}},
       "statements": [{"code": "H318", "sheet": "Verursacht schwere Augenschäden.", "regulation": "Verursacht schwere Augenschäden."}],
-      "warnings": []
+      "warnings": [],
+      "findings": []
     }
-  ]
+  ],
+  "oldest_sheet": {"sheet": 2, "date": "2021-05-03", "dated_by": "revision"}
 }
 ```
 
@@ -278,13 +283,35 @@ kann es nicht wissen:
 Jeder Eintrag enthält `sheet` (mit dem Fingerabdruck `content_hash` des
 Texts dieses Blatts), `statements` und `warnings`, was beim Lesen dieses
 Blatts auffiel, und nennt seine Länder (`countries`, leer, wo keines erkannt
-ist) und sein Produkt (`product_identifier`). Befunde je Blatt gibt es
-nicht. Ein späteres Blatt beginnt am Titel „Sicherheitsdatenblatt“ über
+ist) und sein Produkt (`product_identifier`). Unter `findings` stehen die
+Befunde zum Alter dieses Blatts, beurteilt an seinen eigenen Daten wie bei
+einer Datei mit diesem einen Blatt: `revised-in-future`, `undated`,
+`predates-annex-ii` und `old-format`; die Liste steht auch leer da. Andere
+Befunde je Blatt gibt es nicht: Ein Befund gilt dem Produkt, und ob ein
+Blatt für sich das Produkt ist, weiß das Programm nicht. Ein späteres Blatt beginnt am Titel „Sicherheitsdatenblatt“ über
 seinem Abschnitt 1, damit Datum und Version im Kopf seiner ersten Seite für
 es zählen. Eine Änderungsliste, die die Abschnitte nennt, und dasselbe Blatt
 noch einmal in einer anderen Sprache sind keine weiteren Blätter.
 [Zwei Läufe vergleichen](laeufe-vergleichen.md) vergleicht die Lesung der
 Datei, nicht `parts`.
+
+### Das älteste Blatt
+
+Die Lesung der Datei trägt das neueste Datum, das die Datei nennt, und ihre
+Befunde zum Alter richten sich danach. Eine Datei, in der neben einem neuen
+Harz ein Härter von 2014 steht, gilt deshalb nicht als alt. `oldest_sheet`
+nennt das Blatt, nach dem Sie eine solche Datei beurteilen würden:
+
+| Schlüssel | Bedeutung |
+| --- | --- |
+| `sheet` | die Nummer des Blatts in der Reihenfolge der Datei, ab 1 |
+| `date` | sein Datum: das Überarbeitungsdatum, sonst das Ausgabedatum; ein Datum nach dem Tag des Laufs zählt nicht |
+| `dated_by` | `revision` oder `issue`: welches der beiden Daten es ist |
+
+Tragen mehrere Blätter dasselbe älteste Datum, zählt das erste; trägt keines
+ein Datum, das zählt, steht dort `null`. Eine Datei mit einem Blatt hat kein
+`oldest_sheet`. Wessen Datum für Ihr Produkt zählt, entscheiden Sie; die
+Lesung der Datei und ihre Befunde bleiben, wie sie sind.
 
 ### Was die Blätter übereinander sagen
 
