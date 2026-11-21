@@ -1,4 +1,4 @@
-"""The signal word as printed, and the one the codes call for (SDB-176, SDB-177).
+"""The signal word as printed, and the one the codes call for (SDB-176 to SDB-178).
 
 Every text here is invented.
 """
@@ -70,7 +70,7 @@ def test_a_silent_label_has_no_signal_word() -> None:
     assert label.expected_signal_word == "Gefahr"
 
 
-@pytest.mark.spec("SDB-177")
+@pytest.mark.spec("SDB-178")
 @pytest.mark.spec("SDW-44")
 def test_the_signal_word_the_codes_call_for_is_a_finding() -> None:
     assert _found(_parsed("")) == [{"expected": "Gefahr"}]
@@ -78,6 +78,7 @@ def test_the_signal_word_the_codes_call_for_is_a_finding() -> None:
 
 @pytest.mark.spec("SDB-176")
 @pytest.mark.spec("SDB-177")
+@pytest.mark.spec("SDB-178")
 def test_a_printed_signal_word_gives_no_finding() -> None:
     parsed = _parsed("Signalwort: Gefahr\n")
     assert parsed.sheet.hazard_statements.signal_word == "Gefahr"
@@ -110,6 +111,7 @@ def test_a_label_that_says_it_has_none_expects_none() -> None:
 
 
 @pytest.mark.spec("SDB-177")
+@pytest.mark.spec("SDB-178")
 def test_an_article_gets_no_finding() -> None:
     parsed = _parsed(
         "",

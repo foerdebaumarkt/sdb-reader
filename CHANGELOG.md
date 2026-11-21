@@ -24,7 +24,7 @@ Versions follow the tags of this repository.
 - **The finding `signal-word-not-found`** with the expected word: the codes
   call for a signal word and none was found printed. Not for an article, a
   classification under the old law or a label under the directives before
-  CLP on a sheet dated before 1 June 2015 (SDB-177).
+  CLP on a sheet dated before 1 June 2015 (SDB-178).
 
 ### Fixed
 
