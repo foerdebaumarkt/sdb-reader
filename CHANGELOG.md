@@ -112,6 +112,13 @@ Versions follow the tags of this repository.
 
 ### Fixed
 
+- **Statement texts read through a label's column.** A heading of the
+  label set between a statement's lines ("EUH Sätze", "Sicherheitshinweise")
+  no longer cuts the statement short, a cell of the classification table
+  read into a statement is dropped where the label prints the statement
+  whole, and a misprinted code mark left alone ("EU208 -") goes (SDB-184 to
+  SDB-186). On a set of about 13,000 sheets 8 readings change, all to the
+  sheet's wording, and 3 `wording-deviates` findings go.
 - **A date in the future no longer leaves a file of several sheets
   undated.** Each of its dates is the newest one of its sheets names that is
   not in the future (SDB-182).

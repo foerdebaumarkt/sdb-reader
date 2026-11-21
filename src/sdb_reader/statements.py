@@ -1193,8 +1193,46 @@ def deviates_from_regulation(code: str, wording: str) -> bool:
     official = _comparable(canonical).split()
     if printed[:_OPENING_WORDS] != official[:_OPENING_WORDS]:
         return False
+    return not holds_official_form(code, wording)
+
+
+def holds_official_form(code: str, wording: str) -> bool:
+    """Whether *wording* begins with one of *code*'s official forms (SDW-50).
+
+    False for a code the regulation gives no single wording.
+
+    >>> holds_official_form("H315", "Verursacht Hautreizungen. Berechnungsmethode.")
+    True
+    >>> holds_official_form("H315", "Verursacht | Methode Hautreizungen.")
+    False
+    """
+    code = re.sub(r"\s*\+\s*", "+", code.strip())
+    if canonical_text(code) is None:
+        return False
     text = re.sub(r"^[\W_]+", "", _normalised(re.sub(r"\s+", " ", wording)))
-    return not any(form.match(text) for form in _official_forms(code))
+    return any(form.match(text) for form in _official_forms(code))
+
+
+def interleaves_wording(code: str, wording: str) -> bool:
+    """Whether *wording* holds the regulation's words for *code* in their
+    order, with other text between them, and no official form (SDB-185).
+
+    That is a cell of the table beside the statement read into it: "Kann
+    allergische Hautreaktionen | Berechnungsmethode. (Skin Sens. 1)
+    verursachen." for H317.
+
+    >>> interleaves_wording(
+    ...     "H317", "Kann allergische Hautreaktionen | Berechnung. (Skin Sens. 1) verursachen."
+    ... )
+    True
+    >>> interleaves_wording("H317", "Kann allergische Reaktionen verursachen.")
+    False
+    """
+    canonical = canonical_text(re.sub(r"\s*\+\s*", "+", code.strip()))
+    if canonical is None or holds_official_form(code, wording):
+        return False
+    printed = iter(_comparable(wording).split())
+    return all(word in printed for word in _comparable(canonical).split())
 
 
 # Precautionary statements printed as wording only, in the forms Annex IV of

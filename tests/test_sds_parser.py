@@ -4971,3 +4971,110 @@ def test_a_heading_may_carry_the_mark_of_a_changed_section(mark: str) -> None:
 
     assert sections[Section.HAZARDS].startswith("Einstufung gemäß 67/548/EWG")
     assert old_classification(sections[Section.HAZARDS]) == "R-Sätze 10"
+
+
+@pytest.mark.spec("SDB-184")
+class TestAHeadingSetIntoAStatement:
+    """The label's column heading between a statement's lines."""
+
+    def test_a_heading_inside_the_wording_is_passed_over(self) -> None:
+        _, _, supplemental = _statement_texts(
+            "EUH401 - Zur Vermeidung von Risiken für Mensch und Umwelt die "
+            "Gebrauchsanleitung\nEUH Sätze\neinhalten.\n"
+            "EUH208 - Enthält Musterol. Kann allergische Reaktionen hervorrufen."
+        )
+
+        assert supplemental == (
+            "EUH401 - Zur Vermeidung von Risiken für Mensch und Umwelt die "
+            "Gebrauchsanleitung einhalten.\n"
+            "EUH208 - Enthält Musterol. Kann allergische Reaktionen hervorrufen."
+        )
+
+    def test_a_precautionary_statement_too(self) -> None:
+        _, precautionary, _ = _statement_texts(
+            "P210\nVon Hitze, heißen Oberflächen, Funken, offenen Flammen und "
+            "anderen Zündquellen\nSicherheitshinweise\nfernhalten. Nicht rauchen.\n"
+            "P280\nSchutzhandschuhe tragen."
+        )
+
+        assert precautionary is not None
+        assert precautionary.startswith(
+            "P210 Von Hitze, heißen Oberflächen, Funken, offenen Flammen und "
+            "anderen Zündquellen fernhalten. Nicht rauchen.\n"
+        )
+
+    def test_a_heading_after_a_whole_statement_still_ends_it(self) -> None:
+        hazard, _, _ = _statement_texts(
+            "H315 Verursacht Hautreizungen.\nSicherheitshinweise\nWeiteres Wort."
+        )
+
+        assert hazard == "H315 Verursacht Hautreizungen."
+
+    def test_a_heading_the_next_line_does_not_finish_ends_it(self) -> None:
+        hazard, _, _ = _statement_texts(
+            "H290 Kann gegenüber Metallen\nSicherheitshinweise\nNach Gebrauch waschen."
+        )
+
+        assert hazard == "H290 Kann gegenüber Metallen"
+
+
+@pytest.mark.spec("SDB-185")
+class TestATableCellInsideAStatement:
+    def test_it_goes_beside_the_labels_whole_statement(self) -> None:
+        hazard, _, _ = _statement_texts(
+            "H317: Kann allergische Hautreaktionen | Berechnungsmethode. "
+            "(Skin Sens. 1) verursachen.\n\n"
+            "Gefahrenhinweise\nH317 Kann allergische Hautreaktionen verursachen."
+        )
+
+        assert hazard == "H317 Kann allergische Hautreaktionen verursachen."
+
+    def test_it_stays_where_the_code_has_no_whole_statement(self) -> None:
+        hazard, _, _ = _statement_texts(
+            "H317: Kann allergische Hautreaktionen | Berechnungsmethode. "
+            "(Skin Sens. 1) verursachen."
+        )
+
+        assert hazard == (
+            "H317: Kann allergische Hautreaktionen | Berechnungsmethode. "
+            "(Skin Sens. 1) verursachen."
+        )
+
+    def test_a_statement_that_lacks_a_word_stays(self) -> None:
+        """A deviation of the label is no table cell: it lacks a word."""
+        hazard, _, _ = _statement_texts(
+            "H317: Kann allergische Hautreaktionen verursachen.\n\n"
+            "Gefahrenhinweise\nH317 Kann allergische Hautreaktionen hervorrufen."
+        )
+
+        assert hazard == (
+            "H317: Kann allergische Hautreaktionen verursachen.\n"
+            "H317 Kann allergische Hautreaktionen hervorrufen."
+        )
+
+
+@pytest.mark.spec("SDB-186")
+def test_a_misprinted_code_left_alone_goes() -> None:
+    _, _, supplemental = _statement_texts(
+        "EUH401 Zur Vermeidung von Risiken für Mensch und Umwelt die "
+        "Gebrauchsanleitung einhalten.\n"
+        "EU208 - Enthält Musterol. Kann\nallergische Reaktionen hervorrufen."
+    )
+
+    assert supplemental is not None
+    assert "EU208" not in supplemental
+    assert "EUH208: Enthält Musterol. Kann allergische Reaktionen hervorrufen." in (
+        supplemental
+    )
+
+
+@pytest.mark.spec("SDB-186")
+def test_a_code_of_the_regulation_left_alone_stays() -> None:
+    _, _, supplemental = _statement_texts(
+        "EUH401 Zur Vermeidung von Risiken für Mensch und Umwelt die "
+        "Gebrauchsanleitung einhalten.\n"
+        "EUH204: Enthält Musterol. Kann\nallergische Reaktionen hervorrufen."
+    )
+
+    assert supplemental is not None
+    assert "EUH204" in supplemental

@@ -28,6 +28,8 @@ from .statements import (
     euh_statements_by_wording,
     first_word_of,
     holds_a_wording_of,
+    holds_official_form,
+    interleaves_wording,
     lettered_code,
     open_end,
     precautionary_by_variants,
@@ -2582,12 +2584,27 @@ def _in_print_order(
     return "\n".join(statements) if statements else None
 
 
+# What a line keeps of a code the sheet misprints once its sentence is taken
+# from it: "EU208 -" (SDB-186).
+_ONLY_A_MARK = re.compile(r"^[\W_]*([A-Za-z]{1,3})\s?(\d{3})[\W_]*$")
+
+
 def _without_sentence(text: str, sentence: str) -> str:
+    """*text* without *sentence*, and without a line it leaves only a mark on
+    that is no code of the regulation (SDB-186): "EU208 -" goes, "EUH204:"
+    stays."""
     words = re.escape(sentence).split(r"\ ")
-    lines = [
-        re.sub(r"[^\S\n]*" + r"\s+".join(words), "", line).rstrip()
-        for line in text.split("\n")
-    ]
+    lines = []
+    for line in text.split("\n"):
+        rest = re.sub(r"[^\S\n]*" + r"\s+".join(words), "", line).rstrip()
+        mark = _ONLY_A_MARK.match(rest)
+        if (
+            rest != line.rstrip()
+            and mark
+            and f"{mark.group(1).upper()}{mark.group(2)}" not in statement_codes()
+        ):
+            continue
+        lines.append(rest)
     return "\n".join(line for line in lines if line.strip())
 
 
@@ -3013,6 +3030,29 @@ class _StatementReader:
             and _HOLE_NAME.match(following) is not None
         )
 
+    def resumes_below(self, line: str, below: Sequence[str]) -> bool:
+        """Whether *line* is a heading of the label set into the statement,
+        which the next line finishes (SDB-184).
+
+        The statement has its code and some words, has not reached its
+        wording's end, and its last line ends without a sentence's end;
+        *line* is a heading alone, without a code; and with the first line
+        below, the statement reaches its wording's end.
+        """
+        if (
+            not self.worded
+            or self.complete
+            or _SENTENCE_END.search(self.current[-1])
+            or not _LABEL_HEADING.match(line)
+            or _ANY_STATEMENT_CODE.search(line)
+        ):
+            return False
+        following = next((b.strip() for b in below if b.strip()), "")
+        if not following or _ends_statement(following):
+            return False
+        statement = " ".join([*self.current, following])
+        return _wording_complete(statement, following, self.whole)
+
     def is_over_before(self, line: str) -> bool:
         """Whether the statement is whole and *line* does not begin it again (SDB-51)."""
         if not self.complete or self.complete != len(self.current):
@@ -3178,6 +3218,10 @@ def _extract_statement_text(
             )
         ):
             reader.pass_page_break()
+            continue
+        if reader.resumes_below(normalized, lines[index + 1 :]):
+            # "… die Gebrauchsanleitung" / "EUH Sätze" / "einhalten.": the
+            # label's column heading set into the sentence (SDB-184).
             continue
         if _ends_statement(normalized) or (
             not reader.keeps_sentences and _CONTENTS_LINE.match(normalized)
@@ -3535,7 +3579,9 @@ def _without_strays(statements: list[str]) -> list[str]:
     "H410 Sehr giftig für Wasserorganismen, mit lang-". Where the same code
     has a statement that begins as the regulation words it, one that does not
     goes, and so does one without its end that another of the code begins
-    with.
+    with (SDB-53). Where it has one that holds an official form, one that
+    holds the regulation's words with a table's cell between them goes too
+    (SDB-185).
     """
     proper: dict[str, list[str]] = {}
     parsed: list[tuple[str, str | None, str, bool]] = []
@@ -3548,10 +3594,18 @@ def _without_strays(statements: list[str]) -> list[str]:
         if code and begins:
             proper.setdefault(code, []).append(wording.casefold())
         parsed.append((statement, code, wording, begins))
+    # Codes with a statement that holds an official form (SDB-185).
+    whole = {
+        code
+        for _, code, wording, begins in parsed
+        if code and begins and holds_official_form(code, wording)
+    }
     kept: list[str] = []
     for statement, code, wording, begins in parsed:
         others = proper.get(code or "", [])
         folded = wording.casefold().rstrip("-")
+        if code in whole and interleaves_wording(code or "", wording):
+            continue
         if wording and others:
             if not begins and wording_bounds(code or "") is not None:
                 continue
