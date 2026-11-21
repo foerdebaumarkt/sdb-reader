@@ -31,6 +31,53 @@ same as a report:
 sdb-reader show sheet.pdf
 ```
 
+## Why not just give the PDF to a language model?
+
+For a single sheet you look at yourself, that works well. In a test in
+November 2026 on 30 difficult sheets, current large commercial models read the
+supplier, the date and the codes printed on the label almost without error,
+and so did the smaller models of the same providers. `sdb-reader` is for when
+you read many sheets and act on the result: decide whether a product may be
+sold, fill a shop or a database, check a supplier's sheets. Then a few things
+matter that a model does not give you:
+
+- **One rule instead of a model's judgement.** Many labels print some
+  statements only as a sentence, without the code. Asked for "the codes", one
+  model names the code of such a sentence, another leaves it out, a third
+  guesses: in the same test, an open model listed six precautionary codes for
+  a spray that its label does not print, and none on a second run with the
+  same input. `sdb-reader` applies a fixed rule and says for each code whether
+  the sheet prints it or the reader assigned it from the sentence.
+- **The same sheet, the same answer.** A model may answer differently on a
+  second run. `sdb-reader` reads a file the same way every time, so a result
+  you act on today is the result you get tomorrow.
+- **Every value can be traced.** Each part of a reading comes from a numbered,
+  tested rule. A wrong reading is a rule to fix, not a question to ask again.
+- **Thousands of sheets, no cost per page, offline.** A large commercial model
+  costs a few cents per sheet; a model on your own computer costs time and is
+  less reliable. `sdb-reader` runs on an ordinary computer and sends no sheet
+  anywhere.
+- **A fixed format with findings.** The result is JSON with a published
+  schema, with fixed codes for every warning and finding, including where a
+  sheet falls short of the CLP Regulation.
+
+**What kind of model it takes.** If you use a model anyway: current models
+from the large providers read sheets very well, their small and cheap ones
+included. Open models run on your own computer did noticeably worse in the
+same test, even on a high-end workstation with 128 GB of memory, the most that
+ordinary desktop and laptop computers offer (we tried models of about 27
+billion parameters and a larger mixture-of-experts model). They read printed
+codes reliably, but where a label prints only sentences, they leave statements
+out or guess. Open models too large for such a machine were not tested. Asking
+for a word-for-word quote of each sentence and checking it against the text
+catches most guesses, but also drops correct answers where the sheet words a
+statement differently from the regulation. (As of 2026; models change
+quickly.)
+
+`sdb-reader ask` puts a sheet to a model of your choice and keeps its answer
+beside the reading, so the two can be compared. [How it
+works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html) explains more.
+
 ## Documentation
 
 The documentation is at <https://foerdebaumarkt.github.io/sdb-reader/>, one

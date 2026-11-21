@@ -22,6 +22,41 @@ helps if you do not read it.
   sheet is issued for; sheets for Germany, Austria and Switzerland are all in
   German.
 
+## Why written rules and not a model
+
+A language model reads a safety data sheet well. It understands a sentence it
+has never seen, copes with a layout no rule foresaw, and often finds the
+supplier where a rule picks the wrong line. The reader still reads with
+written rules, for these reasons:
+
+- **The same sheet gives the same answer.** A model may answer differently on
+  a second run, even with the same input and settings. If a reading decides
+  whether a product may be sold, it has to be repeatable.
+- **It reads what is printed, by a rule you can look up.** Where a label
+  prints a statement only as a sentence, models decide differently whether and
+  which code to give, depending on the model and on how the question is put;
+  some guess codes the sheet does not print. The reader follows a fixed rule
+  and records for each code whether it is printed or assigned from the
+  sentence. Where the sheet falls short of the regulation, it says so as a
+  separate finding and corrects nothing.
+- **Every answer can be traced.** Each value comes from a numbered rule, and
+  each rule is tested. A wrong reading names the rule that erred.
+- **A change can be measured.** Every rule change is read over a large
+  collection of sheets and compared, sheet by sheet, with the reading before.
+  A change that breaks other sheets shows up before it is released.
+- **It runs anywhere, for free, offline.** No sheet leaves the machine,
+  nothing is paid per page, and nothing depends on a service or a model
+  version that may change.
+
+**Where a model helps.** A model is good at finding what the rules do not
+cover yet. `sdb-reader ask` puts a sheet to a model of your choice and keeps
+its answer next to the reading; comparing the two shows the sheets where the
+reader misses something, and those cases become new rules. Where a model's
+answer is used, a check against the text helps: a value counts only if the
+model quotes it and the quote is found in the sheet, as `ask` already does for
+the revision date. The model finds the gaps; the rules close them. It never
+changes a reading.
+
 ## The path of a file
 
 ```mermaid

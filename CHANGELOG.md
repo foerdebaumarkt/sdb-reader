@@ -5,6 +5,13 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Documentation
+
+- **Why written rules and not a language model.** The README (English and
+  German) answers why one would not just give a PDF to a language model,
+  with what a test on difficult sheets showed about current models, and
+  "How it works" explains the reasons in a section of its own.
+
 ## 0.11.0 – 2026-11-21
 
 This release reads the label strictly as the sheet prints it and reports,
