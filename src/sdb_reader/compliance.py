@@ -340,7 +340,7 @@ def signal_word_not_found(
     sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
 ) -> list[Message]:
     """The signal word the label's codes call for and the parser did not find
-    printed (SDB-177), with the word under ``expected``.
+    printed (SDB-178), with the word under ``expected``.
 
     The reading keeps the printed signal word only (SDB-176); the one the codes
     call for stands in ``expected_signal_word``. Not for an article, a
