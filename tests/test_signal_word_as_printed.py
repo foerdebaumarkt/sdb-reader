@@ -15,7 +15,7 @@ from sdb_reader import (
 )
 from sdb_reader.compliance import sheet_findings
 from sdb_reader.extraction import ExtractionResult
-from sdb_reader.parser import ParsedSheet
+from sdb_reader.parser import ParsedSheet, read_signal_word
 
 _SHEET = (
     "Sicherheitsdatenblatt\n"
@@ -83,6 +83,21 @@ def test_a_printed_signal_word_gives_no_finding() -> None:
     assert parsed.sheet.hazard_statements.signal_word == "Gefahr"
     assert parsed.sheet.hazard_statements.expected_signal_word is None
     assert _found(parsed) == []
+
+
+@pytest.mark.spec("SDB-176")
+@pytest.mark.parametrize(
+    "label",
+    ["Signalwort: Achtung!\nH319 Reizt", "Signalwort\nAchtung!\nGefahrenhinweise"],
+)
+def test_a_named_signal_word_may_end_in_an_exclamation_mark(label: str) -> None:
+    assert read_signal_word(label) == ("Achtung", True)
+
+
+@pytest.mark.spec("SDB-176")
+def test_the_opening_of_euh211_is_no_signal_word() -> None:
+    label = "Signalwort\nAchtung! Beim Sprühen können gefährliche Tröpfchen entstehen."
+    assert read_signal_word(label) == (None, False)
 
 
 @pytest.mark.spec("SDB-177")
