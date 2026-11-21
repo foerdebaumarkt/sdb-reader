@@ -28,8 +28,10 @@ with any release, the parts that ask a language model included.
 - Judging a sheet: ``sheet_findings`` and the checks it is made of,
   ``classification`` and ``requires_sheet``.
 - Statements and pictograms: ``label_statements`` with the regulation's
-  wording (``canonical_text``), the statement texts tidied and rendered, the
-  pictograms that follow from H statements.
+  wording (``canonical_text``) and whether the label prints each code, the
+  statement texts tidied and rendered, ``as_printed`` for the texts without
+  the codes the label does not print, the pictograms that follow from H
+  statements.
 - Embedded data: ``read_embedded``, ``parse_embedded`` and
   ``embedded_differences``.
 - Messages: what the library notes about a file is a ``Message`` with a
@@ -90,6 +92,7 @@ from .serialise import (
 )
 from .statements import (
     StatementWording,
+    as_printed,
     canonical_text,
     label_statements,
     normalize_statements,
@@ -125,6 +128,7 @@ __all__ = [
     "StatedClassification",
     "StatementWording",
     "Verification",
+    "as_printed",
     "canonical_text",
     "classification",
     "contradicts_label",

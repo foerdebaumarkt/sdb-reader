@@ -1041,6 +1041,50 @@ class StatementWording:
     sheet: str | None
     # None where the regulation gives the code no single wording.
     regulation: str | None
+    # PRINTED where the label prints the code, FROM_WORDING where it prints
+    # only the sentence and the parser assigned the code (SDB-174).
+    code_source: str = "printed"
+
+
+PRINTED = "printed"
+FROM_WORDING = "from_wording"
+
+
+def _assigned(code: str, from_wording: Collection[str]) -> bool:
+    """Whether every code of *code* ("P305+P351+P338" counts as its parts)
+    is one the parser assigned to a sentence (SDB-174)."""
+    return all(part in from_wording for part in code.split("+"))
+
+
+def as_printed(text: str | None, codes_from_wording: Collection[str]) -> str | None:
+    r"""*text* with the codes the label does not print taken off its lines (SDB-174).
+
+    A line whose leading code -- every part of a combination -- the parser
+    assigned to the sheet's sentence keeps the sentence and loses the code;
+    every other line stays as it is.
+
+    >>> as_printed(
+    ...     "P280: Schutzhandschuhe tragen.\nP501 Inhalt/Behälter … entsorgen",
+    ...     ["P501"],
+    ... )
+    'P280: Schutzhandschuhe tragen.\nInhalt/Behälter … entsorgen'
+    >>> as_printed("EUH208: Enthält Musterol. Kann allergische Reaktionen "
+    ...            "hervorrufen.", ["EUH208"])
+    'Enthält Musterol. Kann allergische Reaktionen hervorrufen.'
+    >>> as_printed("P305+P351+P338: BEI KONTAKT MIT DEN AUGEN: …", ["P338"])
+    'P305+P351+P338: BEI KONTAKT MIT DEN AUGEN: …'
+    """
+    if not text or not codes_from_wording:
+        return text
+    lines = []
+    for line in text.split("\n"):
+        statement = STATEMENT_LINE.match(line)
+        if statement is not None and statement.group(4).strip():
+            code = re.sub(r"\s*\+\s*", "+", statement.group(2))
+            if _assigned(code.upper(), codes_from_wording):
+                line = statement.group(1) + statement.group(4).strip()
+        lines.append(line)
+    return "\n".join(lines)
 
 
 # Codes standing first in a wording: the rest of a row of codes joined by
@@ -1112,8 +1156,14 @@ def label_statements(hazards: HazardStatements) -> list[StatementWording]:
 
     for code in sorted(on_label - {part for c in wordings for part in c.split("+")}):
         add(code, None)
+    assigned = set(hazards.codes_from_wording)
     return [
-        StatementWording(code, wording, canonical_text(code))
+        StatementWording(
+            code,
+            wording,
+            canonical_text(code),
+            FROM_WORDING if assigned and _assigned(code, assigned) else PRINTED,
+        )
         for code, printed in wordings.items()
         for wording in (printed or (None,))
     ]

@@ -22,6 +22,23 @@ assert statements[0].regulation == canonical_text("H315")
 with a gap for the supplier to fill, or a list to choose from. `sheet` is
 None for a code the sheet prints without a wording.
 
+`code_source` says whether the label prints the code (`"printed"`) or only
+the sentence, to which the parser assigned the code (`"from_wording"`); a
+combined code is assigned when each of its parts is. The assigned codes also
+stand in `HazardStatements.codes_from_wording`; the code lists hold both kinds.
+
+`as_printed(text, codes_from_wording)` takes the assigned codes off the lines
+of a statement text, so that it reads as the sheet prints it:
+
+```python
+from sdb_reader import as_printed
+
+text = "P280: Schutzhandschuhe tragen.\nP501 Inhalt/Behälter … entsorgen"
+assert as_printed(text, ["P501"]) == (
+    "P280: Schutzhandschuhe tragen.\nInhalt/Behälter … entsorgen"
+)
+```
+
 `canonical_text(code)` gives the regulation's German wording for one code:
 
 ```python

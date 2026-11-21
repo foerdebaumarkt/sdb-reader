@@ -362,6 +362,13 @@
                 "string",
                 "null"
               ]
+            },
+            "codes_from_wording": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
             }
           }
         },
@@ -460,6 +467,14 @@
             "null"
           ],
           "description": "The wording of the CLP Regulation, where it has exactly one."
+        },
+        "code_source": {
+          "type": "string",
+          "enum": [
+            "printed",
+            "from_wording"
+          ],
+          "description": "Whether the label prints the code, or prints only the sentence and the parser assigned the code (SDB-174)."
         }
       }
     },

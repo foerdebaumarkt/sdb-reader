@@ -7,6 +7,13 @@ Versions follow the tags of this repository.
 
 ### Added
 
+- **Whether the label prints a statement's code.** Each statement of the
+  label says under `code_source` whether the sheet prints its code
+  (`printed`) or only its sentence, to which the parser assigned the code
+  (`from_wording`), and `hazard_statements.codes_from_wording` lists the
+  assigned codes. The code lists stay as they are. `as_printed(text,
+  codes_from_wording)` gives a statement text without the assigned codes,
+  as the sheet prints it (SDB-174).
 - **Findings for the label of a classified product.** Where section 2
   classifies the product under CLP and the label (2.2) is not found
   (`label-not-found`), carries no H statement

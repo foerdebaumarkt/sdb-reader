@@ -41,6 +41,9 @@ class HazardStatements:
     hazard_text: str | None = None
     precautionary_text: str | None = None
     supplemental_text: str | None = None
+    # The codes the label does not print and the parser assigned to the
+    # sentences it prints (SDB-174); every one of them also stands in its list.
+    codes_from_wording: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)

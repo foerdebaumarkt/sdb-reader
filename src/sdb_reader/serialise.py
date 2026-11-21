@@ -90,6 +90,7 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
             "hazard_text": sheet.hazard_statements.hazard_text,
             "precautionary_text": sheet.hazard_statements.precautionary_text,
             "supplemental_text": sheet.hazard_statements.supplemental_text,
+            "codes_from_wording": sheet.hazard_statements.codes_from_wording,
         },
         "contact_info": {
             "supplier_name": sheet.contact_info.supplier_name,
@@ -163,6 +164,8 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
                 hazard_text=_optional_text(label["hazard_text"]),
                 precautionary_text=_optional_text(label["precautionary_text"]),
                 supplemental_text=_optional_text(label["supplemental_text"]),
+                # Not in a reading stored before SDB-174.
+                codes_from_wording=_texts(label.get("codes_from_wording", [])),
             ),
             contact_info=ContactInfo(
                 supplier_name=_optional_text(contact["supplier_name"]),
@@ -308,7 +311,12 @@ def reading_to_dict(
 def _statements(sheet: SafetyDataSheet) -> list[dict[str, Any]]:
     """The label's statements, each with both wordings (SDW-5)."""
     return [
-        {"code": s.code, "sheet": s.sheet, "regulation": s.regulation}
+        {
+            "code": s.code,
+            "sheet": s.sheet,
+            "regulation": s.regulation,
+            "code_source": s.code_source,
+        }
         for s in label_statements(sheet.hazard_statements)
     ]
 

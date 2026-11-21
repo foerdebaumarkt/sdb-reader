@@ -111,7 +111,8 @@ The label always stands in the reading as the sheet prints it.
 | `supplemental_codes` | the codes of the supplemental statements (EUH) |
 | `signal_word` | `Gefahr` or `Achtung`, or nothing |
 | `pictograms` | the codes of the pictograms, `GHS01` to `GHS09` |
-| `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them |
+| `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
+| `codes_from_wording` | the codes the label does not print: the sheet prints only the sentence, and the parser assigned the code; each also stands in its list above |
 
 The signal word is the printed one. Where the label states none, it follows
 from the hazard statements as the CLP Regulation assigns it, and so do
@@ -127,6 +128,10 @@ derived or not found.
 | `code` | the statement's code, such as `P102` |
 | `sheet` | the wording the supplier printed |
 | `regulation` | the wording of the CLP Regulation; empty where the regulation has no single one, for a statement with a gap to fill or a list to choose from |
+| `code_source` | `printed` where the label prints the code, `from_wording` where it prints only the sentence and the parser assigned the code |
+
+To show the statements as the sheet prints them, leave out the code of a
+statement whose `code_source` is `from_wording`.
 
 ## The findings
 

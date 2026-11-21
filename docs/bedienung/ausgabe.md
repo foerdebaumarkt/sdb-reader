@@ -113,7 +113,8 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 | `supplemental_codes` | die Codes der ergänzenden Gefahrenmerkmale (EUH) |
 | `signal_word` | `Gefahr` oder `Achtung`, oder nichts |
 | `pictograms` | die Codes der Piktogramme, `GHS01` bis `GHS09` |
-| `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt |
+| `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |
+| `codes_from_wording` | die Codes, die die Kennzeichnung nicht druckt: Das Blatt druckt nur den Satz, und der Parser hat ihm den Code zugeordnet; jeder steht auch in seiner Liste oben |
 
 Das Signalwort ist das gedruckte. Nennt die Kennzeichnung keines, folgt es
 aus den Gefahrenhinweisen, wie die CLP-Verordnung es zuordnet; ebenso
@@ -129,6 +130,10 @@ abgeleitet oder nicht gefunden wurde.
 | `code` | der Code des Satzes, etwa `P102` |
 | `sheet` | der Wortlaut, den der Lieferant gedruckt hat |
 | `regulation` | der Wortlaut der CLP-Verordnung; leer, wo die Verordnung keinen einzelnen hat, bei einem Satz mit Lücke oder mit Auswahl |
+| `code_source` | `printed`, wo die Kennzeichnung den Code druckt, `from_wording`, wo sie nur den Satz druckt und der Parser den Code zugeordnet hat |
+
+Wer die Sätze so zeigen will, wie das Blatt sie druckt, lässt den Code eines
+Satzes weg, dessen `code_source` `from_wording` ist.
 
 ## Die Befunde
 
