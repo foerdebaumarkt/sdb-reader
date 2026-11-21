@@ -26,6 +26,12 @@ Versions follow the tags of this repository.
   classification under the old law or a label under the directives before
   CLP on a sheet dated before 1 June 2015 (SDB-177).
 
+### Fixed
+
+- **A signal word with an exclamation mark behind its label** ("Signalwort:
+  Achtung!") is read; only a sentence that goes on after the mark on the
+  same line is the opening of EUH211 or EUH212 (SDB-176).
+
 ## 0.11.1 – 2026-11-21
 
 A documentation release: the README answers why one would not just give a
