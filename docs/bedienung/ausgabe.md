@@ -197,7 +197,7 @@ Sache seiner neuen Fassung.
 | `country-editions-differ` | die Datei enthält Blätter desselben Produkts für verschiedene Länder, und sie weichen in den genannten Feldern (`fields`) ab |
 | `wording-deviates` | ein Satz weicht im Wortlaut von der Verordnung ab |
 | `pictogram-not-found` | die H-Sätze verlangen ein Piktogramm, das die Kennzeichnung nicht druckt; nur wo `drawing_read` |
-| `pictogram-not-expected` | die Kennzeichnung druckt ein Piktogramm, das keiner ihrer H-Sätze verlangt |
+| `pictogram-not-expected` | die Kennzeichnung druckt ein Piktogramm, das keiner ihrer H-Sätze verlangt; nicht GHS08 auf einem Aerosol, wo es für die Aspirationsgefahr stehen kann (Anhang I Nr. 1.3.3 CLP) |
 | `pictogram-precedence` | die Kennzeichnung druckt GHS07 neben einem Piktogramm, dem es nach Art. 26 CLP weicht |
 | `not-german` | das Blatt ist in einer anderen Sprache |
 

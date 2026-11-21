@@ -36,7 +36,10 @@ sheet does not show, is not claimed: GHS04 is never expected, because
 Article 33 CLP lets the transport label of a gas cylinder stand in for it,
 and GHS05 is not expected where H290 is its only reason (no H314, no
 H318), because Annex I 1.3.6 CLP makes it optional on a package for
-consumers. A label that prints either is right as well.
+consumers. A label that prints either is right as well. GHS08 on an
+aerosol stays in `pictograms_not_expected` where no H code calls for it,
+but is no finding: Annex I 1.3.3 CLP lets an aerosol leave out the
+aspiration hazard, and GHS08 may stand for it.
 
 ## Before you call something missing
 

@@ -346,7 +346,8 @@ def pictogram_findings(
     drawn and every red diamond in it was named (``drawing_read``), not where
     the label states it has none;
     ``pictogram-not-expected`` for each pictogram the label names or shows
-    that none of its H codes calls for; ``pictogram-precedence`` for a
+    that none of its H codes calls for, not GHS08 on an aerosol, where it may
+    stand for the aspiration hazard; ``pictogram-precedence`` for a
     pictogram the label shows although Article 26 CLP leaves it out beside
     another. Not for an article or a classification under the old law
     (SDB-170), and nothing where the label carries no H code.
@@ -372,9 +373,17 @@ def pictogram_findings(
             Message("pictogram-not-found", {"pictogram": code})
             for code in expected.pictograms_missing
         )
+    # GHS08 on an aerosol may stand for the aspiration hazard, which Annex I
+    # 1.3.3 lets the label leave out with H304: no finding where it may be
+    # right (SDB-181, SDB-183).
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
     findings.extend(
         Message("pictogram-not-expected", {"pictogram": code})
         for code in expected.pictograms_not_expected
+        if code != "GHS08"
+        or not _is_aerosol(
+            hazards, {*label.hazard_codes, *classification_hazard_codes(hazards)}
+        )
     )
     printed = set(label.pictograms)
     findings.extend(
@@ -434,8 +443,15 @@ def _not_required(
     """
     if _LEFT_OUT_BESIDE.get(code) in on_label:
         return True
-    return code == "H304" and bool(
-        _AEROSOL_CLASS.search(hazards) or (classified | on_label) & _AEROSOL_STATEMENTS
+    return code == "H304" and _is_aerosol(hazards, classified | on_label)
+
+
+def _is_aerosol(hazards: str, codes: Collection[str]) -> bool:
+    """Whether the product is placed on the market as an aerosol (SDB-173):
+    section 2, its text *hazards*, classes it as one, or its classification
+    or label names one of the aerosol's statements among *codes*."""
+    return bool(_AEROSOL_CLASS.search(hazards)) or not _AEROSOL_STATEMENTS.isdisjoint(
+        codes
     )
 
 

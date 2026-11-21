@@ -92,6 +92,26 @@ def _sheet(
     return path
 
 
+def _pages(path: Path, *pages: list[str | list[str]], side: float = 50) -> Path:
+    """A file of *pages*, each drawn from the top down: a string is a line of
+    text, a list a row of pictograms."""
+    with pymupdf.open() as document:
+        for items in pages:
+            page = document.new_page(width=595, height=842)
+            y = 60.0
+            for item in items:
+                if isinstance(item, str):
+                    page.insert_text((50, y), item, fontsize=9)
+                    y += 14
+                    continue
+                for n, code in enumerate(item):
+                    x = 60.0 + n * (side + 10)
+                    _draw(page, code, pymupdf.Rect(x, y, x + side, y + side))
+                y += side + 18
+        document.save(path)
+    return path
+
+
 def _draw(page: pymupdf.Page, code: str, rect: pymupdf.Rect) -> None:
     with pymupdf.open(DRAWINGS / f"{code}.svg") as drawing:
         as_pdf = pymupdf.open("pdf", drawing.convert_to_pdf())
@@ -518,3 +538,138 @@ def test_a_missing_ghs05_beside_h318_is_a_finding(tmp_path: Path) -> None:
     parsed = _parsed(_corrosive_sheet(tmp_path / "sheet.pdf", ["H290", "H318"], []))
 
     assert _findings(parsed) == [("pictogram-not-found", {"pictogram": "GHS05"})]
+
+
+_CLASSIFIED = _HEAD[:7]
+
+
+@pytest.mark.spec("SDB-179", "SDB-187")
+def test_pictograms_set_above_the_label_heading_belong_to_the_label(
+    tmp_path: Path,
+) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [
+            *_CLASSIFIED,
+            "Gefahrenpiktogramme",
+            ["GHS02", "GHS07"],
+            "GHS02 GHS07",
+            "2.2 Kennzeichnungselemente",
+            *_TAIL,
+        ],
+    )
+
+    images = read_label_images(path)
+    parsed = _parsed(path)
+
+    assert images.labels == [["GHS02", "GHS07"]]
+    assert parsed.sheet.hazard_statements.pictograms == ["GHS02", "GHS07"]
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("SDB-179", "SDB-187")
+def test_pictograms_above_the_heading_without_a_title_stay_outside(
+    tmp_path: Path,
+) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [*_CLASSIFIED, ["GHS06"], "2.2 Kennzeichnungselemente", ["GHS02"], *_TAIL],
+    )
+
+    assert read_label_images(path).labels == [["GHS02"]]
+
+
+@pytest.mark.spec("SDB-179")
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Kennzeichnungselemente (CLP):",
+        "Besondere Vorschriften für ergänzende Kennzeichnungselemente",
+    ],
+)
+def test_another_line_naming_the_label_elements_starts_no_second_label(
+    tmp_path: Path, line: str
+) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [*_CLASSIFIED, "2.2. Kennzeichnungselemente", line, ["GHS02", "GHS07"], *_TAIL],
+    )
+
+    assert read_label_images(path).labels == [["GHS02", "GHS07"]]
+
+
+@pytest.mark.spec("SDB-179")
+def test_each_sheet_of_a_file_keeps_its_pictograms_under_a_second_heading(
+    tmp_path: Path,
+) -> None:
+    def sheet(name: str, pictograms: list[str]) -> list[str | list[str]]:
+        return [
+            *_HEAD[:2],
+            f"Handelsname: {name}",
+            *_CLASSIFIED[3:],
+            "2.2. Kennzeichnungselemente",
+            "Kennzeichnungselemente (CLP):",
+            pictograms,
+            *_TAIL,
+        ]
+
+    path = _pages(
+        tmp_path / "file.pdf",
+        sheet("Musterlack", ["GHS02", "GHS07"]),
+        sheet("Musterhärter", ["GHS02"]),
+    )
+
+    parsed = _parsed(path)
+
+    assert read_label_images(path).labels == [["GHS02", "GHS07"], ["GHS02"]]
+    assert [part.sheet.hazard_statements.pictograms for part in parsed.parts] == [
+        ["GHS02", "GHS07"],
+        ["GHS02"],
+    ]
+    assert all(part.sheet.hazard_statements.drawing_read for part in parsed.parts)
+
+
+def _aerosol_sheet(path: Path, codes: list[str], shown: list[str]) -> Path:
+    classes = {
+        "H222": "Aerosol 1, H222",
+        "H229": "H229",
+        "H336": "STOT SE 3, H336",
+        "H410": "Aquatic Chronic 1, H410",
+        "H225": "Flam. Liq. 2, H225",
+    }
+    head = [*_HEAD[:6], "; ".join(classes[c] for c in codes), *_HEAD[7:]]
+    tail = [
+        "Signalwort: Gefahr",
+        *(f"{c} Gefahrenhinweis." for c in codes),
+        "P210 Von Hitze fernhalten. Nicht rauchen.",
+        *_TAIL[-3:],
+    ]
+    return _sheet(path, shown, head=head, tail=tail)
+
+
+@pytest.mark.spec("SDB-181", "SDB-183")
+def test_ghs08_on_an_aerosol_is_no_finding(tmp_path: Path) -> None:
+    """Annex I 1.3.3 CLP: an aerosol need not be labelled for the aspiration
+    hazard; GHS08 may stand for it where H304 is left out."""
+    parsed = _parsed(
+        _aerosol_sheet(
+            tmp_path / "sheet.pdf",
+            ["H222", "H229", "H336", "H410"],
+            ["GHS02", "GHS07", "GHS08", "GHS09"],
+        )
+    )
+
+    label = parsed.sheet.hazard_statements
+    assert clp_expected(label).pictograms_not_expected == ["GHS08"]
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("SDB-181")
+def test_ghs08_without_its_reason_on_another_product_is_a_finding(
+    tmp_path: Path,
+) -> None:
+    parsed = _parsed(
+        _aerosol_sheet(tmp_path / "sheet.pdf", ["H225"], ["GHS02", "GHS08"])
+    )
+
+    assert _findings(parsed) == [("pictogram-not-expected", {"pictogram": "GHS08"})]

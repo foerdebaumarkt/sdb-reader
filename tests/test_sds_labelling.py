@@ -76,6 +76,58 @@ def test_a_heading_of_2_3_behind_a_bullet_ends_the_label(bullet: str) -> None:
     assert label.hazard_codes == ["H315", "H318"]
 
 
+_LABEL_BELOW_ITS_PICTOGRAMS = (
+    "* 2.2 Kennzeichnungselemente\n"
+    "Signalwort\nGefahr\n"
+    "H315 Verursacht Hautreizungen.\nH318 Verursacht schwere Augenschäden.\n"
+    "P280 Schutzhandschuhe tragen.\n"
+    "2.3 Sonstige Gefahren\nKeine.\n"
+)
+
+
+@pytest.mark.spec("SDB-187")
+@pytest.mark.parametrize(
+    "block",
+    [
+        "Gefahrenpiktogramme\n\nGHS05\nGHS07\n",
+        "Piktogramme:\nGHS05 GHS07\n",
+        "· Gefahrenpiktogramme\nGHS05, GHS07\n\n",
+    ],
+)
+def test_pictograms_set_above_the_label_heading_belong_to_the_label(
+    block: str,
+) -> None:
+    """The page prints the pictograms of 2.2 above its heading; the text
+    brings them between the classification and the heading."""
+    label = read(
+        CLASSIFIED
+        + "Seite 1 von 9\nMusterprodukt\n"
+        + block
+        + _LABEL_BELOW_ITS_PICTOGRAMS
+    )
+
+    assert label.pictograms == ["GHS05", "GHS07"]
+    assert label.hazard_codes == ["H315", "H318"]
+
+
+@pytest.mark.spec("SDB-187")
+@pytest.mark.parametrize(
+    "above",
+    [
+        # Pictograms of the classification in 2.1, without a title of their own.
+        "GHS05 Ätzwirkung\nEye Dam. 1 H318 Verursacht schwere Augenschäden.\nGHS07\n",
+        # A title with more than the codes under it.
+        "Piktogramme: GHS07\nZu kennzeichnende Komponenten: Musterstoff\n",
+    ],
+)
+def test_only_a_block_of_pictograms_directly_above_the_heading_counts(
+    above: str,
+) -> None:
+    label = read(CLASSIFIED + above + _LABEL_BELOW_ITS_PICTOGRAMS)
+
+    assert label.pictograms == []
+
+
 @pytest.mark.spec("SDB-119")
 def test_a_label_that_refers_to_2_1_carries_its_statements() -> None:
     label = read(

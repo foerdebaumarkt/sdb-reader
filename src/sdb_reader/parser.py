@@ -1611,7 +1611,7 @@ def find_label_section(text: str) -> str | None:
         rest = text[start.end() :]
         end = _label_section_end(rest)
         block = rest[: end.start()] if end else rest[:LABEL_SECTION_MAX_CHARS]
-        return block or None
+        return (_pictograms_above(text, start.start()) + block) or None
 
     # No "2.2". The heading may still be there under another number, which is
     # how sheets from before the REACH restructuring are written. Those are
@@ -1631,6 +1631,39 @@ def find_label_section(text: str) -> str | None:
     if not end:
         return None
     return rest[: end.start()] or None
+
+
+# A block of the label's pictograms set above its heading (SDB-187): its title
+# on a line of its own, then nothing but the codes, then "2.2
+# Kennzeichnungselemente". Bullets and the mark of a changed section may stand
+# before the heading's number.
+_PICTOGRAMS_TITLE = re.compile(
+    r"[ \t]*(?:[·•∙*][ \t]*)?(?:Gefahren)?piktogramm\w*[ \t]*:?[ \t]*", re.IGNORECASE
+)
+_PICTOGRAM_CODES_LINE = re.compile(r"[ \t]*(?:GHS\s?0?\d{1,2}[ \t,;]*)*", re.IGNORECASE)
+_BEFORE_HEADING = re.compile(r"[ \t]*(?:[·•∙*][ \t]*)?")
+
+
+def _pictograms_above(text: str, heading: int) -> str:
+    """The block of pictograms that stands directly above the label's heading
+    at *heading* in *text*, with its line breaks, or nothing (SDB-187).
+
+    >>> text = "H302 …\\nGefahrenpiktogramme\\nGHS07\\n* 2.2 Kennzeichnungselemente"
+    >>> _pictograms_above(text, text.index("2.2"))
+    'Gefahrenpiktogramme\\nGHS07\\n'
+    """
+    line = text.rfind("\n", 0, heading) + 1
+    if not _BEFORE_HEADING.fullmatch(text, line, heading):
+        return ""
+    top = line
+    while top > 0:
+        above = text.rfind("\n", 0, top - 1) + 1
+        if _PICTOGRAMS_TITLE.fullmatch(text, above, top - 1):
+            return text[above:line]
+        if not _PICTOGRAM_CODES_LINE.fullmatch(text, above, top - 1):
+            return ""
+        top = above
+    return ""
 
 
 def _label_section_ends(rest: str) -> Iterator[re.Match[str]]:
