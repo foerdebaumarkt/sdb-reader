@@ -59,6 +59,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "no-label-section": (),
     "several-sheets": ("count",),
     "classified-before-clp": ("basis",),
+    "label-before-clp": (),
     "no-hazard-codes": (),
     "label-undetermined": (),
     "no-precautionary-codes": (),

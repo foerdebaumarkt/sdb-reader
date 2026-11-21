@@ -52,6 +52,8 @@ EUH_WORDING_OUTSIDE_LABEL = "euh-wording-outside-label"
 CLASSIFIED_BEFORE_CLP = "classified-before-clp"
 # No block "2.2 Kennzeichnungselemente" was found in section 2 (SDB-4).
 NO_LABEL_SECTION = "no-label-section"
+# The label block follows the directives before CLP (SDB-170).
+LABEL_BEFORE_CLP = "label-before-clp"
 STATEMENT_TOO_LONG = "statement-too-long"
 # How many lines a statement of the hint texts spans at most (SDB-168): the
 # longest a sheet of the measured collection prints has 37.
@@ -601,6 +603,32 @@ _HAZARD_DESIGNATION = re.compile(
 # A sheet of the years between the two systems prints both; with a CLP code in
 # section 2 it has a label to read: "R 10 Entzündlich." beside "H 226 …".
 _CLP_CODE_PRINTED = re.compile(r"\b(?:[HP][^\S\n]?\d{3}|EUH[^\S\n]?\d{3})\b")
+
+
+# A label under the directives before CLP names them as its basis: "Kennzeichnung
+# nach EWG-Richtlinien", "nach EG-Richtlinien/GefStoffV nicht
+# kennzeichnungspflichtig", "gemäß 1999/45/EG".
+_OLD_RULES_LABEL = re.compile(
+    r"\b(?:EWG|EG)-Richtlinien\b|67/548|(?:19)?99/45|\bGefStoffV\b", re.IGNORECASE
+)
+
+
+def label_before_clp(label: str) -> bool:
+    """Whether a label block follows the directives before CLP (SDB-170).
+
+    It prints no H, P or EUH code, and either names the old directives as its
+    basis or labels with R phrases or a hazard symbol as SDB-73 reads them.
+
+    >>> label_before_clp("Kennzeichnung nach EWG-Richtlinien:\\nnicht kennzeichnungspflichtig.")
+    True
+    >>> label_before_clp("Kennzeichnung nach EWG-Richtlinien\\nH315 Verursacht Hautreizungen.")
+    False
+    >>> label_before_clp("Signalwort: Achtung")
+    False
+    """
+    if _CLP_CODE_PRINTED.search(label):
+        return False
+    return bool(_OLD_RULES_LABEL.search(label)) or old_classification(label) is not None
 
 
 def old_classification(hazards_section: str) -> str | None:
@@ -1984,6 +2012,8 @@ def _parse_hazard_statements(
         warnings.append(Message(NO_LABEL_SECTION))
     if len(labels) > 1:
         warnings.append(Message("several-sheets", {"count": len(labels)}))
+    if labels and all(label_before_clp(label) for label in labels):
+        warnings.append(Message(LABEL_BEFORE_CLP))
 
     # Each sheet's label is read as if it stood alone, then the product carries
     # all of them. A combination pack holds both products, so it carries both

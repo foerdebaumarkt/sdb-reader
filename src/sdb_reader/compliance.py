@@ -18,6 +18,7 @@ from .messages import Message
 from .parser import (
     CLASSIFIED_BEFORE_CLP,
     EUH_WORDING_OUTSIDE_LABEL,
+    LABEL_BEFORE_CLP,
     LABEL_UNDETERMINED,
     NO_LABEL_SECTION,
     SheetPart,
@@ -263,8 +264,9 @@ def label_not_found(
     The reading stays as it is: these are findings beside it, and each says
     "not found", which is true whether the sheet lacks it or the parser missed
     it. Only for a product classified under CLP (SDB-75); not under the old
-    law (SDB-73), and not for an article, which is not labelled under CLP
-    (SDB-142, SDB-154). A label counts as found where the parser found its
+    law (SDB-73), not for a label under the old directives on a sheet dated
+    before 1 June 2015, and not for an article, which is not labelled under
+    CLP (SDB-142, SDB-154). A label counts as found where the parser found its
     block (SDB-4), or, without one, read any element of a label in section 2.
 
     >>> from sdb_reader import HazardStatements
@@ -289,6 +291,10 @@ def label_not_found(
         return []
     noted = {warning.code for warning in parser_warnings}
     if CLASSIFIED_BEFORE_CLP in noted:
+        return []
+    # A mixture could be labelled under the old directives until 1 June 2015.
+    dated = sheet.revision_date or sheet.issue_date
+    if LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES:
         return []
     label = sheet.hazard_statements
     read_any = bool(

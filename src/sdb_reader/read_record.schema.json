@@ -686,6 +686,7 @@
             "embedded-wrong-root",
             "euh-outside-label",
             "euh-wording-outside-label",
+            "label-before-clp",
             "label-line-unassigned",
             "label-not-found",
             "statement-too-long",
