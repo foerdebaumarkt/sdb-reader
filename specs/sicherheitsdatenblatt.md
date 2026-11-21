@@ -211,6 +211,7 @@ gehören zu dessen Regeln und werden hier nicht neu vergeben.
 ## Vorgeschlagene Regeln (noch nicht umgesetzt)
 
 - **SDB-22.** *Vorgeschlagen:* Abweichend von SDB-20 liest der Parser Version und Datum je Blatt; ein Teil ohne eigene Kennzeichnung, etwa das Deckblatt eines Kits, hat keine. Als Überarbeitungsdatum einer Datei mit mehreren Blättern gilt das des ältesten Blatts, für die Wahl der aktuellen unter mehreren Dateien wie für die Meldung, ob ein Blatt veraltet ist; eine Version hat eine solche Datei nicht.
+
 ## Entscheidungsprotokoll
 
 - **2026-11-21**: Die Befunde zur Verordnung sind eine Zugabe und nicht vollständig (SDB-169). Grund: Wichtig ist, dass die Lesung wiedergibt, was das Blatt druckt; eine Abweichung von der Verordnung meldet die Bibliothek, wo sie sie erkennt, ohne den Anspruch, jede zu erkennen. Entschieden am 2026-11-21.
