@@ -109,15 +109,17 @@ The label always stands in the reading as the sheet prints it.
 | `hazard_codes` | the codes of the hazard statements (H); H360 and H361 with the letters of their effect, as Annex VI of the CLP Regulation sets them (`H360D`, `H361fd`) |
 | `precautionary_codes` | the codes of the precautionary statements (P) |
 | `supplemental_codes` | the codes of the supplemental statements (EUH) |
-| `signal_word` | `Gefahr` or `Achtung`, or nothing |
+| `signal_word` | `Gefahr` or `Achtung` as the label prints it, or nothing |
+| `expected_signal_word` | where the label says nothing about a signal word, the one its codes call for; otherwise nothing |
 | `pictograms` | the codes of the pictograms, `GHS01` to `GHS09` |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
 | `codes_from_wording` | the codes the label does not print: the sheet prints only the sentence, and the parser assigned the code; each also stands in its list above |
 
-The signal word is the printed one. Where the label states none, it follows
-from the hazard statements as the CLP Regulation assigns it, and so do
-pictograms the text does not name. `parser.warnings` says when something was
-derived or not found.
+The signal word is the printed one only. Where the label states none, the one
+the CLP Regulation assigns to its codes stands in `expected_signal_word`, and
+the finding `signal-word-not-found` says so. Pictograms the text does not name
+follow from the hazard statements; `parser.warnings` says so with
+`pictograms-derived`.
 
 ## The statements
 

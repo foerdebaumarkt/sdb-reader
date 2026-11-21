@@ -5,6 +5,27 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Breaking
+
+- **The signal word only as printed.** Where the label says nothing about a
+  signal word, `signal_word` is now empty; before, it held the word the codes
+  call for, derived from them. That word now stands in `expected_signal_word`
+  (SDB-176, SDB-177). The parser warning `signal-word-derived` is gone. A
+  caller that showed `signal_word` shows what the sheet prints; one that
+  needs the word the codes call for reads `expected_signal_word`.
+- **`PARSER_VERSION` is 21** (0.11.1: 20). `EXTRACTION_VERSION` stays 2;
+  readings kept from before should be made again from the stored texts.
+
+### Added
+
+- **`expected_signal_word`** under `hazard_statements`: the signal word the
+  label's codes call for where the label says nothing about one. A reading
+  stored before reads back without it (SDB-177, SDW-44).
+- **The finding `signal-word-not-found`** with the expected word: the codes
+  call for a signal word and none was found printed. Not for an article, a
+  classification under the old law or a label under the directives before
+  CLP on a sheet dated before 1 June 2015 (SDB-177).
+
 ## 0.11.1 – 2026-11-21
 
 A documentation release: the README answers why one would not just give a

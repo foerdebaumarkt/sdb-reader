@@ -1318,7 +1318,7 @@ def _label(body: str) -> str:
     return f"ABSCHNITT 2: Mögliche Gefahren\n2.2 Kennzeichnungselemente\n{body}\n2.3 Sonstige Gefahren\n"
 
 
-@pytest.mark.spec("SDB-7")
+@pytest.mark.spec("SDB-176")
 def test_signal_word_is_read_from_the_label(parser: SDSParser) -> None:
     result = parser.parse(
         _build_extraction(
@@ -1341,7 +1341,7 @@ def test_signal_word_survives_the_two_column_layout(parser: SDSParser) -> None:
     assert result.sheet.hazard_statements.signal_word == "Achtung"
 
 
-@pytest.mark.spec("SDB-7")
+@pytest.mark.spec("SDB-176", "SDB-177")
 def test_stated_absence_is_not_overridden_by_the_derivation(
     parser: SDSParser,
 ) -> None:
@@ -1351,22 +1351,24 @@ def test_stated_absence_is_not_overridden_by_the_derivation(
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert Message("signal-word-derived") not in result.warnings
+    assert result.sheet.hazard_statements.expected_signal_word is None
 
 
-@pytest.mark.spec("SDB-7")
-def test_derivation_fills_in_when_the_label_says_nothing(
+@pytest.mark.spec("SDB-176", "SDB-177")
+def test_a_silent_label_has_no_signal_word_but_an_expected_one(
     parser: SDSParser,
 ) -> None:
+    """The reading keeps what is printed; the word the codes call for stands
+    apart."""
     body = "H318: Verursacht schwere Augenschäden."
 
     result = parser.parse(_build_extraction(_label(body)))
 
-    assert result.sheet.hazard_statements.signal_word == "Gefahr"
-    assert Message("signal-word-derived") in result.warnings
+    assert result.sheet.hazard_statements.signal_word is None
+    assert result.sheet.hazard_statements.expected_signal_word == "Gefahr"
 
 
-@pytest.mark.spec("SDB-7")
+@pytest.mark.spec("SDB-177")
 @pytest.mark.parametrize(
     ("body", "word"),
     [
@@ -1386,8 +1388,8 @@ def test_derivation_counts_the_euh_codes_that_carry_a_signal_word(
 ) -> None:
     result = parser.parse(_build_extraction(_label(body)))
 
-    assert result.sheet.hazard_statements.signal_word == word
-    assert (Message("signal-word-derived") in result.warnings) is (word is not None)
+    assert result.sheet.hazard_statements.signal_word is None
+    assert result.sheet.hazard_statements.expected_signal_word == word
 
 
 def test_a_read_signal_word_is_not_flagged_as_derived(parser: SDSParser) -> None:
@@ -1398,7 +1400,7 @@ def test_a_read_signal_word_is_not_flagged_as_derived(parser: SDSParser) -> None
     )
 
     assert result.sheet.hazard_statements.signal_word == "Achtung"
-    assert Message("signal-word-derived") not in result.warnings
+    assert result.sheet.hazard_statements.expected_signal_word is None
 
 
 def test_absence_written_as_entfaellt(parser: SDSParser) -> None:
@@ -1409,7 +1411,7 @@ def test_absence_written_as_entfaellt(parser: SDSParser) -> None:
     result = parser.parse(_build_extraction(_label(body)))
 
     assert result.sheet.hazard_statements.signal_word is None
-    assert Message("signal-word-derived") not in result.warnings
+    assert result.sheet.hazard_statements.expected_signal_word is None
 
 
 def test_absence_written_as_a_dash(parser: SDSParser) -> None:
@@ -1452,7 +1454,7 @@ def test_absence_wins_over_a_word_further_down(parser: SDSParser) -> None:
     assert result.sheet.hazard_statements.signal_word is None
 
 
-@pytest.mark.spec("SDB-7")
+@pytest.mark.spec("SDB-176")
 def test_a_sheet_that_states_it_carries_no_label_at_all(parser: SDSParser) -> None:
     """No label means no signal word. Three notations, all from real sheets."""
     for stated in (
@@ -1576,7 +1578,7 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         hazards = parser.parse(_build_extraction(text)).sheet.hazard_statements
         assert hazards.signal_word is None
 
-    @pytest.mark.spec("SDB-63", "SDB-7")
+    @pytest.mark.spec("SDB-63", "SDB-176")
     def test_keine_under_the_signal_word_s_label_is_the_sheet_s_answer(
         self, parser: SDSParser
     ) -> None:
@@ -1587,9 +1589,9 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         )
         result = parser.parse(_build_extraction(text))
         assert result.sheet.hazard_statements.signal_word is None
-        assert "signal-word-derived" not in {w.code for w in result.warnings}
+        assert result.sheet.hazard_statements.expected_signal_word is None
 
-    @pytest.mark.spec("SDB-7")
+    @pytest.mark.spec("SDB-177")
     def test_h229_alone_derives_achtung_where_the_label_is_silent(
         self, parser: SDSParser
     ) -> None:
@@ -1598,8 +1600,8 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
             "H229 Behälter steht unter Druck: Kann bei Erwärmung bersten."
         )
         result = parser.parse(_build_extraction(text))
-        assert result.sheet.hazard_statements.signal_word == "Achtung"
-        assert "signal-word-derived" in {w.code for w in result.warnings}
+        assert result.sheet.hazard_statements.signal_word is None
+        assert result.sheet.hazard_statements.expected_signal_word == "Achtung"
 
     @pytest.mark.spec("SDB-64")
     @pytest.mark.spec("SDB-155")

@@ -322,13 +322,43 @@ def _label_is_judged(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
     *noted* are the codes of the parser's warnings."""
     if sheet.stated_classification is not StatedClassification.CLASSIFIED:
         return False
+    return not _label_is_exempt(sheet, noted)
+
+
+def _label_is_exempt(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
+    """Whether *sheet* is not labelled under CLP (SDB-170): an article, a
+    classification under the old law, or a label under the old directives on a
+    sheet dated before 1 June 2015."""
     if sheet.stated_article or CLASSIFIED_BEFORE_CLP in noted:
-        return False
+        return True
     # A mixture could be labelled under the old directives until 1 June 2015.
     dated = sheet.revision_date or sheet.issue_date
-    return not (
-        LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES
-    )
+    return LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES
+
+
+def signal_word_not_found(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    """The signal word the label's codes call for and the parser did not find
+    printed (SDB-177), with the word under ``expected``.
+
+    The reading keeps the printed signal word only (SDB-176); the one the codes
+    call for stands in ``expected_signal_word``. Not for an article, a
+    classification under the old law, or a label under the old directives on a
+    sheet dated before 1 June 2015 (SDB-170).
+
+    >>> from sdb_reader import HazardStatements
+    >>> label = HazardStatements(hazard_codes=["H225"], expected_signal_word="Gefahr")
+    >>> [m.params for m in signal_word_not_found(
+    ...     SafetyDataSheet(None, None, None, None, "de", hazard_statements=label), [])]
+    [{'expected': 'Gefahr'}]
+    """
+    expected = sheet.hazard_statements.expected_signal_word
+    if expected is None or sheet.hazard_statements.signal_word is not None:
+        return []
+    if _label_is_exempt(sheet, {warning.code for warning in parser_warnings}):
+        return []
+    return [Message("signal-word-not-found", {"expected": expected})]
 
 
 # The order of precedence Annex III Part 1 sets under Article 27 (consolidated
@@ -700,6 +730,7 @@ def sheet_findings(
 
     findings.extend(label_not_found(sheet, parser_warnings))
     findings.extend(hazard_statements_not_in_label(sheet, parser_warnings))
+    findings.extend(signal_word_not_found(sheet, parser_warnings))
 
     findings.extend(
         Message("euh-outside-label", dict(outside.params))

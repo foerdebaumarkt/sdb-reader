@@ -38,8 +38,8 @@ language and keeps its meaning; a sentence can be reworded with any release.
 ```python
 parser_codes = {message.code for message in reading.parser_result.warnings}
 
-if "signal-word-derived" in parser_codes:
-    ...  # the label printed no signal word
+if "pictograms-derived" in parser_codes:
+    ...  # the label named no pictogram; they follow from the H codes
 ```
 
 ## Sentences come from a catalog

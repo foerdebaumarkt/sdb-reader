@@ -2116,6 +2116,9 @@ def _parse_hazard_statements(
         signal_word=_strongest_signal_word(r.signal_word for r in readings),
         pictograms=sorted(set().union(*(r.pictograms for r in readings))),
     )
+    hazard_statements.expected_signal_word = _expected_signal_word(
+        hazard_statements.signal_word, readings
+    )
     # A code one sheet's label prints is printed, even where another sheet of
     # the file only prints its sentence (SDB-174).
     printed_somewhere = set().union(
@@ -2606,12 +2609,25 @@ class _LabelReading:
     signal_word: str | None
     pictograms: set[str]
     warnings: list[Message]
+    # The signal word the codes call for where the label says nothing about
+    # one (SDB-177); never the reading's signal word.
+    expected_signal_word: str | None = None
     # The sheet's sentence read as P501 by SDB-166, where the label prints no
     # P501 code.
     disposal: str | None = None
     # The codes the parser assigned to sentences the label prints without
     # them (SDB-174): SDB-6, SDB-28, SDB-163, SDB-166.
     from_wording: set[str] = field(default_factory=set)
+
+
+def _expected_signal_word(
+    printed: str | None, readings: Iterable[_LabelReading]
+) -> str | None:
+    """The signal word the united label's codes call for (SDB-177): none where
+    one of the file's sheets prints a signal word."""
+    if printed is not None:
+        return None
+    return _strongest_signal_word(r.expected_signal_word for r in readings)
 
 
 def _strongest_signal_word(words: Iterable[str | None]) -> str | None:
@@ -2800,13 +2816,12 @@ def _read_label(
         if removed & pdf_set:
             pictograms = sorted(pdf_set - removed)
 
-    # Derive only where the sheet says nothing. A sheet that prints "Kein
-    # Signalwort" has answered, and overriding that with a derived word would
-    # replace what the supplier labelled with what our table computes.
+    # The reading keeps the printed signal word only (SDB-176). Where the
+    # label says nothing about one, the word its codes call for stands apart
+    # (SDB-177). A sheet that prints "Kein Signalwort" has answered.
+    expected_signal_word = None
     if not signal_word_stated and (h_code_set or supplemental):
-        signal_word = get_signal_word(h_code_set | set(supplemental))
-        if signal_word:
-            warnings.append(Message("signal-word-derived"))
+        expected_signal_word = get_signal_word(h_code_set | set(supplemental))
 
     return _LabelReading(
         hazard_codes=h_code_set,
@@ -2816,6 +2831,7 @@ def _read_label(
         signal_word=signal_word,
         pictograms=set(pictograms),
         warnings=warnings,
+        expected_signal_word=expected_signal_word,
         disposal=disposal,
         from_wording=(h_code_set if hazard_by_wording else set())
         | precautionary_by_wording

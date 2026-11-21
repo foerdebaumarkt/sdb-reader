@@ -353,7 +353,7 @@ def get_signal_word(h_codes: set[str]) -> str | None:
     """Derive the signal word from a set of H-codes.
 
     The EUH codes of the hazard classes added in 2023 count like H-codes:
-    the regulation gives them a signal word (SDB-7).
+    the regulation gives them a signal word (SDB-177).
 
     'Gefahr' takes precedence over 'Achtung' per CLP Art. 19(4).
 

@@ -65,7 +65,6 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `precautionary-wording-unclear` | `codes` | Ein Sicherheitshinweis ohne Code passt gleich gut zu {codes}; keiner davon wurde übernommen. |
 | `label-line-unassigned` | `line` | Eine Zeile der Kennzeichnung wurde nichts zugeordnet: {line} |
 | `statement-too-long` | `codes` | Der Satz {codes} ist nach 100 Zeilen abgeschnitten; was folgt, gehört zu keinem Satz. |
-| `signal-word-derived` | – | Signalwort aus den Gefahrenhinweisen abgeleitet; die Kennzeichnung nennt keines. |
 | `no-identification-section` | – | Abschnitt 1 wurde nicht gefunden; der Lieferant lässt sich nicht lesen. |
 | `no-supplier-name` | – | In Abschnitt 1 wurde kein Name des Lieferanten gefunden. |
 | `no-supplier-address` | – | In Abschnitt 1 wurde keine Anschrift des Lieferanten gefunden. |
@@ -89,6 +88,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `label-without-hazard-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein H-Satz gefunden; die Einstufung verlangt ihre Gefahrenhinweise auf dem Etikett (CLP Art. 27). |
 | `label-without-precautionary-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein P-Satz gefunden; die Einstufung verlangt die einschlägigen Sicherheitshinweise auf dem Etikett (CLP Art. 22). |
 | `hazard-statement-not-in-label` | `statement` | Abschnitt 2.1 nennt {statement} zur Einstufung, und in der Kennzeichnung wurde der Satz nicht gefunden; die Einstufung verlangt ihn auf dem Etikett (CLP Art. 27). |
+| `signal-word-not-found` | `expected` | Die Codes der Kennzeichnung verlangen das Signalwort „{expected}“, und es wurde keines gefunden (CLP Art. 20). |
 | `different-products` | `products` | Die Datei enthält Sicherheitsdatenblätter verschiedener Produkte: {products} |
 | `country-editions-differ` | `fields` | Die Blätter desselben Produkts für verschiedene Länder weichen voneinander ab: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} steht nur außerhalb der Kennzeichnung: {sentence} |

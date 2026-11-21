@@ -65,7 +65,6 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `precautionary-wording-unclear` | `codes` | A precautionary statement without its code fits {codes} alike; none of them was taken. |
 | `label-line-unassigned` | `line` | A line of the label was assigned to nothing: {line} |
 | `statement-too-long` | `codes` | The statement {codes} is cut off after 100 lines; what follows belongs to no statement. |
-| `signal-word-derived` | – | Signal word derived from the statements; the label states none. |
 | `no-identification-section` | – | Section 1 was not found; the supplier cannot be read. |
 | `no-supplier-name` | – | No supplier name was found in section 1. |
 | `no-supplier-address` | – | No supplier address was found in section 1. |
@@ -89,6 +88,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `label-without-hazard-statement` | – | Section 2 classifies the product, and no H statement was found in the label; the classification requires its hazard statements on the label (CLP Article 27). |
 | `label-without-precautionary-statement` | – | Section 2 classifies the product, and no P statement was found in the label; the classification requires the relevant precautionary statements on the label (CLP Article 22). |
 | `hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label; the classification requires it on the label (CLP Article 27). |
+| `signal-word-not-found` | `expected` | The label's codes call for the signal word '{expected}', and none was found (CLP Article 20). |
 | `different-products` | `products` | The file holds safety data sheets of different products: {products} |
 | `country-editions-differ` | `fields` | The sheets of the same product for different countries differ in: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} is printed only outside the label: {sentence} |

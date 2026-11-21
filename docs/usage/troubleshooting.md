@@ -38,7 +38,8 @@
 | --- | --- | --- |
 | a field is empty although the sheet prints it | the value was not found in this layout | read `parser.warnings` and the `section_text` of the section; report the layout |
 | `countries` is empty | the sheet names no country | it counts as a sheet for your country |
-| `signal_word` or `pictograms` although the sheet prints none | they follow from the hazard statements | `parser.warnings` says so with `signal-word-derived` or `pictograms-derived` |
+| `pictograms` although the sheet names none | they follow from the hazard statements | `parser.warnings` says so with `pictograms-derived` |
+| `signal_word` is empty although the sheet carries H statements | the sheet prints no signal word, or it was not found | `expected_signal_word` names the one the codes call for, and `findings` reports `signal-word-not-found` |
 | a value is missing on a sheet set as a form in two columns without colons | outside section 1 such rows are read as a table, and a label and its value can stand apart | a known limit; check `section_text` |
 | the message `short-text` or `short-sample` | the file has little text for a sheet | it may be cut off or partly scanned; look at the file |
 | the finding `wording-deviates` on a statement that looks right | the sheet's wording differs from the regulation's in a word | compare the two wordings in the finding's values |
