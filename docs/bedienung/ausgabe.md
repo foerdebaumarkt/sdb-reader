@@ -111,15 +111,17 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 | `hazard_codes` | die Codes der Gefahrenhinweise (H); H360 und H361 mit den Buchstaben ihrer Wirkung, wie Anhang VI der CLP-Verordnung sie setzt (`H360D`, `H361fd`) |
 | `precautionary_codes` | die Codes der Sicherheitshinweise (P) |
 | `supplemental_codes` | die Codes der ergänzenden Gefahrenmerkmale (EUH) |
-| `signal_word` | `Gefahr` oder `Achtung`, oder nichts |
+| `signal_word` | `Gefahr` oder `Achtung`, wie die Kennzeichnung es druckt, oder nichts |
+| `expected_signal_word` | wo die Kennzeichnung nichts zum Signalwort sagt, das, das ihre Codes verlangen; sonst nichts |
 | `pictograms` | die Codes der Piktogramme, `GHS01` bis `GHS09` |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |
 | `codes_from_wording` | die Codes, die die Kennzeichnung nicht druckt: Das Blatt druckt nur den Satz, und der Parser hat ihm den Code zugeordnet; jeder steht auch in seiner Liste oben |
 
-Das Signalwort ist das gedruckte. Nennt die Kennzeichnung keines, folgt es
-aus den Gefahrenhinweisen, wie die CLP-Verordnung es zuordnet; ebenso
-Piktogramme, die der Text nicht nennt. `parser.warnings` sagt, wenn etwas
-abgeleitet oder nicht gefunden wurde.
+Das Signalwort ist nur das gedruckte. Nennt die Kennzeichnung keines, steht
+das, das die CLP-Verordnung ihren Codes zuordnet, unter `expected_signal_word`,
+und der Befund `signal-word-not-found` sagt es. Piktogramme, die der Text nicht
+nennt, folgen aus den Gefahrenhinweisen; `parser.warnings` sagt es mit
+`pictograms-derived`.
 
 ## Die Sätze
 

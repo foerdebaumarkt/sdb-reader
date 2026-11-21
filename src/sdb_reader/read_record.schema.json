@@ -369,6 +369,14 @@
                 "type": "string"
               },
               "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
+            },
+            "expected_signal_word": {
+              "enum": [
+                "Gefahr",
+                "Achtung",
+                null
+              ],
+              "description": "The signal word the label's codes call for where the label says nothing about one (SDB-177); never the signal word of the reading, which is only the printed one (SDB-176). Missing in a reading stored before."
             }
           }
         },
@@ -528,6 +536,7 @@
                 "label-without-hazard-statement",
                 "label-without-precautionary-statement",
                 "hazard-statement-not-in-label",
+                "signal-word-not-found",
                 "different-products",
                 "country-editions-differ",
                 "euh-outside-label",
@@ -758,7 +767,7 @@
             "several-sheets",
             "short-sample",
             "short-text",
-            "signal-word-derived",
+            "signal-word-not-found",
             "signal-word-not-taken",
             "title-in-running-text",
             "undated",

@@ -91,6 +91,7 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
             "precautionary_text": sheet.hazard_statements.precautionary_text,
             "supplemental_text": sheet.hazard_statements.supplemental_text,
             "codes_from_wording": sheet.hazard_statements.codes_from_wording,
+            "expected_signal_word": sheet.hazard_statements.expected_signal_word,
         },
         "contact_info": {
             "supplier_name": sheet.contact_info.supplier_name,
@@ -166,6 +167,8 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
                 supplemental_text=_optional_text(label["supplemental_text"]),
                 # Not in a reading stored before SDB-174.
                 codes_from_wording=_texts(label.get("codes_from_wording", [])),
+                # Not in a reading stored before SDB-177.
+                expected_signal_word=_optional_text(label.get("expected_signal_word")),
             ),
             contact_info=ContactInfo(
                 supplier_name=_optional_text(contact["supplier_name"]),
