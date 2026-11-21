@@ -422,15 +422,31 @@ def test_a_label_that_says_it_has_no_pictogram_gets_no_missing_one(
     assert _findings(parsed) == []
 
 
-@pytest.mark.spec("SDB-181")
-def test_a_missing_gas_cylinder_is_no_finding(tmp_path: Path) -> None:
+@pytest.mark.spec("BIB-25", "SDB-181", "SDB-183")
+def test_a_missing_gas_cylinder_is_neither_expected_nor_a_finding(
+    tmp_path: Path,
+) -> None:
     """GHS04 may be left out beside the transport label (CLP Article 33)."""
     head = [*_HEAD[:6], "Press. Gas, H280", *_HEAD[7:]]
     tail = ["Signalwort: Achtung", "H280 Enthält Gas unter Druck.", *_TAIL[-3:]]
 
     parsed = _parsed(_sheet(tmp_path / "sheet.pdf", [], head=head, tail=tail))
 
-    assert clp_expected(parsed.sheet.hazard_statements).pictograms_missing == ["GHS04"]
+    expected = clp_expected(parsed.sheet.hazard_statements)
+    assert expected.pictograms == []
+    assert expected.pictograms_missing == []
+    assert _findings(parsed) == []
+
+
+@pytest.mark.spec("BIB-25", "SDB-181", "SDB-183")
+def test_a_printed_gas_cylinder_is_no_finding(tmp_path: Path) -> None:
+    head = [*_HEAD[:6], "Press. Gas, H280", *_HEAD[7:]]
+    tail = ["Signalwort: Achtung", "H280 Enthält Gas unter Druck.", *_TAIL[-3:]]
+
+    parsed = _parsed(_sheet(tmp_path / "sheet.pdf", ["GHS04"], head=head, tail=tail))
+
+    assert parsed.sheet.hazard_statements.pictograms == ["GHS04"]
+    assert clp_expected(parsed.sheet.hazard_statements).pictograms_not_expected == []
     assert _findings(parsed) == []
 
 
@@ -466,7 +482,7 @@ def test_h290_alone_calls_for_no_ghs05(codes: list[str], pictograms: list[str]) 
     assert clp_expected(HazardStatements(hazard_codes=codes)).pictograms == pictograms
 
 
-@pytest.mark.spec("BIB-25", "SDB-181")
+@pytest.mark.spec("BIB-25", "SDB-181", "SDB-183")
 def test_a_label_without_ghs05_for_h290_alone_gets_no_finding(tmp_path: Path) -> None:
     parsed = _parsed(
         _corrosive_sheet(tmp_path / "sheet.pdf", ["H290", "H319"], ["GHS07"])
@@ -476,7 +492,7 @@ def test_a_label_without_ghs05_for_h290_alone_gets_no_finding(tmp_path: Path) ->
     assert _findings(parsed) == []
 
 
-@pytest.mark.spec("BIB-25", "SDB-181")
+@pytest.mark.spec("BIB-25", "SDB-181", "SDB-183")
 def test_ghs05_printed_for_h290_alone_gets_no_finding(tmp_path: Path) -> None:
     parsed = _parsed(_corrosive_sheet(tmp_path / "sheet.pdf", ["H290"], ["GHS05"]))
 
@@ -486,7 +502,7 @@ def test_ghs05_printed_for_h290_alone_gets_no_finding(tmp_path: Path) -> None:
     assert _findings(parsed) == []
 
 
-@pytest.mark.spec("BIB-25", "SDB-181")
+@pytest.mark.spec("BIB-25", "SDB-181", "SDB-183")
 def test_ghs05_printed_for_h290_takes_the_place_of_ghs07(tmp_path: Path) -> None:
     """Printed, GHS05 applies: GHS07 for irritation is not missing beside it."""
     parsed = _parsed(

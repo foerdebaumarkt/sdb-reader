@@ -351,7 +351,7 @@ def pictogram_findings(
     ``pictogram-not-found`` for each pictogram the codes call for that the
     label neither names nor shows, only where the label was looked at as
     drawn and every red diamond in it was named (``drawing_read``), not where
-    the label states it has none, and not for GHS04 (CLP Article 33);
+    the label states it has none;
     ``pictogram-not-expected`` for each pictogram the label names or shows
     that none of its H codes calls for; ``pictogram-precedence`` for a
     pictogram the label shows although Article 26 CLP leaves it out beside
@@ -379,7 +379,6 @@ def pictogram_findings(
         findings.extend(
             Message("pictogram-not-found", {"pictogram": code})
             for code in expected.pictograms_missing
-            if code != "GHS04"
         )
     findings.extend(
         Message("pictogram-not-expected", {"pictogram": code})
