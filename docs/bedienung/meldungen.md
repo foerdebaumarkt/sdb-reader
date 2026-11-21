@@ -88,6 +88,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `label-not-found` | – | Abschnitt 2 stuft das Produkt ein, und eine Kennzeichnung (2.2) wurde nicht gefunden; Anhang II der REACH-Verordnung verlangt sie dort. |
 | `label-without-hazard-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein H-Satz gefunden; die Einstufung verlangt ihre Gefahrenhinweise auf dem Etikett (CLP Art. 27). |
 | `label-without-precautionary-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein P-Satz gefunden; die Einstufung verlangt die einschlägigen Sicherheitshinweise auf dem Etikett (CLP Art. 22). |
+| `hazard-statement-not-in-label` | `statement` | Abschnitt 2.1 nennt {statement} zur Einstufung, und in der Kennzeichnung wurde der Satz nicht gefunden; die Einstufung verlangt ihn auf dem Etikett (CLP Art. 27). |
 | `different-products` | `products` | Die Datei enthält Sicherheitsdatenblätter verschiedener Produkte: {products} |
 | `country-editions-differ` | `fields` | Die Blätter desselben Produkts für verschiedene Länder weichen voneinander ab: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} steht nur außerhalb der Kennzeichnung: {sentence} |

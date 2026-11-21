@@ -14,6 +14,13 @@ Versions follow the tags of this repository.
   assigned codes. The code lists stay as they are. `as_printed(text,
   codes_from_wording)` gives a statement text without the assigned codes,
   as the sheet prints it (SDB-174).
+- **A hazard statement of the classification that the label does not
+  carry.** Where section 2.1 names an H statement for the classification and
+  the label carries neither its code nor its wording, the sheet gets the
+  finding `hazard-statement-not-in-label` with the code. Not required are H400
+  beside H410 and H318 beside H314 (CLP Annex III Part 1) and H304 on an
+  aerosol (Annex I 1.3.3); not where the label carries no H statement at all,
+  which `label-without-hazard-statement` says (SDB-173).
 - **Findings for the label of a classified product.** Where section 2
   classifies the product under CLP and the label (2.2) is not found
   (`label-not-found`), carries no H statement

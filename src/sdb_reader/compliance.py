@@ -19,12 +19,21 @@ from .parser import (
     CLASSIFIED_BEFORE_CLP,
     EUH_WORDING_OUTSIDE_LABEL,
     LABEL_BEFORE_CLP,
+    LABEL_HEADING_PATTERN,
     LABEL_UNDETERMINED,
     NO_LABEL_SECTION,
     SheetPart,
+    classification_hazard_codes,
 )
 from .schema import HazardStatements, SafetyDataSheet, Section, StatedClassification
-from .statements import SHEET_ON_REQUEST, deviates_from_regulation, label_statements
+from .statements import (
+    SHEET_ON_REQUEST,
+    _catalogue,
+    _comparable,
+    base_code,
+    deviates_from_regulation,
+    label_statements,
+)
 
 # Annex II of REACH in the version of Regulation (EU) 2020/878 applies from
 # 1 January 2021; sheets not conforming to it could be supplied until
@@ -285,16 +294,8 @@ def label_not_found(
     >>> label_not_found(sheet(HazardStatements(), StatedClassification.NOT_STATED), [])
     []
     """
-    if sheet.stated_classification is not StatedClassification.CLASSIFIED:
-        return []
-    if sheet.stated_article:
-        return []
     noted = {warning.code for warning in parser_warnings}
-    if CLASSIFIED_BEFORE_CLP in noted:
-        return []
-    # A mixture could be labelled under the old directives until 1 June 2015.
-    dated = sheet.revision_date or sheet.issue_date
-    if LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES:
+    if not _label_is_judged(sheet, noted):
         return []
     label = sheet.hazard_statements
     read_any = bool(
@@ -312,6 +313,101 @@ def label_not_found(
     if not label.precautionary_codes:
         findings.append(Message("label-without-precautionary-statement"))
     return findings
+
+
+def _label_is_judged(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
+    """Whether the label findings apply to *sheet* (SDB-170): a product
+    classified under CLP, no article, no classification under the old law, and
+    no label under the old directives on a sheet dated before 1 June 2015.
+    *noted* are the codes of the parser's warnings."""
+    if sheet.stated_classification is not StatedClassification.CLASSIFIED:
+        return False
+    if sheet.stated_article or CLASSIFIED_BEFORE_CLP in noted:
+        return False
+    # A mixture could be labelled under the old directives until 1 June 2015.
+    dated = sheet.revision_date or sheet.issue_date
+    return not (
+        LABEL_BEFORE_CLP in noted and dated is not None and dated < CLP_FOR_MIXTURES
+    )
+
+
+# The order of precedence Annex III Part 1 sets under Article 27 (consolidated
+# version of 1 July 2026): a statement the label may leave out beside another.
+_LEFT_OUT_BESIDE = {"H400": "H410", "H318": "H314"}
+# An aerosol: its class in 2.1 or one of its statements (Annex I 2.3).
+_AEROSOL_CLASS = re.compile(r"\bAerosol\s?[123]\b")
+_AEROSOL_STATEMENTS = frozenset({"H222", "H223", "H229"})
+
+
+def _not_required(
+    code: str, on_label: set[str], classified: set[str], hazards: str
+) -> bool:
+    """Whether the label may go without *code* although 2.1 names it (SDB-173).
+
+    Beside H410 or H314 the label may leave out H400 or H318 (CLP Annex III
+    Part 1 under Article 27). A product placed on the market as an aerosol need
+    not be labelled for the aspiration hazard, H304 (Annex I 1.3.3).
+    """
+    if _LEFT_OUT_BESIDE.get(code) in on_label:
+        return True
+    return code == "H304" and bool(
+        _AEROSOL_CLASS.search(hazards) or (classified | on_label) & _AEROSOL_STATEMENTS
+    )
+
+
+def hazard_statements_not_in_label(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    r"""Each H statement of the classification in 2.1 that the label does not
+    carry (SDB-173), with its code as ``statement``.
+
+    Only where the label carries at least one H statement -- without any,
+    ``label-without-hazard-statement`` says so (SDB-171) -- and with the
+    exceptions of SDB-170. A code counts as carried where the label carries the
+    same statement, H360 and H361 whatever their letters, and H400 and H318 also
+    where the label carries H410 or H314 (CLP Article 27 with Annex III Part 1).
+
+    >>> from sdb_reader import HazardStatements
+    >>> section = (
+    ...     "2.1 Einstufung des Stoffs oder Gemischs\n"
+    ...     "Aerosol 3, H229\nAquatic Acute 1, H400\nAquatic Chronic 1, H410\n"
+    ...     "2.2 Kennzeichnungselemente\n"
+    ... )
+    >>> sheet = SafetyDataSheet(
+    ...     None, None, None, None, "de",
+    ...     hazard_statements=HazardStatements(hazard_codes=["H410"]),
+    ...     stated_classification=StatedClassification.CLASSIFIED,
+    ...     section_text={Section.HAZARDS: section},
+    ... )
+    >>> [m.params["statement"] for m in hazard_statements_not_in_label(sheet, [])]
+    ['H229']
+    """
+    noted = {warning.code for warning in parser_warnings}
+    label = sheet.hazard_statements
+    if not label.hazard_codes or not _label_is_judged(sheet, noted):
+        return []
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    heading = LABEL_HEADING_PATTERN.search(hazards)
+    label_text = _comparable(hazards[heading.start() :]) if heading else ""
+    on_label = {base_code(code) for code in label.hazard_codes}
+    # Without the wordings of its own statements: "Giftig für Wasserorganismen,
+    # mit langfristiger Wirkung" (H411) stands inside H410's.
+    wordings = _catalogue()
+    for code in on_label:
+        if own := wordings.get(code):
+            label_text = label_text.replace(_comparable(own), " ")
+    classified = {base_code(code) for code in classification_hazard_codes(hazards)}
+    missing: list[Message] = []
+    for code in sorted(classification_hazard_codes(hazards)):
+        base = base_code(code)
+        if base in on_label or _not_required(base, on_label, classified, hazards):
+            continue
+        # The label prints the statement's wording without its code.
+        wording = wordings.get(base)
+        if wording and _comparable(wording) in label_text:
+            continue
+        missing.append(Message("hazard-statement-not-in-label", {"statement": code}))
+    return missing
 
 
 class Classification(StrEnum):
@@ -603,6 +699,7 @@ def sheet_findings(
         findings.append(Message("classification-contradicts-label"))
 
     findings.extend(label_not_found(sheet, parser_warnings))
+    findings.extend(hazard_statements_not_in_label(sheet, parser_warnings))
 
     findings.extend(
         Message("euh-outside-label", dict(outside.params))

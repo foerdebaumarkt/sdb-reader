@@ -88,6 +88,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `label-not-found` | – | Section 2 classifies the product, and no label (2.2) was found; Annex II of REACH requires it there. |
 | `label-without-hazard-statement` | – | Section 2 classifies the product, and no H statement was found in the label; the classification requires its hazard statements on the label (CLP Article 27). |
 | `label-without-precautionary-statement` | – | Section 2 classifies the product, and no P statement was found in the label; the classification requires the relevant precautionary statements on the label (CLP Article 22). |
+| `hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label; the classification requires it on the label (CLP Article 27). |
 | `different-products` | `products` | The file holds safety data sheets of different products: {products} |
 | `country-editions-differ` | `fields` | The sheets of the same product for different countries differ in: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} is printed only outside the label: {sentence} |

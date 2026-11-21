@@ -825,6 +825,43 @@ def _gives_no_answer(part: str) -> bool:
     return found > 0 and not re.search(r"[^\W\d]", rest)
 
 
+# A hazard statement's code as section 2.1 names it with a hazard class: H200
+# to H499, H360 and H361 with the letters of their effect (SDB-173).
+_CLASSIFICATION_HAZARD_CODE = re.compile(
+    r"\bH(?:36[01][A-Za-z]{1,2}(?![^\W\d_])|[2-4]\d{2})(?!\d)"
+)
+
+
+def classification_hazard_codes(hazards_section: str) -> set[str]:
+    r"""The H codes section 2.1 names for the product's classification (SDB-173).
+
+    Read from the text under each classification heading up to the label's
+    (SDB-75); never codes of the sheet. A code on a line that speaks of
+    ingredients ("enthält", "Inhaltsstoff", "Bestandteil", as in SDB-80), or on
+    the line after one that it continues, is an ingredient's, not the product's.
+
+    >>> classification_hazard_codes(
+    ...     "2.1 Einstufung des Stoffs oder Gemischs\n"
+    ...     "Flam. Liq. 3, H226\nRepr. 1B, H360D\n"
+    ...     "Das Gemisch enthält Stoffe, die als Acute Tox. 4\n(H302) eingestuft sind.\n"
+    ...     "2.2 Kennzeichnungselemente\nH226 Flüssigkeit und Dampf entzündbar.\n"
+    ... ) == {"H226", "H360D"}
+    True
+    """
+    codes: set[str] = set()
+    for part in _classification_parts(hazards_section):
+        lines = part.split("\n")
+        for index, line in enumerate(lines):
+            found = _CLASSIFICATION_HAZARD_CODE.findall(line)
+            if not found or _ABOUT_INGREDIENTS.search(line):
+                continue
+            continues = line.lstrip()[:1].islower() or line.lstrip().startswith("(")
+            if continues and index and _ABOUT_INGREDIENTS.search(lines[index - 1]):
+                continue
+            codes.update(lettered_code(code) for code in found)
+    return codes
+
+
 def stated_classification(hazards_section: str) -> StatedClassification:
     """What section 2 says about the product's classification (SDB-75).
 
