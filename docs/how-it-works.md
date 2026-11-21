@@ -171,8 +171,7 @@ Only a German safety data sheet goes on to the parser.
   and counts only under a code the label carries (SDB-124, SDB-125).
 - **The classification of section 2.** Whether section 2 classifies the
   product, classifies it under the directives before CLP, says it is not
-  classified, or says neither (SDB-73, SDB-75, SDB-80, SDB-81, SDB-84 to
-  SDB-88, SDB-104, SDB-106, SDB-107).
+  classified, or says neither (SDB-73, SDB-75, SDB-80, SDB-81, SDB-107).
 - **The product name.** The trade name of subsection 1.1: behind its label,
   on the label's line or the line below, or the line under the heading
   "Produktidentifikator" where the sheet prints no label; "Produktform:

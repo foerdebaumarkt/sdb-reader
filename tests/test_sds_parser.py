@@ -4425,7 +4425,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is StatedClassification.CLASSIFIED
 
-    @pytest.mark.spec("SDB-84")
+    @pytest.mark.spec("SDB-80")
     @pytest.mark.parametrize(
         ("part", "expected"),
         [
@@ -4480,7 +4480,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is StatedClassification.NOT_CLASSIFIED
 
-    @pytest.mark.spec("SDB-85", "SDB-77")
+    @pytest.mark.spec("SDB-81", "SDB-77")
     def test_not_subject_to_classification(self) -> None:
         """Charvát's bitumen sheeting: no classification heading, and "Gefahr"
         only in running text."""
@@ -4492,7 +4492,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is StatedClassification.NOT_CLASSIFIED
 
-    @pytest.mark.spec("SDB-86", "SDB-77")
+    @pytest.mark.spec("SDB-81", "SDB-77")
     def test_not_applicable_as_the_classification(self) -> None:
         """One supplier's alkaline batteries: the old layout, headings that read like
         signal words, and "N/A" where the classification would stand."""
@@ -4503,7 +4503,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is StatedClassification.NOT_CLASSIFIED
 
-    @pytest.mark.spec("SDB-106")
+    @pytest.mark.spec("SDB-75")
     @pytest.mark.parametrize(
         ("part", "expected"),
         [
@@ -4570,7 +4570,7 @@ class TestWhatSection2SaysAboutTheClassification:
             section = section.replace("Nicht kennzeichnungspflichtig.", "Keine.")
         assert stated_classification(section) is expected
 
-    @pytest.mark.spec("SDB-104")
+    @pytest.mark.spec("SDB-81")
     def test_no_classification_per_kind_of_hazard(self) -> None:
         """With the page header inside the part."""
         section = (
@@ -4582,7 +4582,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is StatedClassification.NOT_CLASSIFIED
 
-    @pytest.mark.spec("SDB-87")
+    @pytest.mark.spec("SDB-75")
     @pytest.mark.parametrize(
         ("part", "label", "expected"),
         [
@@ -4622,7 +4622,7 @@ class TestWhatSection2SaysAboutTheClassification:
         )
         assert stated_classification(section) is expected
 
-    @pytest.mark.spec("SDB-88")
+    @pytest.mark.spec("SDB-75", "SDB-81")
     @pytest.mark.parametrize(
         ("section", "expected"),
         [

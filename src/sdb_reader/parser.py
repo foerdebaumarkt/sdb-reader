@@ -690,7 +690,7 @@ _HAZARD_CLASS_IN_WORDS = re.compile(
     # "… auf die Haut, Kategorie" / "2".
     r"|^[^\S\n]*(?:Gefahren)?Kategorie[^\S\n]+[1-4][A-C]?[^\S\n]*$"
     r"|\b(?:Gefahren)?Kategorie[^\S\n]*\n[^\S\n]*[1-4][A-C]?[^\S\n]*$"
-    # Or the table drops the word (SDB-84): a line that is the name, a comma
+    # Or the table drops the word (SDB-80): a line that is the name, a comma
     # and the category, "Ätz-/Reizwirkung auf die Haut, 2".
     r"|^[^\S\n]*[A-ZÄÖÜ][^.:\n]{3,70}?,[^\S\n]*[1-4][A-C]?[^\S\n]*$"
     # A list under "Gefahrenkategorien:" names each class with an abbreviation
@@ -734,9 +734,9 @@ _NOT_CLASSIFIED = re.compile(
     r"|kriterien\s+(?:sind\s+)?nicht\s+erfüllt"
     r"|keiner\s+Gefahren(?:kategorie|klasse)"
     r"|nicht\s+einstufungspflichtig|keine\s+(?:Gefahren)?einstufung"
-    # "Keine Klassifizierung für physikalische Gefahren." (SDB-104).
+    # "Keine Klassifizierung für physikalische Gefahren." (SDB-81).
     r"|keine\s+Klassifizierung"
-    # "… als Fertigprodukt unterliegen nicht der Einstufung gemäß …" (SDB-85).
+    # "… als Fertigprodukt unterliegen nicht der Einstufung gemäß …" (SDB-81).
     r"|unterlieg\w*\s+nicht\s+der\s+Einstufung"
     r"|nicht\s+gefährlich|\bungefährlich|nicht\s+klassifiziert"
     r"|nicht\s+kennzeichnungspflichtig|von\s+der\s+Etikettierung\s+befreit"
@@ -755,7 +755,7 @@ _NOT_CLASSIFIED = re.compile(
     # From the last colon before the word, so that a run of colons and blanks
     # is not read again from each of them.
     r"|(?m:(?:^|:)[^\w\n:]*keine?\.?[^\w\n]*$)"
-    # "GHS Einstufung:" / "N/A" -- not applicable (SDB-86).
+    # "GHS Einstufung:" / "N/A" -- not applicable (SDB-81).
     r"|(?m:(?:^|:)[^\w\n:]*N\s?/\s?A\b[^\w\n]*$)"
     # A dash where the classification would stand.
     # Each character of the line one way: dashes, then blanks to its end.
@@ -764,7 +764,7 @@ _NOT_CLASSIFIED = re.compile(
 )
 
 
-# A classification that only says nothing is at hand (SDB-87): a classified
+# A classification that only says nothing is at hand (SDB-75, step 5): a classified
 # product has to name its classification there, so this names none.
 _NO_ANSWER = re.compile(
     r"Es\s+liegen\s+keine\s+Informationen\s+vor"
@@ -772,7 +772,7 @@ _NO_ANSWER = re.compile(
     r"|\bn\.\s?a\.",
     re.IGNORECASE,
 )
-# An EUH statement is supplemental labelling, not a hazard class (SDB-88).
+# An EUH statement is supplemental labelling, not a hazard class (SDB-75, step 7).
 _EUH_CODE = re.compile(r"\bEUH\s?\d{3}[A-Z]?\b")
 
 
@@ -820,7 +820,7 @@ def _label_says_unclassified(hazards_section: str) -> bool:
 
 
 def _gives_no_answer(part: str) -> bool:
-    """Nothing under the classification but "no information" (SDB-87)."""
+    """Nothing under the classification but "no information" (SDB-75, step 5)."""
     rest, found = _NO_ANSWER.subn("", part)
     return found > 0 and not re.search(r"[^\W\d]", rest)
 
@@ -882,7 +882,7 @@ def stated_classification(hazards_section: str) -> StatedClassification:
     # whole section, where an EUH statement may stand beside a hazard in words.
     headed = _CLASSIFICATION_HEADING.search(hazards_section) is not None
     # The regulation's wording of a hazard statement without its code
-    # (SDB-106): "Schädlich für Wasserorganismen, mit langfristiger Wirkung."
+    # (SDB-75, step 6): "Schädlich für Wasserorganismen, mit langfristiger Wirkung."
     if headed and any(
         _HAZARD_CLASS_CODE.fullmatch(code)
         for part in parts

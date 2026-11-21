@@ -67,7 +67,7 @@ You can still work with them:
   | --- | --- |
   | `*Vorgeschlagen:*` | proposed: has its ID, is not in force, has no test |
   | `*Zurückgezogen 2026-11-17:*` | withdrawn on that date; the old text stays behind the marker, in `specs/historie.md` |
-  | `*Zurückgezogen …, ersetzt durch SDB-87:*` | withdrawn and replaced by the rule named |
+  | `*Zurückgezogen …, ersetzt durch SDB-75:*` | withdrawn and replaced by the rule named |
   | `*Zurückgezogen …, aufgenommen in SDB-57:*` | withdrawn; its content now stands in the rule named, which sums up several |
   | `*Hintergrund:*` | background: a note under a rule, mostly its legal basis; not a rule itself |
 
