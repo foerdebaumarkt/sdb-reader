@@ -13,9 +13,14 @@ helps if you do not read it.
   nothing a sheet "should" carry and corrects nothing it gets wrong. Where a
   label prints a statement only as a sentence, the reader names its code and
   says that the code was assigned, not printed.
-- **Report, don't correct.** Where a sheet falls short of the CLP Regulation
-  or REACH, the reader says so as a finding beside the reading. The findings
-  name what its rules detect; they are a help, not a complete audit, and a
+- **Report only what is certain, and let it check the reading.** Where a
+  sheet falls short of the CLP Regulation or REACH, the reader says so as a
+  finding beside the reading, but only where it is sure. Where the answer
+  depends on something the sheet does not say, such as the pack size or who
+  buys the product, there is no finding. A finding means that the reading and
+  the regulation disagree: either the sheet is wrong, or the reader misread
+  it. Each case is checked by hand when a rule is built, and many have led to
+  fixes in the reading. The findings are a help, not a complete audit; a
   sheet without a finding is not thereby in order.
 - **Get the data right; leave the decision to the user.** The reader judges
   one file. Whether a product may be sold, which of several sheets applies,
