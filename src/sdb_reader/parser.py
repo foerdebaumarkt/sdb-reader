@@ -2114,7 +2114,7 @@ _FOR_ALL_SIZES = re.compile(
 )
 # The heading of a block under another regulation (SDB-190), on a line of its
 # own after any bullets, and what its block says it is.
-_LINE_MARKS = re.compile(r"^[^\S\n]*(?:[·•∙*\-][^\S\n]*)*")
+_LINE_MARKS = re.compile(r"^[ \t·•∙*\-]*")
 _OTHER_REGULATION_HEADINGS = (
     (
         LabelKind.BIOCIDES,
@@ -2144,7 +2144,7 @@ _OTHER_REGULATION_HEADINGS = (
 # of an element of the label.
 _STARTS_WITH_CODE = re.compile(r"^\W*(?:EUH|[HP])\s?\d{3}(?!\d)", re.IGNORECASE)
 _LABEL_ELEMENT_LINE = re.compile(
-    r"^[^\S\n]*(?:[·•∙*\-][^\S\n]*)*(?:"
+    r"^[ \t·•∙*\-]*(?:"
     r"(?:Zus(?:ä|ae)tzliche|Erg(?:ä|ae)nzende)[\s:]*$"
     r"|(?:(?:Zus(?:ä|ae)tzliche|Erg(?:ä|ae)nzende)\s+)?(?:Signalw|Gefahren-?\s*piktogramm"
     r"|Piktogramm|Gefahrenhinweis|Sicherheitshinweis|[HP]\s*-\s*S(?:ä|ae)tze"

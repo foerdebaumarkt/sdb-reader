@@ -15,7 +15,7 @@ import re
 # als 125 ml", "Kennzeichnung gemäß: Ausnahme für Pakete mit einer Kapazität
 # von 125 ml oder weniger", "Reduzierte Kennzeichnung (≤ 125 ml):" alone.
 SMALL_PACKAGE_HEADING = re.compile(
-    r"^[^\S\n]*(?:[·•∙*\-][^\S\n]*)*(?:"
+    r"^[ \t·•∙*\-]*(?:"
     r"Kennzeichnung\s+von\s+Verpackungen\s+bei\s+einem\s+Inhalt\s+von\s+nicht\s+mehr"
     r"\s+als\s+125\s*ml\b"
     r"|Kennzeichnung\s+gem(?:ä|ae)(?:ß|ss)\s*:\s*Ausnahme\s+f(?:ü|ue)r\s+"
