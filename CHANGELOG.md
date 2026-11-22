@@ -85,6 +85,8 @@ Versions follow the tags of this repository.
   public), as printed; the statements stay in the label (SDB-191, SDB-192).
   All new keys are optional in the schema, and `sheet_from_dict` reads
   records without them.
+  A small package's label counts for whether the product needs a sheet
+  (SDB-76).
 - **The findings `small-package-hazard-statement-not-in-label`,
   `small-package-signal-word-not-found` and
   `small-package-pictogram-not-found`**: what a small package's label lacks

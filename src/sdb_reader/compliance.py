@@ -208,11 +208,24 @@ def requires_sheet(sheet: SafetyDataSheet) -> bool:
     ... )
     True
     """
-    return _label_requires_sheet(
+    # What a small package's label carries speaks of the same product: its
+    # contents do not change with the package (SDB-76, SDB-188).
+    labels = [
         sheet.hazard_statements,
-        sheet.stated_classification,
-        voluntary=sheet.stated_voluntary,
-        article=sheet.stated_article,
+        *(
+            further.label
+            for further in sheet.hazard_statements.further_labels
+            if further.kind is LabelKind.SMALL_PACKAGE
+        ),
+    ]
+    return any(
+        _label_requires_sheet(
+            label,
+            sheet.stated_classification,
+            voluntary=sheet.stated_voluntary,
+            article=sheet.stated_article,
+        )
+        for label in labels
     )
 
 
