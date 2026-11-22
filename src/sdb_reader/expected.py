@@ -12,7 +12,11 @@ from dataclasses import dataclass
 
 from .parser import with_effects_joined
 from .pictograms import get_signal_word, pictograms_for, suppress_pictograms
-from .schema import HazardStatements
+from .schema import HazardStatements, LabelKind
+
+# The aerosol's statements: on a small package of an aerosol, CLP Annex I
+# 1.5.2.1.1 refers to Directive 75/324/EEC, whose exemptions it does not name.
+_AEROSOL_STATEMENTS = frozenset({"H222", "H223", "H229"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +48,9 @@ class ClpExpected:
     pictograms_left_out: list[str]
 
 
-def clp_expected(label: HazardStatements) -> ClpExpected:
+def clp_expected(
+    label: HazardStatements, *, small_package: bool = False
+) -> ClpExpected:
     """What the CLP Regulation expects of *label*, from its codes (BIB-25).
 
     The signal word follows from the H and EUH codes, never from the
@@ -57,6 +63,14 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
     prints either is right as well; beside a printed GHS05, GHS07 for
     irritation gives way as Article 26 says. A label without codes expects
     neither.
+
+    Where the label may be that of a package of at most 125 ml -- the sheet
+    prints no small package's label beside it (SDB-194), or *small_package*
+    says it is one -- H290 calls for no signal word, which Annex I 1.5.2.1.3
+    lets such a package leave out. With *small_package*, on an aerosol (H222,
+    H223 or H229 among the codes) these codes call for neither a signal word
+    nor a pictogram (1.5.2.1.1; SDB-193). A signal word the full codes call
+    for does not differ.
 
     >>> from sdb_reader import HazardStatements
     >>> expected = clp_expected(HazardStatements(
@@ -71,12 +85,23 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
     ['GHS07']
     >>> clp_expected(HazardStatements(hazard_codes=["H290", "H319"])).pictograms
     ['GHS07']
+    >>> clp_expected(HazardStatements(hazard_codes=["H290"])).signal_word is None
+    True
     """
     hazard_codes = with_effects_joined(set(label.hazard_codes))
     codes = hazard_codes | set(label.supplemental_codes)
-    signal_word = get_signal_word(codes) if codes else None
+    full_word = get_signal_word(codes) if codes else None
+    counted = set(hazard_codes)
+    if small_package or not any(
+        further.kind is LabelKind.SMALL_PACKAGE for further in label.further_labels
+    ):
+        counted -= {"H290"}
+    if small_package and counted & _AEROSOL_STATEMENTS:
+        counted -= _AEROSOL_STATEMENTS
+    called = counted | set(label.supplemental_codes)
+    signal_word = get_signal_word(called) if called else None
     printed = set(label.pictograms)
-    expected = _expected_pictograms(hazard_codes)
+    expected = _expected_pictograms(counted if small_package else hazard_codes)
     # A GHS05 the label prints for H290 alone applies all the same: GHS07 for
     # irritation then gives way to it (Article 26).
     called_for = suppress_pictograms(expected | (printed & {"GHS05"}), hazard_codes)
@@ -88,7 +113,7 @@ def clp_expected(label: HazardStatements) -> ClpExpected:
         pictograms=sorted(expected),
         signal_word_missing=signal_word is not None and label.signal_word is None,
         signal_word_differs=label.signal_word is not None
-        and label.signal_word != signal_word,
+        and label.signal_word not in {signal_word, full_word},
         pictograms_missing=sorted(called_for - printed),
         pictograms_not_expected=sorted(printed - allowed),
         pictograms_left_out=sorted(

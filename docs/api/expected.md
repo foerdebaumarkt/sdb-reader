@@ -41,6 +41,15 @@ aerosol stays in `pictograms_not_expected` where no H code calls for it,
 but is no finding: Annex I 1.3.3 CLP lets an aerosol leave out the
 aspiration hazard, and GHS08 may stand for it.
 
+The size of the package matters too. Annex I 1.5.2.1.3 lets a package of at
+most 125 ml leave out every element of "corrosive to metals": where the
+label may be such a package's, because the sheet prints no small package's
+label beside it, H290 calls for no signal word. `clp_expected(label,
+small_package=True)` judges a small package's label (`FurtherLabel.label`):
+H290 then calls for nothing, and on an aerosol neither do H222, H223 and
+H229, for which 1.5.2.1.1 refers to the aerosol directive. A signal word the
+codes call for without these exceptions does not count as differing.
+
 ## Before you call something missing
 
 The comparison is plain: it does not know why the reading lacks something.

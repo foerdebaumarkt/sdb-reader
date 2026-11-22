@@ -12,11 +12,15 @@ from itertools import pairwise
 import structlog
 
 from .extraction import ExtractionResult
+from .label_blocks import SMALL_PACKAGE_HEADING
 from .line_breaks import join_broken_words
 from .messages import Message
 from .schema import (
     ContactInfo,
+    FurtherLabel,
     HazardStatements,
+    LabelCondition,
+    LabelKind,
     SafetyDataSheet,
     Section,
     StatedClassification,
@@ -2091,6 +2095,311 @@ def _without_the_old_directives_phrase(text: str) -> tuple[str, list[str]]:
     return OLD_REQUEST_SENTENCE.sub("", text), taken
 
 
+# The blocks of 2.2 beside the label (SDB-188 to SDB-190). The heading of a
+# small package's label is label_blocks.py's, which the drawing shares.
+#
+# A sentence that says what a small package leaves out (SDB-189):
+# "Reduzierte Kennzeichnung <= 125 ml: H225 und H319 entfallen. …", "Nach
+# 1272/2008/EG I, 1.5.2 keine Kennzeichnung bei Gebinden < 125ml mit: H225, …".
+_SMALL_PACKAGE_OMITS = re.compile(
+    r"Reduzierte\s+Kennzeichnung\s*(?:<=|≤|<)\s*125\s*ml\s*:"
+    r"|keine\s+Kennzeichnung\s+bei\s+Gebinden\s*(?:<=|≤|<)\s*125\s*ml\b",
+    re.IGNORECASE,
+)
+# A code list's shorthand combination: "P303+361+353" is P303, P361 and P353.
+_SHORTHAND_COMBINATION = re.compile(r"\b(EUH|[HP])(\d{3})((?:\s*\+\s*\d{3}(?!\d))+)")
+# What a small package's label shares with the product's (SDB-188).
+_FOR_ALL_SIZES = re.compile(
+    r"\(\s*f(?:ü|ue)r\s+alle\s+Verpackungsgr(?:ö|oe)(?:ß|ss)en\s*\)", re.I
+)
+# The heading of a block under another regulation (SDB-190), on a line of its
+# own after any bullets, and what its block says it is.
+_LINE_MARKS = re.compile(r"^[^\S\n]*(?:[·•∙*\-][^\S\n]*)*")
+_OTHER_REGULATION_HEADINGS = (
+    (
+        LabelKind.BIOCIDES,
+        re.compile(
+            r"(?:Biozid-?\s*Kennzeichnung"
+            r"|Kennzeichnung\s+gem(?:\.|äß|aess)\s+Verordnung\s+\((?:EU|EG)\)\s+Nr\.\s*528/2012"
+            r"|Verordnung\s+\((?:EU|EG)\)\s+Nr\.\s*528/2012\s+über\s+Biozidprodukte)"
+            r"[\s:*]*",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        LabelKind.DETERGENTS,
+        re.compile(
+            r"(?:Etikettierung\s+von\s+Wasch-?\s*(?:und|u\.)\s*Reinigungsmitteln"
+            r"|Inhaltsstoffe\s+nach\s+Detergenzienverordnung\s+(?:\(?EG\)?\s+)?(?:Nr\.\s*)?648/2004"
+            r"|Kennzeichnung\s+der\s+Inhaltsstoffe\s+gem(?:äß|aess)\s+Verordnung\s+\(EG\)"
+            r"\s+Nr\.\s*648/2004(?:\s*,\s*Anhang\s+VII)?"
+            r"|Zus(?:ä|ae)tzliche\s+Angaben\s+gem(?:äß|aess)\s+Verordnung\s+\(EG\)\s+Nr\.\s*"
+            r"648/2004(?:\s*\([^()\n]*\))?)"
+            r"[\s:*]*",
+            re.IGNORECASE,
+        ),
+    ),
+)
+# What ends such a block (SDB-190): a line beginning with a code, and the name
+# of an element of the label.
+_STARTS_WITH_CODE = re.compile(r"^\W*(?:EUH|[HP])\s?\d{3}(?!\d)", re.IGNORECASE)
+_LABEL_ELEMENT_LINE = re.compile(
+    r"^[^\S\n]*(?:[·•∙*\-][^\S\n]*)*(?:"
+    r"(?:Zus(?:ä|ae)tzliche|Erg(?:ä|ae)nzende)[\s:]*$"
+    r"|(?:(?:Zus(?:ä|ae)tzliche|Erg(?:ä|ae)nzende)\s+)?(?:Signalw|Gefahren-?\s*piktogramm"
+    r"|Piktogramm|Gefahrenhinweis|Sicherheitshinweis|[HP]\s*-\s*S(?:ä|ae)tze"
+    r"|EUH\s*-\s*S(?:ä|ae)tze))",
+    re.IGNORECASE,
+)
+
+
+@dataclass(slots=True)
+class _Block:
+    """A block of 2.2 beside the label, as the parser cut it (SDB-188 to SDB-190)."""
+
+    kind: LabelKind
+    heading: str
+    # Its lines as printed, without the heading.
+    lines: list[str] = field(default_factory=list)
+    # The lines that are its own: not shared with the label (SDB-188), with
+    # the heading. These leave section 2 when the label's texts are cut.
+    own: list[str] = field(default_factory=list)
+    # A sentence of SDB-189: the codes it says a small package leaves out.
+    omitted: list[str] | None = None
+
+
+def _other_regulation_heading(
+    lines: Sequence[str], index: int
+) -> tuple[LabelKind, str, int] | None:
+    """The kind and heading of a block under another regulation that begins at
+    *lines[index]*, and how many lines its heading takes (SDB-190)."""
+    first = _LINE_MARKS.sub("", lines[index]).strip()
+    candidates = [(first, 1)]
+    if index + 1 < len(lines) and lines[index + 1].strip():
+        candidates.append((f"{first} {lines[index + 1].strip()}", 2))
+    for text, taken in candidates:
+        for kind, pattern in _OTHER_REGULATION_HEADINGS:
+            if pattern.fullmatch(text):
+                return kind, text.rstrip(" :*").strip(), taken
+    return None
+
+
+def omitted_codes(sentence: str) -> list[str]:
+    """The codes a sentence of SDB-189 names, one by one, a shorthand
+    combination ("P303+361+353") as its parts.
+
+    >>> omitted_codes("H225, H319, P210, P303+361+353, P305+351+338")
+    ['H225', 'H319', 'P210', 'P303', 'P305', 'P338', 'P351', 'P353', 'P361']
+    """
+    codes = set(_ANY_STATEMENT_CODE.findall(sentence))
+    for letters, first, rest in _SHORTHAND_COMBINATION.findall(sentence):
+        codes.add(f"{letters}{first}")
+        codes.update(f"{letters}{number}" for number in re.findall(r"\d{3}", rest))
+    return sorted(code.upper() for code in codes)
+
+
+def _page_furniture_line(line: str, furniture: frozenset[str]) -> bool:
+    """Whether *line* is the page's, not the label's: a running head, a page
+    number, a line repeated on the pages."""
+    text = line.strip()
+    return bool(text) and (
+        text in furniture
+        or bool(_PAGE_NUMBER.match(text))
+        or bool(_CONTINUED.fullmatch(text))
+        or bool(_RUNNING_HEAD.search(text))
+    )
+
+
+def split_label_blocks(
+    label: str, furniture: frozenset[str] = frozenset()
+) -> tuple[str, list[_Block]]:
+    """*label* without the blocks beside it, and those blocks in its order
+    (SDB-188 to SDB-190).
+
+    A small package's label runs to the next such heading or the label's end;
+    a block under another regulation interrupts it, and what follows "(für
+    alle Verpackungsgrößen)" belongs to the label as well. A block under
+    another regulation ends before an empty line, a line beginning with a
+    code, the name of a label element or another heading; a page break, the
+    lines of *furniture* and the empty lines among them, ends none. A
+    sentence naming what a small package leaves out is a block of its own.
+    """
+    lines = label.split("\n")
+    main: list[str] = []
+    blocks: list[_Block] = []
+    small: _Block | None = None
+    other: _Block | None = None
+    shared = False
+    page_break = False
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        heading_other = _other_regulation_heading(lines, index)
+        if other is not None and (
+            _page_furniture_line(line, furniture) or (page_break and not line.strip())
+        ):
+            page_break = True
+            other.own.append(line)
+            index += 1
+            continue
+        page_break = False
+        if other is not None:
+            if (
+                not line.strip()
+                or _STARTS_WITH_CODE.match(line)
+                or _LABEL_ELEMENT_LINE.match(line)
+                or SMALL_PACKAGE_HEADING.match(line)
+                or heading_other is not None
+            ):
+                other = None
+            else:
+                other.lines.append(line)
+                other.own.append(line)
+                index += 1
+                continue
+        if SMALL_PACKAGE_HEADING.match(line):
+            heading = [_LINE_MARKS.sub("", line).strip()]
+            # A heading that runs on: "… 125 ml und es technisch unmöglich
+            # ist um alle Sätze" / "aufzulisten:".
+            while index + 1 < len(lines) and re.match(
+                r"\s*[a-zäöüß]", lines[index + 1]
+            ):
+                index += 1
+                heading.append(lines[index].strip())
+            small = _Block(LabelKind.SMALL_PACKAGE, " ".join(heading), own=[line])
+            blocks.append(small)
+            shared = False
+            index += 1
+            continue
+        if heading_other is not None:
+            kind, title, taken = heading_other
+            other = _Block(kind, title, own=lines[index : index + taken])
+            blocks.append(other)
+            index += taken
+            continue
+        if _SMALL_PACKAGE_OMITS.search(line):
+            sentence = [line]
+            while sentence[-1].rstrip().endswith(",") and index + 1 < len(lines):
+                index += 1
+                sentence.append(lines[index])
+            text = " ".join(part.strip() for part in sentence)
+            blocks.append(
+                _Block(
+                    LabelKind.SMALL_PACKAGE,
+                    _LINE_MARKS.sub("", text).strip(),
+                    own=sentence,
+                    omitted=omitted_codes(text),
+                )
+            )
+            index += 1
+            continue
+        if small is not None and _FOR_ALL_SIZES.search(line):
+            shared = True
+        if small is None or shared:
+            main.append(line)
+        if small is not None:
+            small.lines.append(line)
+            if not shared:
+                small.own.append(line)
+        index += 1
+    return "\n".join(main), blocks
+
+
+# The label's own condition (SDB-191): "Obige Kennzeichnung gilt bei Abgabe
+# an privaten Endverbraucher."
+_LABEL_FOR_CONSUMERS = re.compile(
+    r"Obige\s+Kennzeichnung\s+gilt\s+bei\s+Abgabe\s+an\s+private[n]?\s+Endverbraucher\.?",
+    re.IGNORECASE,
+)
+# What begins statements for consumers only (SDB-192), and the end of the
+# passage the first one opens: "***Nur für private Endverbraucher: P101 …
+# P501 …***".
+_FOR_CONSUMERS = re.compile(
+    r"Nur\s+f(?:ü|ue)r\s+private\s+Endverbraucher\s*:"
+    r"|F(?:ü|ue)r\s+den\s+privaten\s+Endabnehmer\s+steht\s+zus(?:ä|ae)tzlich\s+auf\s+dem"
+    r"\s+Etikett\W*:"
+    r"|Zus(?:ä|ae)tzliche\s+Angaben\s+auf\s+dem\s+Etikett\s+f(?:ü|ue)r\s+den\s+privaten"
+    r"\s+Endabnehmer\s*:",
+    re.IGNORECASE,
+)
+_PASSAGE_CLOSED = re.compile(r"\*{3}\s*$")
+# A line that names something, not a sentence going on: "Zusätzliche Angaben
+# gemäß Verordnung (EG) Nr. 648/2004 (Detergenzienverodnung):".
+_NAMES_A_FIELD = re.compile(r"^[^\S\n]*[A-ZÄÖÜ][^:\n]{2,90}:[^\S\n]*$")
+# EUH210 for others than the general public (SDB-192).
+_EUH210_NOT_PUBLIC = re.compile(
+    r"EUH\s?210\b[^.]{0,200}?\bnicht\s+f(?:ü|ue)r\s+die\s+breite\s+(?:Ö|Oe)ffentlichkeit"
+    r"\s+bestimmt"
+    r"|EUH\s?210\b[^.]{0,80}?\bdarf\s+entfallen\b[^.]{0,120}?\bbreite\s+(?:Ö|Oe)ffentlichkeit"
+    r"|Nicht\s+f(?:ü|ue)r\s+die\s+private\s+Abnahme\s+bestimmte\s+Zubereitungen",
+    re.IGNORECASE,
+)
+
+
+def label_condition(label: str) -> tuple[LabelCondition, str] | None:
+    """Whom *label* says it applies to, and the sentence that says so (SDB-191)."""
+    found = _LABEL_FOR_CONSUMERS.search(label)
+    if found is None:
+        return None
+    return LabelCondition.CONSUMERS, " ".join(found.group(0).split())
+
+
+def statement_conditions(
+    label: str, on_label: Iterable[str]
+) -> dict[str, LabelCondition]:
+    """The statements of *label* printed with a condition, by code (SDB-192);
+    only codes in *on_label*, the codes the label carries."""
+    carried = set(on_label)
+    found: dict[str, LabelCondition] = {}
+    lines = label.split("\n")
+    for index, line in enumerate(lines):
+        start = _FOR_CONSUMERS.search(line)
+        if start is None:
+            continue
+        passage = [line[start.end() :]]
+        closes = "***" in line[: start.start()] or line.lstrip().startswith("*")
+        for after in lines[index + 1 :]:
+            if closes and _PASSAGE_CLOSED.search(passage[-1]):
+                break
+            if not after.strip() or _FOR_CONSUMERS.search(after):
+                break
+            if not closes and (
+                _NAMES_A_FIELD.match(after)
+                or not (
+                    _STARTS_WITH_CODE.match(after)
+                    or not _SENTENCE_END.search(passage[-1].rstrip())
+                )
+            ):
+                break
+            passage.append(after)
+        for code in _ANY_STATEMENT_CODE.findall("\n".join(passage)):
+            if code in carried:
+                found.setdefault(code, LabelCondition.CONSUMERS)
+    if "EUH210" in carried and _EUH210_NOT_PUBLIC.search(re.sub(r"\s+", " ", label)):
+        found["EUH210"] = LabelCondition.NOT_GENERAL_PUBLIC
+    return dict(sorted(found.items()))
+
+
+def without_lines(text: str, lines: Sequence[str]) -> str:
+    """*text* without the first run of *lines* in it, empty lines aside.
+
+    The label is cut from the file's text, section 2 from its sections, and
+    the two do not keep the same empty lines (SDB-196).
+    """
+    wanted = "\n".join(line.strip() for line in lines if line.strip())
+    if not wanted:
+        return text
+    rows = text.split("\n")
+    filled = [i for i, row in enumerate(rows) if row.strip()]
+    joined = "\n" + "\n".join(rows[i].strip() for i in filled) + "\n"
+    at = joined.find("\n" + wanted + "\n")
+    if at == -1:
+        return text
+    first = joined.count("\n", 0, at)
+    gone = set(filled[first : first + wanted.count("\n") + 1])
+    return "\n".join(row for i, row in enumerate(rows) if i not in gone)
+
+
 def _parse_hazard_statements(
     sections: dict[Section, str],
     full_text: str,
@@ -2116,9 +2425,114 @@ def _parse_hazard_statements(
         for part, label in (_parts_with_labels(full_text) if full_text else [])
         if label is not None
     ]
-    labels = [label for _, label in labelled]
-    if not labels and full_text:
+    if not labelled and full_text:
         warnings.append(Message(NO_LABEL_SECTION))
+    # The blocks beside the label are read apart from it (SDB-188 to SDB-190):
+    # the label is what stays, and section 2 loses their lines before the
+    # label's texts are cut from it.
+    furniture = _page_furniture(full_text, pages)
+    blocks: list[_Block] = []
+    without_blocks: list[tuple[str, str]] = []
+    for part, label in labelled:
+        main, found = split_label_blocks(label, furniture)
+        without_blocks.append((part, main))
+        blocks.extend(found)
+    if blocks and Section.HAZARDS in sections:
+        hazards_text = sections[Section.HAZARDS]
+        for block in blocks:
+            hazards_text = without_lines(hazards_text, block.own)
+        sections = {**sections, Section.HAZARDS: hazards_text}
+    hazard_statements, label_warnings = _read_labels(
+        without_blocks, sections, furniture, old_phrases
+    )
+    if any(w.code == CLASSIFIED_BEFORE_CLP for w in label_warnings):
+        # A sheet from before CLP carries no CLP label (_read_labels).
+        return hazard_statements, label_warnings
+    warnings.extend(label_warnings)
+    if labelled:
+        # The blocks beside the label have left section 2 (SDB-196).
+        warnings.extend(
+            _euh_wordings_outside(
+                sections.get(Section.HAZARDS, ""),
+                [
+                    *(main for _, main in without_blocks),
+                    *_supplemental_passages(sections.get(Section.HAZARDS, "")),
+                ],
+                set(hazard_statements.supplemental_codes),
+            )
+        )
+    for _, main in without_blocks:
+        condition = label_condition(main)
+        if condition is not None and hazard_statements.condition is None:
+            hazard_statements.condition, hazard_statements.condition_text = condition
+        on_label = {
+            *hazard_statements.hazard_codes,
+            *hazard_statements.precautionary_codes,
+            *hazard_statements.supplemental_codes,
+        }
+        for code, said in statement_conditions(main, on_label).items():
+            hazard_statements.statement_conditions.setdefault(code, said)
+    hazard_statements.statement_conditions = dict(
+        sorted(hazard_statements.statement_conditions.items())
+    )
+    for block in blocks:
+        further, block_warnings = _further_label(block, furniture)
+        hazard_statements.further_labels.append(further)
+        warnings.extend(block_warnings)
+    return hazard_statements, warnings
+
+
+# What a small package's label reports of the label's own warnings: the lines
+# it does not account for and the statements cut off (SDB-165, SDB-168).
+_FURTHER_LABEL_WARNINGS = frozenset({LABEL_LINE_UNASSIGNED, STATEMENT_TOO_LONG})
+
+
+def _further_label(
+    block: _Block, furniture: frozenset[str]
+) -> tuple[FurtherLabel, list[Message]]:
+    """The reading of a block beside the label (SDB-188 to SDB-190): a small
+    package's label is read like a label, from its own lines alone; a block
+    under another regulation and a sentence of SDB-189 only as printed."""
+    text = (
+        "\n".join(
+            line for line in block.lines if not _page_furniture_line(line, furniture)
+        ).strip("\n")
+        or None
+    )
+    if block.omitted is not None:
+        return FurtherLabel(block.kind, block.heading, omitted_codes=block.omitted), []
+    further = FurtherLabel(block.kind, block.heading, text=text)
+    if block.kind is not LabelKind.SMALL_PACKAGE or text is None:
+        return further, []
+    label, notes = _read_labels([(text, text)], {Section.HAZARDS: text}, furniture, [])
+    on_label = {
+        *label.hazard_codes,
+        *label.precautionary_codes,
+        *label.supplemental_codes,
+    }
+    label.statement_conditions = statement_conditions(text, on_label)
+    further.label = label
+    # What it shares with the label is the label's to account for (SDB-188).
+    own = {" ".join(line.split()) for line in block.own}
+    return further, [
+        found
+        for found in notes
+        if found.code in _FURTHER_LABEL_WARNINGS
+        and (found.code != LABEL_LINE_UNASSIGNED or found.params["line"] in own)
+    ]
+
+
+def _read_labels(
+    labelled: Sequence[tuple[str, str]],
+    sections: dict[Section, str],
+    furniture: frozenset[str],
+    old_phrases: list[str],
+) -> tuple[HazardStatements, list[Message]]:
+    """What the labels of *labelled*, each with the text of its sheet, carry
+    together (SDB-9); *sections* gives section 2, whose texts the statements
+    are cut from."""
+    warnings: list[Message] = []
+    labels = [label for _, label in labelled]
     if len(labels) > 1:
         warnings.append(Message("several-sheets", {"count": len(labels)}))
     if labels and all(label_before_clp(label) for label in labels):
@@ -2221,7 +2635,6 @@ def _parse_hazard_statements(
     # to prove itself first: on all 102 every block was found, and the model
     # confirmed a dropped code on two, both H318 beside H314 -- the pair Article
     # 27 lets the label print as H314 alone.
-    furniture = _page_furniture(full_text, pages)
     # The statements cut off at their limit (SDB-168), by the codes they begin with.
     too_long: list[str] = []
     hazard_statements.hazard_text = _statements_within(
@@ -2321,14 +2734,6 @@ def _parse_hazard_statements(
         Message(LABEL_LINE_UNASSIGNED, {"line": line})
         for line in unassigned_label_lines(labels, hazard_statements, furniture)
     )
-    if labels:
-        warnings.extend(
-            _euh_wordings_outside(
-                sections.get(Section.HAZARDS, ""),
-                [*labels, *passages],
-                set(hazard_statements.supplemental_codes),
-            )
-        )
     return hazard_statements, warnings
 
 
@@ -2666,6 +3071,33 @@ def _supplemental_passages(hazards_text: str) -> list[str]:
     return passages
 
 
+_TREATED_ARTICLE = re.compile(
+    r"\bbehandelt\w*\s+(?:Ware|Erzeugnis\w*)\s*\.\s*"
+    r"Kann\s+allergische\s+Reaktionen\s+hervorrufen\s*\.?",
+    re.IGNORECASE,
+)
+# How far back the sentence about a treated article may begin.
+_TREATED_ARTICLE_REACH = 400
+_CONTAINS = re.compile(r"\bEnth(?:ä|ae)lt\b", re.IGNORECASE)
+
+
+def _without_treated_articles(text: str) -> str:
+    """*text* without its sentences about a treated article that do not say
+    "Enthält" (SDB-196), from the end of the sentence before."""
+    kept: list[str] = []
+    done = 0
+    for found in _TREATED_ARTICLE.finditer(text):
+        reach = max(done, found.start() - _TREATED_ARTICLE_REACH)
+        before = max(text.rfind(mark, reach, found.start()) for mark in ".!?")
+        start = reach if before == -1 else before + 1
+        if _CONTAINS.search(text, start, found.end()):
+            continue
+        kept.append(text[done:start])
+        done = found.end()
+    kept.append(text[done:])
+    return " ".join(kept)
+
+
 def _euh_wordings_outside(
     hazards_text: str, labels: Sequence[str], on_label: set[str]
 ) -> list[Message]:
@@ -2679,7 +3111,13 @@ def _euh_wordings_outside(
     """
     outside = hazards_text
     for label in labels:
-        outside = outside.replace(label, " ")
+        # Line by line: the label and section 2 do not keep the same empty
+        # lines (SDB-196).
+        outside = without_lines(outside.replace(label, " "), label.split("\n"))
+    # A sentence about a treated article is no EUH208 without "Enthält"
+    # (SDB-196): "Mit Konservierungsmittel … behandelte Ware. Kann allergische
+    # Reaktionen hervorrufen." is Article 58 of Regulation (EU) No 528/2012.
+    outside = _without_treated_articles(outside)
     return [
         Message(EUH_WORDING_OUTSIDE_LABEL, {"statement": code, "sentence": sentence})
         for code, sentence in euh_statements_by_wording(

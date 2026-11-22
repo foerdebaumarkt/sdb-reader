@@ -22,6 +22,11 @@ with any release, the parts that ask a language model included.
   before. ``SheetReading`` is what comes back;
   for a file that holds several sheets its parsed result names each one read
   on its own as a ``SheetPart``.
+- The reading: a ``SafetyDataSheet`` with its label (``HazardStatements``),
+  supplier (``ContactInfo``), sections (``Section``) and what section 2 says
+  of the classification (``StatedClassification``); the blocks of 2.2 beside
+  the label as ``FurtherLabel`` of a ``LabelKind``, and whom a label or a
+  statement applies to as ``LabelCondition``.
 - Keeping: ``reading_to_dict``, ``sheet_to_dict`` and ``verification_to_dict``
   give JSON, ``sheet_from_dict`` reads a stored sheet back;
   ``extraction_to_dict`` and ``extraction_from_dict`` store a text,
@@ -91,7 +96,10 @@ from .pictograms import pictograms_for
 from .reading import SheetReading, read_extraction, read_sheet
 from .schema import (
     ContactInfo,
+    FurtherLabel,
     HazardStatements,
+    LabelCondition,
+    LabelKind,
     SafetyDataSheet,
     Section,
     StatedClassification,
@@ -139,9 +147,12 @@ __all__ = [
     "EmbeddedSheet",
     "ExtractionError",
     "ExtractionResult",
+    "FurtherLabel",
     "HazardStatements",
+    "LabelCondition",
     "LabelImages",
     "LabelImagesStatus",
+    "LabelKind",
     "Message",
     "ParsedSheet",
     "SafetyDataSheet",

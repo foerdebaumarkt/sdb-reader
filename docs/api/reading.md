@@ -110,6 +110,30 @@ assert missing in sheet_findings(sheet, reading.parser_result.warnings)
 `reading.label_images` (`LabelImages`), to keep beside the text
 ([Stored texts](stored-texts.md)).
 
+### Blocks beside the label, and conditions
+
+Some sheets print more than one label in 2.2: the label of a package of at
+most 125 ml, or a block under another regulation (biocides, detergents).
+Each stands in `label.further_labels` as a `FurtherLabel`, in the sheet's
+order, and nothing of it stands in the label itself:
+
+| Attribute of `FurtherLabel` | Type | Holds |
+| --- | --- | --- |
+| `kind` | `LabelKind` | `SMALL_PACKAGE`, `BIOCIDES` or `DETERGENTS` |
+| `heading` | str | its heading as printed; for a sentence that says what a small package leaves out, that sentence |
+| `text` | str or None | its lines as printed, without the heading |
+| `omitted_codes` | list of str | the codes such a sentence says a small package leaves out |
+| `label` | `HazardStatements` | what a small package's label carries, read like a label, its drawing included; empty for the other kinds |
+
+A label can also say whom it applies to: `label.condition` is
+`LabelCondition.CONSUMERS` where it prints "Obige Kennzeichnung gilt bei
+Abgabe an privaten Endverbraucher.", with the sentence in
+`label.condition_text`. Single statements printed with a condition stand in
+`label.statement_conditions`, by code: `CONSUMERS` for "Nur für private
+Endverbraucher: P101 …", `NOT_GENERAL_PUBLIC` for EUH210 on packages not
+meant for the general public. Those statements stay in the label's lists.
+Which label and which condition apply to a product is yours to decide.
+
 ## A file that is not a sheet, or cannot be read
 
 Neither raises. A file that is something else has a kind and no parsed sheet:

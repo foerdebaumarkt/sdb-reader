@@ -94,6 +94,9 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `pictogram-not-expected` | `pictogram` | Die Kennzeichnung zeigt das Piktogramm {pictogram}, und keiner ihrer H-Sätze verlangt es. |
 | `pictogram-precedence` | `pictogram`, `beside` | Die Kennzeichnung zeigt {pictogram} neben {beside}; nach dem Vorrang des Art. 26 CLP entfällt {pictogram} dort. |
 | `signal-word-not-found` | `expected` | Die Codes der Kennzeichnung verlangen das Signalwort „{expected}“, und es wurde keines gefunden (CLP Art. 20). |
+| `small-package-hazard-statement-not-in-label` | `statement` | Abschnitt 2.1 nennt {statement} zur Einstufung, und in der Kennzeichnung für Verpackungen bis 125 ml wurde der Satz nicht gefunden; Anhang I Nr. 1.5.2.1 CLP lässt ihn dort nicht weg. |
+| `small-package-signal-word-not-found` | `expected` | Die Codes der Kennzeichnung für Verpackungen bis 125 ml verlangen das Signalwort „{expected}“, und es wurde keines gefunden; Anhang I Nr. 1.5.2.1 CLP lässt es dort nicht weg. |
+| `small-package-pictogram-not-found` | `pictogram` | Die H-Sätze der Kennzeichnung für Verpackungen bis 125 ml verlangen das Piktogramm {pictogram}, und es wurde nicht gefunden; Anhang I Nr. 1.5.2.1 CLP lässt es dort nicht weg. |
 | `different-products` | `products` | Die Datei enthält Sicherheitsdatenblätter verschiedener Produkte: {products} |
 | `country-editions-differ` | `fields` | Die Blätter desselben Produkts für verschiedene Länder weichen voneinander ab: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} steht nur außerhalb der Kennzeichnung: {sentence} |

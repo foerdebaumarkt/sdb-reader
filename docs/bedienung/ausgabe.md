@@ -117,6 +117,9 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 | `states_no_signal_word`, `states_no_pictograms` | ob die Kennzeichnung angibt, keines zu tragen („Signalwort entfällt“, „Gefahrenpiktogramme: keine“) |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |
 | `codes_from_wording` | die Codes, die die Kennzeichnung nicht druckt: Das Blatt druckt nur den Satz, und der Parser hat ihm den Code zugeordnet; jeder steht auch in seiner Liste oben |
+| `condition`, `condition_text` | für wen die Kennzeichnung nach ihren Worten gilt, und der Satz, der es sagt: `consumers` für „Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher.“; sonst `null` |
+| `statement_conditions` | einzelne Sätze mit einer Bedingung, je Code: `consumers` („Nur für private Endverbraucher: P101 …“), `not-general-public` (EUH210 für Verpackungen, die nicht für die breite Öffentlichkeit bestimmt sind); die Codes stehen auch in den Listen oben |
+| `further_labels` | die Blöcke in 2.2 neben der Kennzeichnung, siehe unten |
 
 Die Kennzeichnung enthält nur, was das Blatt druckt. Das Signalwort ist das
 gedruckte. Piktogramme sind die gedruckten: Die meisten Blätter drucken sie
@@ -131,6 +134,26 @@ Blatt, eine Kennzeichnung ohne die Überschrift „Kennzeichnungselemente“)
 oder blieb eine Raute unbenannt, sagt es `parser.warnings`
 (`label-images-not-read`, `pictograms-not-recognised`), und `drawing_read`
 ist falsch.
+
+### Blöcke neben der Kennzeichnung
+
+Manche Blätter drucken in 2.2 mehr als eine Kennzeichnung. `further_labels`
+führt jeden Block neben der Kennzeichnung in der Reihenfolge des Blatts auf,
+und nichts davon steht in der Kennzeichnung oben:
+
+| Feld | Bedeutung |
+| --- | --- |
+| `kind` | `small-package`: die Kennzeichnung einer Verpackung mit höchstens 125 ml (CLP Anhang I Nr. 1.5.2.1); `biocides`: ein Block nach der Verordnung (EU) Nr. 528/2012; `detergents`: ein Block nach der Verordnung (EG) Nr. 648/2004 |
+| `heading` | seine Überschrift, wie gedruckt; für einen Satz, der sagt, was eine kleine Packung weglässt („Reduzierte Kennzeichnung <= 125 ml: H225 und H319 entfallen.“), dieser Satz |
+| `text` | seine Zeilen, wie gedruckt, ohne die Überschrift |
+| `omitted_codes` | die Codes, die ein solcher Satz einer kleinen Packung weglassen lässt |
+| `label` | was die Kennzeichnung einer kleinen Packung trägt, in denselben Feldern wie die Kennzeichnung oben (ohne `further_labels`); für die anderen Arten leer |
+
+Welche Kennzeichnung gilt, entscheiden Sie: Die oben ist die des Produkts,
+die einer kleinen Packung gilt für eine Verpackung mit höchstens 125 ml.
+Druckt ein Blatt keine Kennzeichnung einer kleinen Packung, kann seine
+Kennzeichnung eine sein: Einen Satz, den eine solche Packung weglassen darf,
+meldet `read` dann nicht als fehlend.
 
 ## Die Sätze
 
@@ -199,6 +222,9 @@ Sache seiner neuen Fassung.
 | `pictogram-not-found` | die H-Sätze verlangen ein Piktogramm, das die Kennzeichnung nicht druckt; nur wo `drawing_read` |
 | `pictogram-not-expected` | die Kennzeichnung druckt ein Piktogramm, das keiner ihrer H-Sätze verlangt; nicht GHS08 auf einem Aerosol, wo es für die Aspirationsgefahr stehen kann (Anhang I Nr. 1.3.3 CLP) |
 | `pictogram-precedence` | die Kennzeichnung druckt GHS07 neben einem Piktogramm, dem es nach Art. 26 CLP weicht |
+| `small-package-hazard-statement-not-in-label` | der Kennzeichnung einer kleinen Packung fehlt ein Gefahrenhinweis aus 2.1, den Anhang I Nr. 1.5.2.1 CLP dort nicht weglassen lässt |
+| `small-package-signal-word-not-found` | die Kennzeichnung einer kleinen Packung hat eine Zeile „Signalwort“ und druckt keines, das ihre Codes verlangen |
+| `small-package-pictogram-not-found` | der Kennzeichnung einer kleinen Packung fehlt ein Piktogramm, das ihre H-Sätze verlangen; nur wo sie als Bild angesehen ist und von Piktogrammen spricht |
 | `not-german` | das Blatt ist in einer anderen Sprache |
 
 Ein Befund ist eine Beobachtung am Dokument. Was daraus folgt, etwa beim

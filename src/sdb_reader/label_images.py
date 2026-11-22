@@ -30,6 +30,7 @@ from typing import Any
 
 import pymupdf
 
+from .label_blocks import SMALL_PACKAGE_HEADING
 from .versions import label_images_stage
 
 # Where a label begins and ends on the page: the heading of 2.2, and the next
@@ -105,12 +106,18 @@ class LabelImages:
     *labels* has one entry for each label found on the pages, in the file's
     order, with the codes of the pictograms recognised in it; *unrecognised*
     counts, label by label, the red-framed diamonds no reference matched.
+    Below a small package's heading in a label (SDB-188) the pictograms are
+    that small package's: *small_packages* has, label by label, one entry for
+    each such heading with its codes, *small_packages_unrecognised* the
+    diamonds no reference matched there; neither counts in *labels*.
     """
 
     stage: str
     status: LabelImagesStatus
     labels: list[list[str]] = field(default_factory=list)
     unrecognised: list[int] = field(default_factory=list)
+    small_packages: list[list[list[str]]] = field(default_factory=list)
+    small_packages_unrecognised: list[list[int]] = field(default_factory=list)
 
 
 def label_images_to_dict(images: LabelImages) -> dict[str, Any]:
@@ -120,17 +127,29 @@ def label_images_to_dict(images: LabelImages) -> dict[str, Any]:
         "status": images.status.value,
         "labels": images.labels,
         "unrecognised": images.unrecognised,
+        "small_packages": images.small_packages,
+        "small_packages_unrecognised": images.small_packages_unrecognised,
     }
 
 
 def label_images_from_dict(stored: Mapping[str, Any]) -> LabelImages:
     """What ``label_images_to_dict`` stored. A caller compares ``stage`` with
-    ``label_images_stage()`` and looks at the PDF again where they differ."""
+    ``label_images_stage()`` and looks at the PDF again where they differ.
+    Without the small packages' keys the labels have none."""
+    labels = [[str(code) for code in label] for label in stored["labels"]]
     return LabelImages(
         stage=str(stored["stage"]),
         status=LabelImagesStatus(stored["status"]),
-        labels=[[str(code) for code in label] for label in stored["labels"]],
+        labels=labels,
         unrecognised=[int(count) for count in stored["unrecognised"]],
+        small_packages=[
+            [[str(code) for code in small] for small in label]
+            for label in stored.get("small_packages", [[] for _ in labels])
+        ],
+        small_packages_unrecognised=[
+            [int(count) for count in label]
+            for label in stored.get("small_packages_unrecognised", [[] for _ in labels])
+        ],
     )
 
 
@@ -152,21 +171,33 @@ def read_label_images(path: Path, *, max_pages: int | None = None) -> LabelImage
             return LabelImages(label_images_stage(), LabelImagesStatus.NO_LABEL)
         labels: list[list[str]] = []
         unrecognised: list[int] = []
-        for region in regions:
-            codes: list[str] = []
-            missed = 0
+        small_packages: list[list[list[str]]] = []
+        small_unrecognised: list[list[int]] = []
+        for region, splits in regions:
+            # The label's own pictograms, then each small package's (SDB-188).
+            codes: list[list[str]] = [[] for _ in range(len(splits) + 1)]
+            missed = [0] * (len(splits) + 1)
             for number, top, bottom in region:
                 page = document[number]
                 for rect in _diamonds(page, top, bottom):
+                    centre = (number, (rect.y0 + rect.y1) / 2)
+                    part = sum(1 for split in splits if split < centre)
                     code = _name(page, rect)
                     if code is None:
-                        missed += 1
-                    elif code not in codes:
-                        codes.append(code)
-            labels.append(codes)
-            unrecognised.append(missed)
+                        missed[part] += 1
+                    elif code not in codes[part]:
+                        codes[part].append(code)
+            labels.append(codes[0])
+            unrecognised.append(missed[0])
+            small_packages.append(codes[1:])
+            small_unrecognised.append(missed[1:])
     return LabelImages(
-        label_images_stage(), LabelImagesStatus.READ, labels, unrecognised
+        label_images_stage(),
+        LabelImagesStatus.READ,
+        labels,
+        unrecognised,
+        small_packages,
+        small_unrecognised,
     )
 
 
@@ -199,10 +230,19 @@ def _pictograms_above(lines: Sequence[tuple[float, str]], heading: int) -> float
     return y
 
 
-def _label_regions(document: pymupdf.Document, pages: range) -> list[list[_Band]]:
-    """Each label of the file as the bands of the pages it covers."""
-    labels: list[list[_Band]] = []
+# Where a small package's label begins in a label: the page and the top of its
+# heading (SDB-188).
+_Split = tuple[int, float]
+
+
+def _label_regions(
+    document: pymupdf.Document, pages: range
+) -> list[tuple[list[_Band], list[_Split]]]:
+    """Each label of the file as the bands of the pages it covers, with the
+    places where a small package's label begins in it (SDB-188)."""
+    labels: list[tuple[list[_Band], list[_Split]]] = []
     current: list[_Band] | None = None
+    splits: list[_Split] = []
     for number in pages:
         page = document[number]
         top: float | None = 0.0 if current is not None else None
@@ -220,8 +260,8 @@ def _label_regions(document: pymupdf.Document, pages: range) -> list[list[_Band]
                 )
                 if current is not None and top is not None:
                     current.append((number, top, start))
-                    labels.append(current)
-                current, top = [], start
+                    labels.append((current, splits))
+                current, top, splits = [], start, []
                 continue
             if (
                 current is not None
@@ -230,15 +270,18 @@ def _label_regions(document: pymupdf.Document, pages: range) -> list[list[_Band]
                 and _LABEL_END.search(text)
             ):
                 current.append((number, top, y))
-                labels.append(current)
-                current, top = None, None
+                labels.append((current, splits))
+                current, top, splits = None, None, []
+                continue
+            if current is not None and SMALL_PACKAGE_HEADING.match(text):
+                splits.append((number, y))
         if current is not None:
             current.append((number, top or 0.0, page.rect.height))
             if len(current) >= _LABEL_PAGES:
-                labels.append(current)
-                current = None
+                labels.append((current, splits))
+                current, splits = None, []
     if current:
-        labels.append(current)
+        labels.append((current, splits))
     return labels
 
 
