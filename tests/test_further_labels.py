@@ -27,6 +27,7 @@ from sdb_reader import (
     read_extraction,
     read_label_images,
     read_sheet,
+    requires_sheet,
     sheet_findings,
     sheet_from_dict,
     sheet_to_dict,
@@ -619,3 +620,19 @@ def test_a_page_break_ends_no_block() -> None:
     assert block.lines == ["Enthält ein Biozidprodukt: Musterin"]
     assert "Musterin" not in main
     assert main.endswith("P102 Darf nicht in die Hände von Kindern gelangen.")
+
+
+@pytest.mark.spec("SDB-76", "SDB-188")
+def test_a_small_package_s_label_speaks_of_the_product_s_sheet() -> None:
+    sheet = _parsed(
+        "Kennzeichnung gemäß Verordnung (EG) Nr. 1272/2008 entfällt\n"
+        "Signalwort entfällt\n"
+        f"{_SMALL}\n"
+        "Enthält Musterol. Kann allergische Reaktionen hervorrufen.",
+        "Das Gemisch ist nicht eingestuft.",
+    ).sheet
+
+    assert sheet.hazard_statements.supplemental_codes == []
+    [small] = sheet.hazard_statements.further_labels
+    assert small.label.supplemental_codes == ["EUH208"]
+    assert requires_sheet(sheet)
