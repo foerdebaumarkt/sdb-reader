@@ -53,9 +53,9 @@ def _not_in_label(classification: str, label: str) -> list[str]:
 @pytest.mark.spec("SDW-42")
 def test_a_statement_of_the_classification_missing_from_the_label() -> None:
     assert _not_in_label(
-        "Flam. Liq. 3, H226\nSkin Irrit. 2, H315",
+        "Flam. Liq. 3, H226\nSkin Sens. 1, H317",
         "H226 Flüssigkeit und Dampf entzündbar.",
-    ) == ["H315"]
+    ) == ["H317"]
 
 
 @pytest.mark.spec("SDB-173")
@@ -117,10 +117,13 @@ def test_the_wording_without_its_code_carries_the_statement() -> None:
 @pytest.mark.spec("SDB-173")
 def test_a_wording_inside_another_statements_does_not_carry_it() -> None:
     # "Giftig für Wasserorganismen, mit langfristiger Wirkung" (H411) stands
-    # inside the wording of H410.
+    # inside the wording of H410. The sheet prints a small package's label as
+    # well, so the label is that of a larger package (SDB-194).
     assert _not_in_label(
         "Aquatic Acute 1, H400\nAquatic Chronic 2, H411",
-        "H410 Sehr giftig für Wasserorganismen mit langfristiger Wirkung.",
+        "H410 Sehr giftig für Wasserorganismen mit langfristiger Wirkung.\n"
+        "Kennzeichnung von Verpackungen bei einem Inhalt von nicht mehr als 125 ml\n"
+        "Signalwort: Achtung",
     ) == ["H411"]
 
 

@@ -24,7 +24,10 @@ from .messages import Catalog, Message, shipped_catalog
 from .reading import SheetReading
 from .schema import (
     ContactInfo,
+    FurtherLabel,
     HazardStatements,
+    LabelCondition,
+    LabelKind,
     SafetyDataSheet,
     Section,
     StatedClassification,
@@ -89,20 +92,7 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
         "stated_voluntary": sheet.stated_voluntary,
         "stated_article": sheet.stated_article,
         "sheet_required": requires_sheet(sheet),
-        "hazard_statements": {
-            "hazard_codes": sheet.hazard_statements.hazard_codes,
-            "precautionary_codes": sheet.hazard_statements.precautionary_codes,
-            "supplemental_codes": sheet.hazard_statements.supplemental_codes,
-            "signal_word": sheet.hazard_statements.signal_word,
-            "pictograms": sheet.hazard_statements.pictograms,
-            "hazard_text": sheet.hazard_statements.hazard_text,
-            "precautionary_text": sheet.hazard_statements.precautionary_text,
-            "supplemental_text": sheet.hazard_statements.supplemental_text,
-            "codes_from_wording": sheet.hazard_statements.codes_from_wording,
-            "drawing_read": sheet.hazard_statements.drawing_read,
-            "states_no_signal_word": sheet.hazard_statements.states_no_signal_word,
-            "states_no_pictograms": sheet.hazard_statements.states_no_pictograms,
-        },
+        "hazard_statements": _label_fields(sheet.hazard_statements),
         "contact_info": {
             "supplier_name": sheet.contact_info.supplier_name,
             "supplier_address": sheet.contact_info.supplier_address,
@@ -116,6 +106,80 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
             section.value: text for section, text in sheet.section_text.items()
         },
     }
+
+
+def _label_fields(label: HazardStatements, *, further: bool = True) -> dict[str, Any]:
+    """*label* as the record holds it; a further label's own label carries no
+    further labels (SDW-51)."""
+    fields: dict[str, Any] = {
+        "hazard_codes": label.hazard_codes,
+        "precautionary_codes": label.precautionary_codes,
+        "supplemental_codes": label.supplemental_codes,
+        "signal_word": label.signal_word,
+        "pictograms": label.pictograms,
+        "hazard_text": label.hazard_text,
+        "precautionary_text": label.precautionary_text,
+        "supplemental_text": label.supplemental_text,
+        "codes_from_wording": label.codes_from_wording,
+        "drawing_read": label.drawing_read,
+        "states_no_signal_word": label.states_no_signal_word,
+        "states_no_pictograms": label.states_no_pictograms,
+        # Whom the label and single statements apply to (SDB-191, SDB-192).
+        "condition": None if label.condition is None else label.condition.value,
+        "condition_text": label.condition_text,
+        "statement_conditions": {
+            code: said.value for code, said in label.statement_conditions.items()
+        },
+    }
+    if further:
+        # The blocks of 2.2 beside the label (SDB-188 to SDB-190).
+        fields["further_labels"] = [
+            {
+                "kind": block.kind.value,
+                "heading": block.heading,
+                "text": block.text,
+                "omitted_codes": block.omitted_codes,
+                "label": _label_fields(block.label, further=False),
+            }
+            for block in label.further_labels
+        ]
+    return fields
+
+
+def _label_from_dict(label: Mapping[str, Any]) -> HazardStatements:
+    """The label ``_label_fields`` stored. The keys of SDB-174, SDB-179,
+    SDB-180 and SDB-188 to SDB-192 are not in a reading stored before them."""
+    condition = label.get("condition")
+    return HazardStatements(
+        hazard_codes=_texts(label["hazard_codes"]),
+        precautionary_codes=_texts(label["precautionary_codes"]),
+        supplemental_codes=_texts(label["supplemental_codes"]),
+        signal_word=_optional_text(label["signal_word"]),
+        pictograms=_texts(label["pictograms"]),
+        hazard_text=_optional_text(label["hazard_text"]),
+        precautionary_text=_optional_text(label["precautionary_text"]),
+        supplemental_text=_optional_text(label["supplemental_text"]),
+        codes_from_wording=_texts(label.get("codes_from_wording", [])),
+        drawing_read=label.get("drawing_read", False) is True,
+        states_no_signal_word=label.get("states_no_signal_word", False) is True,
+        states_no_pictograms=label.get("states_no_pictograms", False) is True,
+        condition=None if condition is None else LabelCondition(_text(condition)),
+        condition_text=_optional_text(label.get("condition_text")),
+        statement_conditions={
+            _text(code): LabelCondition(_text(said))
+            for code, said in label.get("statement_conditions", {}).items()
+        },
+        further_labels=[
+            FurtherLabel(
+                kind=LabelKind(_text(block["kind"])),
+                heading=_text(block["heading"]),
+                text=_optional_text(block["text"]),
+                omitted_codes=_texts(block["omitted_codes"]),
+                label=_label_from_dict(block["label"]),
+            )
+            for block in label.get("further_labels", [])
+        ],
+    )
 
 
 def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
@@ -166,22 +230,7 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
             revision_date=_stored_date(stored["revision_date"]),
             version=_optional_text(stored["version"]),
             language=_text(stored["language"]),
-            hazard_statements=HazardStatements(
-                hazard_codes=_texts(label["hazard_codes"]),
-                precautionary_codes=_texts(label["precautionary_codes"]),
-                supplemental_codes=_texts(label["supplemental_codes"]),
-                signal_word=_optional_text(label["signal_word"]),
-                pictograms=_texts(label["pictograms"]),
-                hazard_text=_optional_text(label["hazard_text"]),
-                precautionary_text=_optional_text(label["precautionary_text"]),
-                supplemental_text=_optional_text(label["supplemental_text"]),
-                # Not in a reading stored before SDB-174.
-                codes_from_wording=_texts(label.get("codes_from_wording", [])),
-                # Not in a reading stored before SDB-179 and SDB-180.
-                drawing_read=label.get("drawing_read", False) is True,
-                states_no_signal_word=label.get("states_no_signal_word", False) is True,
-                states_no_pictograms=label.get("states_no_pictograms", False) is True,
-            ),
+            hazard_statements=_label_from_dict(label),
             contact_info=ContactInfo(
                 supplier_name=_optional_text(contact["supplier_name"]),
                 supplier_address=_optional_text(contact["supplier_address"]),

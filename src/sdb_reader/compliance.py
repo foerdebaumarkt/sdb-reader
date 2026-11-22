@@ -24,8 +24,16 @@ from .parser import (
     NO_LABEL_SECTION,
     SheetPart,
     classification_hazard_codes,
+    without_lines,
 )
-from .schema import HazardStatements, SafetyDataSheet, Section, StatedClassification
+from .schema import (
+    FurtherLabel,
+    HazardStatements,
+    LabelKind,
+    SafetyDataSheet,
+    Section,
+    StatedClassification,
+)
 from .statements import (
     SHEET_ON_REQUEST,
     _catalogue,
@@ -307,11 +315,76 @@ def label_not_found(
     if NO_LABEL_SECTION in noted and not read_any:
         return [Message("label-not-found")]
     findings: list[Message] = []
-    if not label.hazard_codes:
+    # Where the label may be a small package's, a label without what such a
+    # package may leave out is no finding (SDB-194).
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    classified = {base_code(c) for c in classification_hazard_codes(hazards)}
+    small_may_be = not prints_small_package_label(label)
+    aerosol = _is_aerosol(hazards, classified | set(label.hazard_codes))
+    if not label.hazard_codes and not (
+        small_may_be
+        and classified
+        and all(small_package_may_omit(code, aerosol=aerosol) for code in classified)
+    ):
         findings.append(Message("label-without-hazard-statement"))
-    if not label.precautionary_codes:
+    product = classified | {base_code(c) for c in label.hazard_codes}
+    if not label.precautionary_codes and not (
+        small_may_be
+        and product
+        and all(
+            small_package_may_omit(code, aerosol=aerosol)
+            or code in _SMALL_PACKAGE_OMITS_PRECAUTIONS
+            for code in product
+        )
+    ):
         findings.append(Message("label-without-precautionary-statement"))
     return findings
+
+
+# The hazard statements CLP Annex I 1.5.2.1.1 lets a package of at most 125 ml
+# leave out (consolidated version of 1 July 2026), each standing for categories
+# of the list only: oxidising gas 1 (H270), gases under pressure (H280, H281),
+# flammable liquid 2 and 3 (H225, H226), flammable solid 1 and 2 (H228),
+# self-reactive and organic peroxide types C to F (H242), self-heating 2
+# (H252), water-reactive 1 to 3 (H260, H261), oxidising liquid and solid 2
+# and 3 (H272), skin irritation 2 (H315), eye irritation 2 (H319), aquatic
+# acute 1 (H400), aquatic chronic 1 and 2 (H410, H411); and 1.5.2.1.3 metal
+# corrosion (H290). SDB-194.
+_SMALL_PACKAGE_OMITS = frozenset(
+    {
+        "H225", "H226", "H228", "H242", "H252", "H260", "H261", "H270", "H272",
+        "H280", "H281", "H290", "H315", "H319", "H400", "H410", "H411",
+    }
+)  # fmt: skip
+# Those 1.5.2.1.1 lets it leave out only where the product is not supplied to
+# the general public: acute toxicity 4, STOT SE 2 and 3, STOT RE 2. Who buys
+# the product the sheet does not say (SDB-183).
+_SMALL_PACKAGE_OMITS_NOT_PUBLIC = frozenset(
+    {"H302", "H312", "H332", "H335", "H336", "H371", "H373"}
+)
+# The categories whose precautionary statements alone 1.5.2.1.2 lets it leave
+# out: effects on or via lactation, aquatic chronic 3 and 4. H221 stands for
+# flammable gas 1B as well, which the list does not name.
+_SMALL_PACKAGE_OMITS_PRECAUTIONS = frozenset({"H362", "H412", "H413"})
+
+
+def small_package_may_omit(code: str, *, aerosol: bool) -> bool:
+    """Whether a package of at most 125 ml may go without the hazard statement
+    *code* (CLP Annex I 1.5.2.1.1 and 1.5.2.1.3; SDB-194). On an aerosol also
+    the statements of the aerosol class, for which 1.5.2.1.1 refers to
+    Directive 75/324/EEC."""
+    return (
+        code in _SMALL_PACKAGE_OMITS
+        or code in _SMALL_PACKAGE_OMITS_NOT_PUBLIC
+        or (aerosol and code in _AEROSOL_STATEMENTS)
+    )
+
+
+def prints_small_package_label(label: HazardStatements) -> bool:
+    """Whether the sheet prints a small package's label beside *label*, by a
+    heading or a sentence naming what it leaves out (SDB-188, SDB-189): the
+    label is then that of a larger package."""
+    return any(f.kind is LabelKind.SMALL_PACKAGE for f in label.further_labels)
 
 
 def _label_is_judged(sheet: SafetyDataSheet, noted: Collection[str]) -> bool:
@@ -433,17 +506,39 @@ _AEROSOL_STATEMENTS = frozenset({"H222", "H223", "H229"})
 
 
 def _not_required(
-    code: str, on_label: set[str], classified: set[str], hazards: str
+    code: str, on_label: set[str], classified: set[str], sheet: SafetyDataSheet
 ) -> bool:
     """Whether the label may go without *code* although 2.1 names it (SDB-173).
 
     Beside H410 or H314 the label may leave out H400 or H318 (CLP Annex III
-    Part 1 under Article 27). A product placed on the market as an aerosol need
-    not be labelled for the aspiration hazard, H304 (Annex I 1.3.3).
+    Part 1 under Article 27). A product placed on the market as an aerosol, or
+    in a container with a sealed spray attachment the sheet names, need not be
+    labelled for the aspiration hazard, H304 (Annex I 1.3.3; SDB-195).
     """
     if _LEFT_OUT_BESIDE.get(code) in on_label:
         return True
-    return code == "H304" and _is_aerosol(hazards, classified | on_label)
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    return code == "H304" and (
+        _is_aerosol(hazards, classified | on_label) or _names_sealed_spray(sheet)
+    )
+
+
+# A sealed spray attachment, or Annex I 1.3.3 named as the reason to leave the
+# aspiration hazard out (SDB-195): "Behälter mit versiegelter
+# Sprühvorrichtung", "… Anhang 1 Abs. 1.3.3.".
+_SEALED_SPRAY = re.compile(
+    r"versiegelte\w*\s+Spr(?:ü|ue)hvorrichtung|\bAnhang\b[^\n]{0,60}?\b1\.3\.3\b",
+    re.IGNORECASE,
+)
+
+
+def _names_sealed_spray(sheet: SafetyDataSheet) -> bool:
+    """Whether section 2 or 3 names a sealed spray attachment or Annex I 1.3.3
+    (SDB-195)."""
+    return any(
+        _SEALED_SPRAY.search(sheet.section_text.get(section, ""))
+        for section in (Section.HAZARDS, Section.COMPOSITION)
+    )
 
 
 def _is_aerosol(hazards: str, codes: Collection[str]) -> bool:
@@ -466,11 +561,15 @@ def hazard_statements_not_in_label(
     exceptions of SDB-170. A code counts as carried where the label carries the
     same statement, H360 and H361 whatever their letters, and H400 and H318 also
     where the label carries H410 or H314 (CLP Article 27 with Annex III Part 1).
+    Where the sheet prints no small package's label beside it, the label may be
+    one, and a statement such a package may leave out gives no finding (CLP
+    Annex I 1.5.2.1; SDB-194): here H229 of an aerosol.
 
     >>> from sdb_reader import HazardStatements
     >>> section = (
     ...     "2.1 Einstufung des Stoffs oder Gemischs\n"
     ...     "Aerosol 3, H229\nAquatic Acute 1, H400\nAquatic Chronic 1, H410\n"
+    ...     "Skin Sens. 1, H317\n"
     ...     "2.2 Kennzeichnungselemente\n"
     ... )
     >>> sheet = SafetyDataSheet(
@@ -480,7 +579,7 @@ def hazard_statements_not_in_label(
     ...     section_text={Section.HAZARDS: section},
     ... )
     >>> [m.params["statement"] for m in hazard_statements_not_in_label(sheet, [])]
-    ['H229']
+    ['H317']
     """
     noted = {warning.code for warning in parser_warnings}
     label = sheet.hazard_statements
@@ -488,7 +587,33 @@ def hazard_statements_not_in_label(
         return []
     hazards = sheet.section_text.get(Section.HAZARDS, "")
     heading = LABEL_HEADING_PATTERN.search(hazards)
-    label_text = _comparable(hazards[heading.start() :]) if heading else ""
+    # Without the blocks beside the label (SDB-188 to SDB-190).
+    printed = hazards[heading.start() :] if heading else ""
+    for further in label.further_labels:
+        printed = without_lines(
+            printed, [further.heading, *(further.text or "").split("\n")]
+        )
+    # Where the label may be a small package's, what such a package may
+    # leave out is no finding (SDB-194).
+    small_may_be = not prints_small_package_label(label)
+    return [
+        Message("hazard-statement-not-in-label", {"statement": code})
+        for code in _not_carried(sheet, label, printed, small_package=small_may_be)
+    ]
+
+
+def _not_carried(
+    sheet: SafetyDataSheet,
+    label: HazardStatements,
+    printed: str,
+    *,
+    small_package: bool,
+) -> list[str]:
+    """The H codes of the classification in 2.1 that *label*, printed as
+    *printed*, does not carry and has to (SDB-173); with *small_package*
+    not those a package of at most 125 ml may leave out (SDB-194)."""
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    label_text = _comparable(printed)
     on_label = {base_code(code) for code in label.hazard_codes}
     # Without the wordings of its own statements: "Giftig für Wasserorganismen,
     # mit langfristiger Wirkung" (H411) stands inside H410's.
@@ -497,17 +622,102 @@ def hazard_statements_not_in_label(
         if own := wordings.get(code):
             label_text = label_text.replace(_comparable(own), " ")
     classified = {base_code(code) for code in classification_hazard_codes(hazards)}
-    missing: list[Message] = []
+    aerosol = _is_aerosol(hazards, classified | on_label)
+    missing: list[str] = []
     for code in sorted(classification_hazard_codes(hazards)):
         base = base_code(code)
-        if base in on_label or _not_required(base, on_label, classified, hazards):
+        if base in on_label or _not_required(base, on_label, classified, sheet):
+            continue
+        if small_package and small_package_may_omit(base, aerosol=aerosol):
             continue
         # The label prints the statement's wording without its code.
         wording = wordings.get(base)
         if wording and _comparable(wording) in label_text:
             continue
-        missing.append(Message("hazard-statement-not-in-label", {"statement": code}))
+        missing.append(code)
     return missing
+
+
+def small_package_findings(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    """What each small package's label the sheet prints beside its label
+    lacks that CLP Annex I 1.5.2.1 requires on such a package too (SDB-193).
+
+    Only for a small package's label that prints an element or states it has
+    none; with the exceptions of SDB-170. A hazard statement of 2.1 it does
+    not carry, unless such a package may leave it out (SDB-194); the signal
+    word and the pictograms its H codes call for, without H290 (1.5.2.1.3)
+    and, on an aerosol, the aerosol's statements (``clp_expected`` with
+    ``small_package``). A pictogram only where its drawing was read.
+    """
+    if not _label_is_judged(sheet, {w.code for w in parser_warnings}):
+        return []
+    findings: list[Message] = []
+    for further in sheet.hazard_statements.further_labels:
+        if not _judged_small_package(further):
+            continue
+        small = further.label
+        text = further.text or ""
+        printed = "\n".join(
+            filter(
+                None,
+                [small.hazard_text, small.precautionary_text, small.supplemental_text],
+            )
+        )
+        if small.hazard_codes or _NAMES_HAZARD_STATEMENTS.search(text):
+            findings.extend(
+                Message(
+                    "small-package-hazard-statement-not-in-label", {"statement": code}
+                )
+                for code in _not_carried(sheet, small, printed, small_package=True)
+            )
+        expected = clp_expected(small, small_package=True)
+        if (
+            expected.signal_word_missing
+            and not small.states_no_signal_word
+            and _NAMES_SIGNAL_WORD.search(text)
+        ):
+            findings.append(
+                Message(
+                    "small-package-signal-word-not-found",
+                    {"expected": expected.signal_word},
+                )
+            )
+        if (
+            small.drawing_read
+            and not small.states_no_pictograms
+            and (small.pictograms or _NAMES_PICTOGRAMS.search(text))
+        ):
+            findings.extend(
+                Message("small-package-pictogram-not-found", {"pictogram": code})
+                for code in expected.pictograms_missing
+            )
+    return findings
+
+
+# Where a small package's label speaks of an element (SDB-193): the name of
+# its field, "Signalwort", "Piktogramme", "Gefahrenhinweise", "H-Sätze".
+_NAMES_SIGNAL_WORD = re.compile(r"^\W*Signalw(?:o|ö)rt", re.IGNORECASE | re.MULTILINE)
+_NAMES_PICTOGRAMS = re.compile(r"Piktogramm|Gefahrensymbol", re.IGNORECASE)
+_NAMES_HAZARD_STATEMENTS = re.compile(
+    r"Gefahrenhinweis|\bH\s*-\s*(?:und\s+P\s*-\s*)?S(?:ä|ae)tze", re.IGNORECASE
+)
+
+
+def _judged_small_package(further: FurtherLabel) -> bool:
+    """Whether *further* is a small package's label that prints an element of
+    a label or states it has none (SDB-193)."""
+    label = further.label
+    return further.kind is LabelKind.SMALL_PACKAGE and bool(
+        label.hazard_codes
+        or label.precautionary_codes
+        or label.supplemental_codes
+        or label.signal_word
+        or label.pictograms
+        or label.states_no_signal_word
+        or label.states_no_pictograms
+    )
 
 
 class Classification(StrEnum):
@@ -905,6 +1115,7 @@ def sheet_findings(
     findings.extend(label_not_found(sheet, parser_warnings))
     findings.extend(hazard_statements_not_in_label(sheet, parser_warnings))
     findings.extend(signal_word_not_found(sheet, parser_warnings))
+    findings.extend(small_package_findings(sheet, parser_warnings))
 
     findings.extend(
         Message("euh-outside-label", dict(outside.params))

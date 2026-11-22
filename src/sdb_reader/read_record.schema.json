@@ -334,89 +334,7 @@
           "description": "Whether, by this sheet, its product needs a safety data sheet."
         },
         "hazard_statements": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "hazard_codes",
-            "hazard_text",
-            "pictograms",
-            "precautionary_codes",
-            "precautionary_text",
-            "signal_word",
-            "supplemental_codes",
-            "supplemental_text"
-          ],
-          "properties": {
-            "hazard_codes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "precautionary_codes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "supplemental_codes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "signal_word": {
-              "enum": [
-                "Gefahr",
-                "Achtung",
-                null
-              ]
-            },
-            "pictograms": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "^GHS\\d{1,2}$"
-              }
-            },
-            "hazard_text": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "precautionary_text": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "supplemental_text": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "codes_from_wording": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
-            },
-            "drawing_read": {
-              "type": "boolean",
-              "description": "Whether the label was looked at as drawn and every red diamond in it was named (SDB-179). Missing in a reading stored before."
-            },
-            "states_no_signal_word": {
-              "type": "boolean",
-              "description": "Whether the label states that it has no signal word, as \"Kein Signalwort\" (SDB-176). Missing in a reading stored before."
-            },
-            "states_no_pictograms": {
-              "type": "boolean",
-              "description": "Whether the label states that it has no pictogram, as \"Piktogramme: keine\" (SDB-180). Missing in a reading stored before."
-            }
-          }
+          "$ref": "#/$defs/label"
         },
         "contact_info": {
           "type": "object",
@@ -590,6 +508,9 @@
                 "pictogram-not-expected",
                 "pictogram-precedence",
                 "signal-word-not-found",
+                "small-package-hazard-statement-not-in-label",
+                "small-package-pictogram-not-found",
+                "small-package-signal-word-not-found",
                 "different-products",
                 "country-editions-differ",
                 "euh-outside-label",
@@ -830,6 +751,9 @@
             "short-text",
             "signal-word-not-found",
             "signal-word-not-taken",
+            "small-package-hazard-statement-not-in-label",
+            "small-package-pictogram-not-found",
+            "small-package-signal-word-not-found",
             "title-in-running-text",
             "undated",
             "unknown",
@@ -909,6 +833,281 @@
             "pattern": "^GHS\\d{1,2}$"
           },
           "description": "In the label as read and called for, but Article 26 leaves them out beside another pictogram it has."
+        }
+      }
+    },
+    "label": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hazard_codes",
+        "hazard_text",
+        "pictograms",
+        "precautionary_codes",
+        "precautionary_text",
+        "signal_word",
+        "supplemental_codes",
+        "supplemental_text"
+      ],
+      "properties": {
+        "hazard_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "precautionary_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supplemental_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "signal_word": {
+          "enum": [
+            "Gefahr",
+            "Achtung",
+            null
+          ]
+        },
+        "pictograms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^GHS\\d{1,2}$"
+          }
+        },
+        "hazard_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "precautionary_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "supplemental_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codes_from_wording": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
+        },
+        "drawing_read": {
+          "type": "boolean",
+          "description": "Whether the label was looked at as drawn and every red diamond in it was named (SDB-179). Missing in a reading stored before."
+        },
+        "states_no_signal_word": {
+          "type": "boolean",
+          "description": "Whether the label states that it has no signal word, as \"Kein Signalwort\" (SDB-176). Missing in a reading stored before."
+        },
+        "states_no_pictograms": {
+          "type": "boolean",
+          "description": "Whether the label states that it has no pictogram, as \"Piktogramme: keine\" (SDB-180). Missing in a reading stored before."
+        },
+        "condition": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "consumers",
+            "not-general-public",
+            null
+          ],
+          "description": "Whom the label says it applies to (SDB-191): consumers for \"Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher\". Missing in a reading stored before."
+        },
+        "condition_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The sentence that names the label's condition, as printed (SDB-191). Missing in a reading stored before."
+        },
+        "statement_conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "consumers",
+              "not-general-public"
+            ]
+          },
+          "description": "Single statements printed with a condition, by code, such as P101 \"Nur für private Endverbraucher\" or EUH210 for others than the general public (SDB-192); the codes stand in the lists as well. Missing in a reading stored before."
+        },
+        "further_labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/further_label"
+          },
+          "description": "The blocks of 2.2 beside the label, in the sheet's order (SDB-188 to SDB-190): a small package's label, or a block under another regulation. None of their elements stands in this label. Missing in a reading stored before."
+        }
+      }
+    },
+    "further_label": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "heading",
+        "text",
+        "omitted_codes",
+        "label"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "small-package",
+            "biocides",
+            "detergents"
+          ],
+          "description": "What the block is: a package of at most 125 ml (SDB-188, SDB-189), a block under Regulation (EU) No 528/2012 or under Regulation (EC) No 648/2004 (SDB-190)."
+        },
+        "heading": {
+          "type": "string",
+          "description": "The block's heading as printed; for a sentence naming what a small package leaves out, that sentence (SDB-189)."
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The block's lines as printed, without the heading."
+        },
+        "omitted_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The codes a sentence says a small package leaves out (SDB-189), one by one."
+        },
+        "label": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hazard_codes",
+            "hazard_text",
+            "pictograms",
+            "precautionary_codes",
+            "precautionary_text",
+            "signal_word",
+            "supplemental_codes",
+            "supplemental_text"
+          ],
+          "properties": {
+            "hazard_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "precautionary_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "supplemental_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "signal_word": {
+              "enum": [
+                "Gefahr",
+                "Achtung",
+                null
+              ]
+            },
+            "pictograms": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^GHS\\d{1,2}$"
+              }
+            },
+            "hazard_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "precautionary_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supplemental_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "codes_from_wording": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The codes the label does not print and the parser assigned to the sentences it prints (SDB-174); each also stands in its list. Missing in a reading stored before."
+            },
+            "drawing_read": {
+              "type": "boolean",
+              "description": "Whether the label was looked at as drawn and every red diamond in it was named (SDB-179). Missing in a reading stored before."
+            },
+            "states_no_signal_word": {
+              "type": "boolean",
+              "description": "Whether the label states that it has no signal word, as \"Kein Signalwort\" (SDB-176). Missing in a reading stored before."
+            },
+            "states_no_pictograms": {
+              "type": "boolean",
+              "description": "Whether the label states that it has no pictogram, as \"Piktogramme: keine\" (SDB-180). Missing in a reading stored before."
+            },
+            "condition": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "consumers",
+                "not-general-public",
+                null
+              ],
+              "description": "Whom the label says it applies to (SDB-191): consumers for \"Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher\". Missing in a reading stored before."
+            },
+            "condition_text": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The sentence that names the label's condition, as printed (SDB-191). Missing in a reading stored before."
+            },
+            "statement_conditions": {
+              "type": "object",
+              "additionalProperties": {
+                "enum": [
+                  "consumers",
+                  "not-general-public"
+                ]
+              },
+              "description": "Single statements printed with a condition, by code, such as P101 \"Nur für private Endverbraucher\" or EUH210 for others than the general public (SDB-192); the codes stand in the lists as well. Missing in a reading stored before."
+            }
+          },
+          "description": "What the block labels with, read like a label (SDB-188); empty for a block under another regulation and for a sentence naming what a small package leaves out."
         }
       }
     }

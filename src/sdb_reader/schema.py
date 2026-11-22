@@ -28,6 +28,27 @@ class Section(Enum):
     OTHER = "section_16"
 
 
+class LabelKind(StrEnum):
+    """What a further label block in 2.2 is (SDB-188 to SDB-190)."""
+
+    # The label of a package of at most 125 ml (CLP Annex I 1.5.2.1).
+    SMALL_PACKAGE = "small-package"
+    # A block under the Biocidal Products Regulation (EU) No 528/2012.
+    BIOCIDES = "biocides"
+    # A block under the Detergents Regulation (EC) No 648/2004.
+    DETERGENTS = "detergents"
+
+
+class LabelCondition(StrEnum):
+    """Whom a label or a statement applies to, as the sheet prints it
+    (SDB-191, SDB-192)."""
+
+    # Supplied to private consumers.
+    CONSUMERS = "consumers"
+    # Supplied to others than the general public.
+    NOT_GENERAL_PUBLIC = "not-general-public"
+
+
 @dataclass(slots=True)
 class HazardStatements:
     """The label of a sheet (section 2.2): codes, their texts as printed, the
@@ -54,6 +75,34 @@ class HazardStatements:
     # pictogram (SDB-180): "Signalwort entfällt", "Piktogramme: keine".
     states_no_signal_word: bool = False
     states_no_pictograms: bool = False
+    # Whom the label applies to, where it says so, and the sentence that says
+    # it (SDB-191).
+    condition: LabelCondition | None = None
+    condition_text: str | None = None
+    # Single statements printed with a condition, by code (SDB-192); they
+    # stand in the lists above as well.
+    statement_conditions: dict[str, LabelCondition] = field(default_factory=dict)
+    # The blocks of 2.2 beside the label, in the sheet's order (SDB-188 to
+    # SDB-190); none of their elements stands above.
+    further_labels: list[FurtherLabel] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class FurtherLabel:
+    """A block of 2.2 beside the label (SDB-188 to SDB-190): the label of a
+    small package, or a block under another regulation, as printed."""
+
+    kind: LabelKind
+    # Its heading, or for a sentence naming what a small package leaves out,
+    # that sentence (SDB-189).
+    heading: str
+    # The block's lines as printed, without the heading.
+    text: str | None = None
+    # The codes such a sentence says a small package leaves out (SDB-189).
+    omitted_codes: list[str] = field(default_factory=list)
+    # What the block labels with, read like a label (SDB-188); empty for a
+    # block under another regulation and for a sentence of SDB-189.
+    label: HazardStatements = field(default_factory=HazardStatements)
 
 
 @dataclass(slots=True)

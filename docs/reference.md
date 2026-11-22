@@ -75,6 +75,18 @@ The parts of a parsed sheet.
    :members:
    :undoc-members:
 
+.. autoclass:: FurtherLabel
+   :members:
+   :undoc-members:
+
+.. autoclass:: LabelKind
+   :members:
+   :undoc-members:
+
+.. autoclass:: LabelCondition
+   :members:
+   :undoc-members:
+
 .. autoclass:: ContactInfo
    :members:
    :undoc-members:

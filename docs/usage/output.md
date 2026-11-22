@@ -115,6 +115,9 @@ The label always stands in the reading as the sheet prints it.
 | `states_no_signal_word`, `states_no_pictograms` | whether the label states it has none ("Signalwort entfällt", "Gefahrenpiktogramme: keine") |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
 | `codes_from_wording` | the codes the label does not print: the sheet prints only the sentence, and the parser assigned the code; each also stands in its list above |
+| `condition`, `condition_text` | whom the label says it applies to, and the sentence that says it: `consumers` for "Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher."; otherwise `null` |
+| `statement_conditions` | single statements printed with a condition, by code: `consumers` ("Nur für private Endverbraucher: P101 …"), `not-general-public` (EUH210 for packages not meant for the general public); the codes stand in the lists above as well |
+| `further_labels` | the blocks of 2.2 beside the label, see below |
 
 The label holds only what the sheet prints. The signal word is the printed
 one. Pictograms are the printed ones: most sheets print them as pictures,
@@ -127,6 +130,25 @@ that one was not found. Where the label could not be looked at (a scanned
 sheet, a label without the heading "Kennzeichnungselemente") or a diamond
 stayed unnamed, `parser.warnings` says so (`label-images-not-read`,
 `pictograms-not-recognised`) and `drawing_read` is false.
+
+### Blocks beside the label
+
+Some sheets print more than one label in 2.2. `further_labels` holds each
+block beside the label, in the sheet's order, and nothing of it stands in
+the label above:
+
+| Field | Meaning |
+| --- | --- |
+| `kind` | `small-package`: the label of a package of at most 125 ml (CLP Annex I 1.5.2.1); `biocides`: a block under Regulation (EU) No 528/2012; `detergents`: a block under Regulation (EC) No 648/2004 |
+| `heading` | its heading as printed; for a sentence that says what a small package leaves out ("Reduzierte Kennzeichnung <= 125 ml: H225 und H319 entfallen."), that sentence |
+| `text` | its lines as printed, without the heading |
+| `omitted_codes` | the codes such a sentence says a small package leaves out |
+| `label` | what a small package's label carries, in the same fields as the label above (without `further_labels`); empty for the other kinds |
+
+Which label applies is yours to decide: the label above is the product's,
+and a small package's label is the one of a package of at most 125 ml.
+Where a sheet prints no small package's label, its label may be one: a
+statement such a package may leave out is then not reported as missing.
 
 ## The statements
 
@@ -194,6 +216,9 @@ to put right.
 | `pictogram-not-found` | the H statements call for a pictogram the label does not print; only where `drawing_read` |
 | `pictogram-not-expected` | the label prints a pictogram none of its H statements calls for; not GHS08 on an aerosol, where it may stand for the aspiration hazard (Annex I 1.3.3 CLP) |
 | `pictogram-precedence` | the label prints GHS07 beside a pictogram Article 26 CLP lets it give way to |
+| `small-package-hazard-statement-not-in-label` | a small package's label lacks a hazard statement of 2.1 that Annex I 1.5.2.1 CLP does not let it leave out |
+| `small-package-signal-word-not-found` | a small package's label names a signal word field, and prints none its codes call for |
+| `small-package-pictogram-not-found` | a small package's label lacks a pictogram its H statements call for; only where it was looked at as drawn and speaks of pictograms |
 | `not-german` | the sheet is in another language |
 
 A finding is an observation about the document. What follows from it, such

@@ -17,6 +17,7 @@ _SECTION_2 = (
     "2.1 Einstufung des Stoffs oder Gemischs\n"
     "Einstufung gemäß Verordnung (EG) Nr. 1272/2008\n"
     "Flam. Aerosol 1 H222 Extrem entzündbares Aerosol.\n"
+    "Skin Sens. 1 H317 Kann allergische Hautreaktionen verursachen.\n"
     "2.2 Kennzeichnungselemente\n"
     "{label}\n"
     "2.3 Sonstige Gefahren\n"

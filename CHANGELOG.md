@@ -7,6 +7,34 @@ Versions follow the tags of this repository.
 
 ### Breaking
 
+- **The label is only the product's label.** A second label in 2.2, for a
+  package of at most 125 ml, and a block under the Biocidal Products or the
+  Detergents Regulation no longer add their codes, signal word, pictograms
+  or sentences to `hazard_statements`; they stand apart under
+  `further_labels` (below). On a set of about 13,000 sheets the label's
+  codes, signal word or pictograms change on 6, which printed them only for
+  the small package. `LabelImages` gives the pictograms below a small
+  package's heading to that label (`small_packages`); label images stored
+  at `LABEL_IMAGES_VERSION` 1 before this change have to be read from the
+  PDFs again.
+- **No finding for what a small package may leave out, where the sheet does
+  not show the package.** Where a sheet prints no label for packages of at
+  most 125 ml, its label may be one, and CLP Annex I 1.5.2.1 lets such a
+  package leave out the hazard statements of some categories (H225, H226,
+  H315, H319, H400, H410, H411 and others; acute toxicity 4 and STOT 2 and
+  3 where not sold to the general public; an aerosol's own statements) and
+  the precautionary statements of H362, H412 and H413. Such a statement is
+  then no `hazard-statement-not-in-label`, and a label without hazard or
+  precautionary statements whose hazards are all of that kind no
+  `label-without-hazard-statement` or `label-without-precautionary-statement`
+  (SDB-194). `clp_expected` then expects no signal word for H290 alone
+  (1.5.2.1.3). On the same set 32 `hazard-statement-not-in-label` go, all
+  H411 where the label prints H410 instead, and 3 of the other two.
+- **No `euh-outside-label` for a treated article.** "Mit Konservierungsmittel
+  … behandelte Ware. Kann allergische Reaktionen hervorrufen." is the
+  sentence of the Biocidal Products Regulation, not EUH208, without
+  "Enthält" (SDB-196). On the same set the finding goes from 4 sheets.
+
 - **A sheet that has to be renewed anyway gets only the findings on its
   age.** Where a sheet was revised before 2021 (`predates-annex-ii`) or
   since then in the layout from before Regulation (EU) 2020/878
@@ -42,6 +70,30 @@ Versions follow the tags of this repository.
   should be made again.
 
 ### Added
+
+- **`further_labels`** under `hazard_statements`, with `FurtherLabel` and
+  `LabelKind`: each block of 2.2 beside the label, with its `kind`
+  (`small-package`, `biocides`, `detergents`), its `heading` and `text` as
+  printed, the `omitted_codes` of a sentence that says what a small package
+  leaves out, and for a small package's label its `label`, read like a label
+  and from its own drawing (SDB-188 to SDB-190, SDW-51).
+- **`condition`, `condition_text` and `statement_conditions`** under
+  `hazard_statements`, with `LabelCondition`: whom the label says it applies
+  to ("Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher."), and
+  single statements printed with a condition ("Nur für private
+  Endverbraucher: P101 …", EUH210 for packages not meant for the general
+  public), as printed; the statements stay in the label (SDB-191, SDB-192).
+  All new keys are optional in the schema, and `sheet_from_dict` reads
+  records without them.
+- **The findings `small-package-hazard-statement-not-in-label`,
+  `small-package-signal-word-not-found` and
+  `small-package-pictogram-not-found`**: what a small package's label lacks
+  that CLP Annex I 1.5.2.1 requires there too, only for the elements the
+  label speaks of (SDB-193). `clp_expected(label, small_package=True)`
+  judges such a label.
+- **No H304 finding where the sheet names a sealed spray attachment** or
+  Annex I 1.3.3 CLP as the reason to leave the aspiration hazard out
+  (SDB-195).
 
 - **`clp_expected(label)` and `ClpExpected`** (BIB-25): the signal word the
   label's H and EUH codes call for, the pictograms its H codes call for with

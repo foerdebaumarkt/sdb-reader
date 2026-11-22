@@ -94,6 +94,9 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `pictogram-not-expected` | `pictogram` | The label shows the pictogram {pictogram}, and none of its H statements calls for it. |
 | `pictogram-precedence` | `pictogram`, `beside` | The label shows {pictogram} beside {beside}; by the precedence of CLP Article 26, {pictogram} is left out there. |
 | `signal-word-not-found` | `expected` | The label's codes call for the signal word '{expected}', and none was found (CLP Article 20). |
+| `small-package-hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label for packages of up to 125 ml; CLP Annex I 1.5.2.1 does not let it be left out there. |
+| `small-package-signal-word-not-found` | `expected` | The codes of the label for packages of up to 125 ml call for the signal word '{expected}', and none was found; CLP Annex I 1.5.2.1 does not let it be left out there. |
+| `small-package-pictogram-not-found` | `pictogram` | The H statements of the label for packages of up to 125 ml call for the pictogram {pictogram}, and it was not found; CLP Annex I 1.5.2.1 does not let it be left out there. |
 | `different-products` | `products` | The file holds safety data sheets of different products: {products} |
 | `country-editions-differ` | `fields` | The sheets of the same product for different countries differ in: {fields} |
 | `euh-outside-label` | `statement`, `sentence` | {statement} is printed only outside the label: {sentence} |

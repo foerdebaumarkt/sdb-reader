@@ -378,7 +378,7 @@ class TestLabelOfAClassifiedProduct:
 
     @pytest.mark.spec("SDW-42", "SDB-172")
     def test_a_label_with_hazard_statements_only(self) -> None:
-        label = HazardStatements(hazard_codes=["H412"])
+        label = HazardStatements(hazard_codes=["H317"], signal_word="Achtung")
         sheet = _sheet(hazards=label, stated=StatedClassification.CLASSIFIED)
         assert _kinds(sheet) == ["label-without-precautionary-statement"]
 

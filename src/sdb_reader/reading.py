@@ -13,10 +13,11 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from .extraction import ExtractionError, ExtractionResult, extract_pdf_text
+from .label_blocks import SMALL_PACKAGE_HEADING
 from .label_images import LabelImages, LabelImagesStatus, read_label_images
 from .messages import Message
 from .parser import ParsedSheet, SDSParser
-from .schema import SafetyDataSheet
+from .schema import FurtherLabel, LabelKind, SafetyDataSheet
 from .verification import DocumentKind, SDSVerifier, Verification
 
 LINE_TOO_LONG = "line-too-long"
@@ -151,6 +152,11 @@ def with_label_images(parsed: ParsedSheet, images: LabelImages | None) -> None:
     _add_pictograms(
         parsed.sheet, set().union(*images.labels), read=not any(images.unrecognised)
     )
+    _add_small_packages(
+        parsed.sheet,
+        [codes for label in images.small_packages for codes in label],
+        [count for label in images.small_packages_unrecognised for count in label],
+    )
     if missed := sum(images.unrecognised):
         parsed.warnings.append(Message(PICTOGRAMS_NOT_RECOGNISED, {"count": missed}))
     if not parsed.parts:
@@ -161,10 +167,16 @@ def with_label_images(parsed: ParsedSheet, images: LabelImages | None) -> None:
                 Message(LABEL_IMAGES_NOT_READ, {"reason": LABELS_NOT_PAIRED})
             )
         return
-    for part, codes, missed in zip(
-        parsed.parts, images.labels, images.unrecognised, strict=True
+    for part, codes, missed, small, small_missed in zip(
+        parsed.parts,
+        images.labels,
+        images.unrecognised,
+        images.small_packages,
+        images.small_packages_unrecognised,
+        strict=True,
     ):
         _add_pictograms(part.sheet, set(codes), read=not missed)
+        _add_small_packages(part.sheet, small, small_missed)
         if missed:
             part.warnings.append(Message(PICTOGRAMS_NOT_RECOGNISED, {"count": missed}))
 
@@ -173,6 +185,29 @@ def _add_pictograms(sheet: SafetyDataSheet, codes: set[str], *, read: bool) -> N
     label = sheet.hazard_statements
     label.pictograms = sorted(set(label.pictograms) | codes)
     label.drawing_read = read
+
+
+def _drawn(further: FurtherLabel) -> bool:
+    """Whether *further* is a small package's label under a heading, which the
+    drawing finds too (SDB-188), and not a sentence of SDB-189."""
+    return further.kind is LabelKind.SMALL_PACKAGE and bool(
+        SMALL_PACKAGE_HEADING.match(further.heading)
+    )
+
+
+def _add_small_packages(
+    sheet: SafetyDataSheet, codes: list[list[str]], unrecognised: list[int]
+) -> None:
+    """Give each small package's label of *sheet* the pictograms of its
+    drawing (SDB-188), where the drawing found as many as the text; else
+    none is read as drawn."""
+    drawn = [f for f in sheet.hazard_statements.further_labels if _drawn(f)]
+    if len(drawn) != len(codes):
+        return
+    for further, found, missed in zip(drawn, codes, unrecognised, strict=True):
+        label = further.label
+        label.pictograms = sorted(set(label.pictograms) | set(found))
+        label.drawing_read = not missed
 
 
 def within_line_limit(

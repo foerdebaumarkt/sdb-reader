@@ -23,15 +23,16 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
         "edd646c6bcd02e5a",
     ),
     "LABEL_IMAGES_VERSION": (
-        ("label_images.py", "pictogram_references.json"),
+        ("label_blocks.py", "label_images.py", "pictogram_references.json"),
         1,
-        "1023b067ec783ffe",
+        "0850504908c60ed7",
     ),
     "PARSER_VERSION": (
         (
             "clp_earlier_wordings_de.json",
             "clp_statements_de.json",
             "compliance.py",
+            "label_blocks.py",
             "messages.py",
             "parser.py",
             "pictograms.py",
@@ -42,7 +43,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
             "verification.py",
         ),
         21,
-        "93e7b2f8f59c4062",
+        "6e2e4bc90e5b51d2",
     ),
 }
 
