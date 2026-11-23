@@ -90,6 +90,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `label-without-hazard-statement` | – | Section 2 classifies the product, and no H statement was found in the label; the classification requires its hazard statements on the label (CLP Article 27). |
 | `label-without-precautionary-statement` | – | Section 2 classifies the product, and no P statement was found in the label; the classification requires the relevant precautionary statements on the label (CLP Article 22). |
 | `hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label; the classification requires it on the label (CLP Article 27). |
+| `hazard-statement-not-classified` | `statement`, `classified` | The label prints {statement}, and the classification in section 2.1 does not call for it; it names {classified} (CLP Article 27). Either the classification or the label deviates. |
 | `pictogram-not-found` | `pictogram` | The label's H statements call for the pictogram {pictogram}, and it was not found (CLP Article 19). |
 | `pictogram-not-expected` | `pictogram` | The label shows the pictogram {pictogram}, and none of its H statements calls for it. |
 | `pictogram-precedence` | `pictogram`, `beside` | The label shows {pictogram} beside {beside}; by the precedence of CLP Article 26, {pictogram} is left out there. |

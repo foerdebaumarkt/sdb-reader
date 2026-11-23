@@ -870,6 +870,36 @@ def classification_hazard_codes(hazards_section: str) -> set[str]:
     return codes
 
 
+def classification_codes_complete(hazards_section: str) -> bool:
+    r"""Whether 2.1 names a code for each hazard class it names (SDB-197):
+    in every classification part at least as many H codes as classes, by
+    their abbreviation ("Skin Irrit. 2") or in words ("Reizwirkung auf die
+    Haut, Kategorie 2"). A part that names classes in words only is not
+    read to its codes.
+
+    >>> classification_codes_complete("Skin Irrit. 2, H315\nEye Irrit. 2")
+    False
+    >>> classification_codes_complete(
+    ...     "Akut gewässergefährdend, Kategorie 1 (Aquatic Acute 1, H400)."
+    ... )
+    True
+    """
+    for part in _classification_parts(hazards_section):
+        # A class may stand in both forms ("Akut gewässergefährdend, Kategorie
+        # 1 (Aquatic Acute 1, H400)"): the larger count is that of the classes.
+        classes = max(
+            len(_HAZARD_CLASS_NAME.findall(part)),
+            sum(
+                1
+                for entry in _HAZARD_CLASS_IN_WORDS.finditer(part)
+                if not _ABOUT_INGREDIENTS.search(entry.group(0))
+            ),
+        )
+        if len(set(_CLASSIFICATION_HAZARD_CODE.findall(part))) < classes:
+            return False
+    return True
+
+
 def stated_classification(hazards_section: str) -> StatedClassification:
     """What section 2 says about the product's classification (SDB-75).
 

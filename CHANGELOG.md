@@ -93,6 +93,15 @@ Versions follow the tags of this repository.
   that CLP Annex I 1.5.2.1 requires there too, only for the elements the
   label speaks of (SDB-193). `clp_expected(label, small_package=True)`
   judges such a label.
+- **The finding `hazard-statement-not-classified`**: the label prints a
+  hazard statement the classification in 2.1 does not name, with the
+  printed code and the codes 2.1 names; either the classification or the
+  label may be the wrong one (SDB-197). The size of the package does not
+  matter. On a set of about 13,000 sheets it names 51: 32 that print H410
+  where 2.1 classifies Aquatic Chronic 2, and 12 that print it over Chronic
+  3. A small package's label is held to the pictograms and signal word of the
+  product's codes (2.1, the label and its own), not only its own; H304 of an
+  aerosol does not count.
 - **No H304 finding where the sheet names a sealed spray attachment** or
   Annex I 1.3.3 CLP as the reason to leave the aspiration hazard out
   (SDB-195).

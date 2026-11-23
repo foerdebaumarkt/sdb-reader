@@ -636,3 +636,106 @@ def test_a_small_package_s_label_speaks_of_the_product_s_sheet() -> None:
     [small] = sheet.hazard_statements.further_labels
     assert small.label.supplemental_codes == ["EUH208"]
     assert requires_sheet(sheet)
+
+
+@pytest.mark.spec("SDB-197", "SDW-42")
+def test_a_label_statement_the_classification_does_not_name() -> None:
+    result = _parsed(
+        "Signalwort: Achtung\n"
+        "H410 Sehr giftig für Wasserorganismen mit langfristiger Wirkung.\n"
+        "P273 Freisetzung in die Umwelt vermeiden.",
+        "Aquatic Acute 1, H400\nAquatic Chronic 2, H411",
+    )
+    findings = sheet_findings(result.sheet, result.warnings)
+
+    assert [(f.code, f.params) for f in findings] == [
+        (
+            "hazard-statement-not-classified",
+            {"statement": "H410", "classified": "H400, H411"},
+        )
+    ]
+    # The reading stays as printed.
+    assert result.sheet.hazard_statements.hazard_codes == ["H410"]
+
+
+@pytest.mark.spec("SDB-197")
+def test_a_statement_the_order_of_precedence_lets_2_1_leave_out() -> None:
+    assert (
+        _findings(
+            "Signalwort: Achtung\n"
+            "H400 Sehr giftig für Wasserorganismen.\n"
+            "H410 Sehr giftig für Wasserorganismen mit langfristiger Wirkung.\n"
+            "P273 Freisetzung in die Umwelt vermeiden.",
+            "Aquatic Chronic 1, H410",
+        )
+        == []
+    )
+
+
+@pytest.mark.spec("SDB-193")
+def test_a_small_package_keeps_the_pictograms_of_the_product() -> None:
+    text = _SHEET.format(
+        classification="Ox. Gas 1, H270\nPress. Gas, H280",
+        label=(
+            "Signalwort: Gefahr\n"
+            "H270 Kann Brand verursachen oder verstärken; Oxidationsmittel.\n"
+            "H280 Enthält Gas unter Druck; kann bei Erwärmung explodieren.\n"
+            "Gefahrenpiktogramme\nP220 Von Kleidung fernhalten.\n"
+            f"{_SMALL}\nGefahrenpiktogramme\nSignalwort: Gefahr\n"
+            "Gefahrenhinweise entfällt"
+        ),
+    )
+    images = LabelImages(
+        label_images_stage(),
+        LabelImagesStatus.READ,
+        [["GHS03"]],
+        [0],
+        [[["GHS04"]]],
+        [[0]],
+    )
+    result = read_extraction(
+        extraction_from_dict(
+            {"text": text, "extractor": "pymupdf", "pages_sampled": 1, "warnings": []}
+        ),
+        images,
+    ).parser_result
+    assert result is not None
+
+    findings = sheet_findings(result.sheet, result.warnings)
+
+    # 1.5.2.1.1 lets H270 and H280 go, never the oxidiser's pictogram; GHS04
+    # is never expected (Art. 33).
+    assert [(f.code, f.params) for f in findings] == [
+        ("small-package-pictogram-not-found", {"pictogram": "GHS03"})
+    ]
+
+
+@pytest.mark.spec("SDB-193", "SDB-173")
+def test_a_small_aerosol_needs_no_pictogram_for_the_aspiration_hazard() -> None:
+    text = _SHEET.format(
+        classification="Aerosol 1, H222, H229\nAsp. Tox. 1, H304",
+        label=(
+            "Signalwort: Gefahr\nH222 Extrem entzündbares Aerosol.\n"
+            "H229 Behälter steht unter Druck: Kann bei Erwärmung bersten.\n"
+            "Gefahrenpiktogramme\nP210 Von Hitze fernhalten.\n"
+            f"{_SMALL}\nGefahrenpiktogramme\nSignalwort: Gefahr\nGefahrenhinweise\n"
+            "H222-H229"
+        ),
+    )
+    images = LabelImages(
+        label_images_stage(),
+        LabelImagesStatus.READ,
+        [["GHS02"]],
+        [0],
+        [[["GHS02"]]],
+        [[0]],
+    )
+    result = read_extraction(
+        extraction_from_dict(
+            {"text": text, "extractor": "pymupdf", "pages_sampled": 1, "warnings": []}
+        ),
+        images,
+    ).parser_result
+    assert result is not None
+
+    assert sheet_findings(result.sheet, result.warnings) == []

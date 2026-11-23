@@ -222,9 +222,10 @@ Sache seiner neuen Fassung.
 | `pictogram-not-found` | die H-Sätze verlangen ein Piktogramm, das die Kennzeichnung nicht druckt; nur wo `drawing_read` |
 | `pictogram-not-expected` | die Kennzeichnung druckt ein Piktogramm, das keiner ihrer H-Sätze verlangt; nicht GHS08 auf einem Aerosol, wo es für die Aspirationsgefahr stehen kann (Anhang I Nr. 1.3.3 CLP) |
 | `pictogram-precedence` | die Kennzeichnung druckt GHS07 neben einem Piktogramm, dem es nach Art. 26 CLP weicht |
+| `hazard-statement-not-classified` | die Kennzeichnung druckt einen Gefahrenhinweis, den die Einstufung in 2.1 nicht nennt (`statement`; `classified` nennt die Codes von 2.1); welche Seite abweicht, sagt der Befund nicht |
 | `small-package-hazard-statement-not-in-label` | der Kennzeichnung einer kleinen Packung fehlt ein Gefahrenhinweis aus 2.1, den Anhang I Nr. 1.5.2.1 CLP dort nicht weglassen lässt |
-| `small-package-signal-word-not-found` | die Kennzeichnung einer kleinen Packung hat eine Zeile „Signalwort“ und druckt keines, das ihre Codes verlangen |
-| `small-package-pictogram-not-found` | der Kennzeichnung einer kleinen Packung fehlt ein Piktogramm, das ihre H-Sätze verlangen; nur wo sie als Bild angesehen ist und von Piktogrammen spricht |
+| `small-package-signal-word-not-found` | die Kennzeichnung einer kleinen Packung hat eine Zeile „Signalwort“ und druckt keines, das die Codes des Produkts verlangen |
+| `small-package-pictogram-not-found` | der Kennzeichnung einer kleinen Packung fehlt ein Piktogramm, das die H-Sätze des Produkts verlangen (2.1, die Kennzeichnung und ihre eigenen); nur wo sie als Bild angesehen ist und von Piktogrammen spricht |
 | `not-german` | das Blatt ist in einer anderen Sprache |
 
 Ein Befund ist eine Beobachtung am Dokument. Was daraus folgt, etwa beim

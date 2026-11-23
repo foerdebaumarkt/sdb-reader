@@ -216,9 +216,10 @@ to put right.
 | `pictogram-not-found` | the H statements call for a pictogram the label does not print; only where `drawing_read` |
 | `pictogram-not-expected` | the label prints a pictogram none of its H statements calls for; not GHS08 on an aerosol, where it may stand for the aspiration hazard (Annex I 1.3.3 CLP) |
 | `pictogram-precedence` | the label prints GHS07 beside a pictogram Article 26 CLP lets it give way to |
+| `hazard-statement-not-classified` | the label prints a hazard statement the classification in 2.1 does not name (`statement`; `classified` lists what 2.1 names); either side may be the wrong one |
 | `small-package-hazard-statement-not-in-label` | a small package's label lacks a hazard statement of 2.1 that Annex I 1.5.2.1 CLP does not let it leave out |
-| `small-package-signal-word-not-found` | a small package's label names a signal word field, and prints none its codes call for |
-| `small-package-pictogram-not-found` | a small package's label lacks a pictogram its H statements call for; only where it was looked at as drawn and speaks of pictograms |
+| `small-package-signal-word-not-found` | a small package's label names a signal word field, and prints none the product's codes call for |
+| `small-package-pictogram-not-found` | a small package's label lacks a pictogram the product's H statements call for (2.1, the label and its own); only where it was looked at as drawn and speaks of pictograms |
 | `not-german` | the sheet is in another language |
 
 A finding is an observation about the document. What follows from it, such

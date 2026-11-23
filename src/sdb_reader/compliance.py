@@ -23,6 +23,7 @@ from .parser import (
     LABEL_UNDETERMINED,
     NO_LABEL_SECTION,
     SheetPart,
+    classification_codes_complete,
     classification_hazard_codes,
     without_lines,
 )
@@ -651,6 +652,75 @@ def _not_carried(
     return missing
 
 
+# The statements Annex III Part 1 lets a label leave out beside another
+# (_LEFT_OUT_BESIDE): a classification that names H410 or H314 may leave out
+# H400 or H318 in the same way, and a label that prints them prints what it
+# calls for. Not the other way round: H410 does not follow from H400.
+_AEROSOL_CATEGORY = re.compile(r"\bAerosol\s?([123])\b")
+_AEROSOL_CALLS_FOR = {
+    "1": {"H222", "H229"},
+    "2": {"H223", "H229"},
+    "3": {"H229"},
+}
+
+
+def hazard_statements_not_classified(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    r"""Each H statement the label prints that the classification in 2.1 does
+    not call for (SDB-197), with its code as ``statement`` and the codes 2.1
+    names as ``classified``.
+
+    Either side may be the wrong one, and the finding does not say which.
+    Only where 2.1 names H codes and the label prints one; not for H360 or
+    H361 that 2.1 names with other letters, nor for H400 or H318 where 2.1
+    names H410 or H314 (Annex III Part 1).
+    The size of the package does not matter: a statement printed instead of
+    another is no statement left out.
+
+    >>> from sdb_reader import HazardStatements
+    >>> section = (
+    ...     "2.1 Einstufung des Stoffs oder Gemischs\n"
+    ...     "Aquatic Acute 1, H400\nAquatic Chronic 2, H411\n"
+    ...     "2.2 Kennzeichnungselemente\n"
+    ... )
+    >>> sheet = SafetyDataSheet(
+    ...     None, None, None, None, "de",
+    ...     hazard_statements=HazardStatements(hazard_codes=["H410"]),
+    ...     stated_classification=StatedClassification.CLASSIFIED,
+    ...     section_text={Section.HAZARDS: section},
+    ... )
+    >>> [m.params for m in hazard_statements_not_classified(sheet, [])]
+    [{'statement': 'H410', 'classified': 'H400, H411'}]
+    """
+    label = sheet.hazard_statements
+    if not label.hazard_codes or not _label_is_judged(
+        sheet, {warning.code for warning in parser_warnings}
+    ):
+        return []
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    named = sorted(classification_hazard_codes(hazards))
+    classified = {base_code(code) for code in named}
+    if not classified or not classification_codes_complete(hazards):
+        return []
+    # An aerosol's category calls for its statements, also where 2.1 names
+    # only one of them ("Aerosol 1, H222"): Annex I Table 2.3.1.
+    for category in _AEROSOL_CATEGORY.findall(hazards):
+        classified |= _AEROSOL_CALLS_FOR[category]
+    for code, category in (("H222", "1"), ("H223", "2")):
+        if code in classified:
+            classified |= _AEROSOL_CALLS_FOR[category]
+    return [
+        Message(
+            "hazard-statement-not-classified",
+            {"statement": code, "classified": ", ".join(named)},
+        )
+        for code in label.hazard_codes
+        if base_code(code) not in classified
+        and _LEFT_OUT_BESIDE.get(base_code(code)) not in classified
+    ]
+
+
 def small_package_findings(
     sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
 ) -> list[Message]:
@@ -660,12 +730,24 @@ def small_package_findings(
     Only for a small package's label that prints an element or states it has
     none; with the exceptions of SDB-170. A hazard statement of 2.1 it does
     not carry, unless such a package may leave it out (SDB-194); the signal
-    word and the pictograms its H codes call for, without H290 (1.5.2.1.3)
-    and, on an aerosol, the aerosol's statements (``clp_expected`` with
-    ``small_package``). A pictogram only where its drawing was read.
+    word and the pictograms the product's codes call for -- those of the
+    classification in 2.1, of the label and of the small package's label,
+    since 1.5.2.1.1 leaves out statements and never a pictogram or the
+    signal word -- without H290 (1.5.2.1.3) and, on an aerosol, the
+    aerosol's statements (``clp_expected`` with ``small_package``). A
+    pictogram only where its drawing was read.
     """
     if not _label_is_judged(sheet, {w.code for w in parser_warnings}):
         return []
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    product = {
+        *classification_hazard_codes(hazards),
+        *sheet.hazard_statements.hazard_codes,
+    }
+    # An aerosol, or a sealed spray attachment the sheet names, is not
+    # labelled for the aspiration hazard (Annex I 1.3.3; SDB-173, SDB-195).
+    if _is_aerosol(hazards, product) or _names_sealed_spray(sheet):
+        product.discard("H304")
     findings: list[Message] = []
     for further in sheet.hazard_statements.further_labels:
         if not _judged_small_package(further):
@@ -685,7 +767,17 @@ def small_package_findings(
                 )
                 for code in _not_carried(sheet, small, printed, small_package=True)
             )
-        expected = clp_expected(small, small_package=True)
+        # As the small package's label prints its signal word and pictograms,
+        # against what the product's codes call for (SDB-193).
+        expected = clp_expected(
+            HazardStatements(
+                hazard_codes=sorted(product | set(small.hazard_codes)),
+                supplemental_codes=small.supplemental_codes,
+                signal_word=small.signal_word,
+                pictograms=small.pictograms,
+            ),
+            small_package=True,
+        )
         if (
             expected.signal_word_missing
             and not small.states_no_signal_word
@@ -1128,6 +1220,16 @@ def sheet_findings(
     findings.extend(label_not_found(sheet, parser_warnings))
     findings.extend(hazard_statements_not_in_label(sheet, parser_warnings))
     findings.extend(signal_word_not_found(sheet, parser_warnings))
+    # Sheet by sheet in a file of several: each label against its own 2.1.
+    if parts:
+        not_classified: list[Message] = []
+        for part in parts:
+            for found in hazard_statements_not_classified(part.sheet, part.warnings):
+                if found not in not_classified:
+                    not_classified.append(found)
+        findings.extend(not_classified)
+    else:
+        findings.extend(hazard_statements_not_classified(sheet, parser_warnings))
     findings.extend(small_package_findings(sheet, parser_warnings))
 
     findings.extend(
