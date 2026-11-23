@@ -80,7 +80,7 @@ sdb-reader = "sdb_reader.cli:main"
 # and vulture carry the same versions as their hooks in
 # .pre-commit-config.yaml.
 dev = [
-  "ruff==0.17.5",
+  "ruff==0.17.6",
   "mypy==2.4.1",
   "vulture==2.16",
   "pytest==9.2.0",
@@ -88,7 +88,7 @@ dev = [
   "jsonschema==4.26.0",
   # The uv that CI installs: setup-uv reads it from uv.lock (version-file),
   # so Dependabot moves it like any other locked package.
-  "uv==0.13.8",
+  "uv==0.13.9",
   # The documentation site (make docs): Sphinx reads the Markdown pages
   # through MyST, Furo is the theme. Development tools only; nothing of them
   # is installed with the package. Sphinx 9.1, because 9.2 needs Python 3.13
@@ -103,7 +103,7 @@ dev = [
   "types-defusedxml==0.7.0.20260504",
   # Property tests: random and degenerate text through the reading, each
   # reading held to a time limit (tests/test_reading_time.py).
-  "hypothesis==6.170.15",
+  "hypothesis==6.170.17",
 ]
 
 [tool.setuptools]
