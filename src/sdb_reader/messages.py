@@ -89,6 +89,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "label-not-found": (),
     "label-without-hazard-statement": (),
     "hazard-statement-not-in-label": ("statement",),
+    "hazard-statement-not-classified": ("statement", "classified"),
     "label-without-precautionary-statement": (),
     "pictogram-not-found": ("pictogram",),
     "pictogram-not-expected": ("pictogram",),

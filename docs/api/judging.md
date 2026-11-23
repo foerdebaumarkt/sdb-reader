@@ -75,9 +75,10 @@ assert "revised-in-future" not in [
 | `pictogram-not-found` | `pictogram` | lacks a pictogram its H statements call for; only where the label was looked at as drawn (`drawing_read`), not where it states it has none |
 | `pictogram-not-expected` | `pictogram` | names or shows a pictogram none of its H statements calls for; not GHS08 on an aerosol, where it may stand for the aspiration hazard |
 | `pictogram-precedence` | `pictogram`, `beside` | shows GHS07 beside a pictogram that Article 26 CLP lets it give way to |
+| `hazard-statement-not-classified` | `statement`, `classified` | prints a hazard statement the classification in 2.1 does not name; either side may be wrong |
 | `small-package-hazard-statement-not-in-label` | `statement` | prints a small package's label that lacks a hazard statement of 2.1 which CLP Annex I 1.5.2.1 does not let it leave out |
-| `small-package-signal-word-not-found` | `expected` | prints a small package's label with a signal word field and none of the word its codes call for |
-| `small-package-pictogram-not-found` | `pictogram` | prints a small package's label that lacks a pictogram its H statements call for; only where it was looked at as drawn and speaks of pictograms |
+| `small-package-signal-word-not-found` | `expected` | prints a small package's label with a signal word field and none of the word the product's codes call for |
+| `small-package-pictogram-not-found` | `pictogram` | prints a small package's label that lacks a pictogram the product's H statements call for (2.1, the label and its own); only where it was looked at as drawn and speaks of pictograms |
 
 Where a sheet prints no small package's label, its label may be one: a
 statement CLP Annex I 1.5.2.1 lets such a package leave out (H315, H319,

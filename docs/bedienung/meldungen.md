@@ -90,6 +90,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `label-without-hazard-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein H-Satz gefunden; die Einstufung verlangt ihre Gefahrenhinweise auf dem Etikett (CLP Art. 27). |
 | `label-without-precautionary-statement` | – | Abschnitt 2 stuft das Produkt ein, und in der Kennzeichnung wurde kein P-Satz gefunden; die Einstufung verlangt die einschlägigen Sicherheitshinweise auf dem Etikett (CLP Art. 22). |
 | `hazard-statement-not-in-label` | `statement` | Abschnitt 2.1 nennt {statement} zur Einstufung, und in der Kennzeichnung wurde der Satz nicht gefunden; die Einstufung verlangt ihn auf dem Etikett (CLP Art. 27). |
+| `hazard-statement-not-classified` | `statement`, `classified` | Die Kennzeichnung druckt {statement}, und die Einstufung in Abschnitt 2.1 verlangt den Satz nicht; sie nennt {classified} (CLP Art. 27). Entweder die Einstufung oder die Kennzeichnung weicht ab. |
 | `pictogram-not-found` | `pictogram` | Die H-Sätze der Kennzeichnung verlangen das Piktogramm {pictogram}, und es wurde nicht gefunden (CLP Art. 19). |
 | `pictogram-not-expected` | `pictogram` | Die Kennzeichnung zeigt das Piktogramm {pictogram}, und keiner ihrer H-Sätze verlangt es. |
 | `pictogram-precedence` | `pictogram`, `beside` | Die Kennzeichnung zeigt {pictogram} neben {beside}; nach dem Vorrang des Art. 26 CLP entfällt {pictogram} dort. |
