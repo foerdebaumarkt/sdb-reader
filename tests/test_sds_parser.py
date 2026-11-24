@@ -5018,6 +5018,32 @@ class TestAHeadingSetIntoAStatement:
         assert hazard == "H290 Kann gegenüber Metallen"
 
 
+@pytest.mark.spec("SDB-200")
+class TestAHeadingWithAColonInsideAStatement:
+    """The label's column heading with the statement's last words behind it."""
+
+    def test_the_words_behind_the_heading_finish_the_statement(self) -> None:
+        _, precautionary, _ = _statement_texts(
+            "P101 Ist ärztlicher Rat erforderlich, Verpackung oder\n"
+            "Sicherheitshinweise: Kennzeichnungsetikett bereithalten.\n"
+            "P102 Darf nicht in die Hände von Kindern gelangen."
+        )
+
+        assert precautionary == (
+            "P101 Ist ärztlicher Rat erforderlich, Verpackung oder "
+            "Kennzeichnungsetikett bereithalten.\n"
+            "P102 Darf nicht in die Hände von Kindern gelangen."
+        )
+
+    def test_words_that_do_not_finish_it_end_it(self) -> None:
+        _, precautionary, _ = _statement_texts(
+            "P101 Ist ärztlicher Rat erforderlich, Verpackung oder\n"
+            "Sicherheitshinweise: Nach Gebrauch waschen."
+        )
+
+        assert precautionary == "P101 Ist ärztlicher Rat erforderlich, Verpackung oder"
+
+
 @pytest.mark.spec("SDB-185")
 class TestATableCellInsideAStatement:
     def test_it_goes_beside_the_labels_whole_statement(self) -> None:
@@ -5078,3 +5104,17 @@ def test_a_code_of_the_regulation_left_alone_stays() -> None:
 
     assert supplemental is not None
     assert "EUH204" in supplemental
+
+
+@pytest.mark.spec("SDB-201")
+class TestADateMonthFirst:
+    def test_a_date_only_month_first_is_read_so(self) -> None:
+        assert _extract_issue_date("Ausgabedatum: 08/31/2020") == date(2020, 8, 31)
+
+    def test_a_date_either_way_is_read_day_first(self) -> None:
+        assert _extract_issue_date("Ausgabedatum: 08/06/2020") == date(2020, 6, 8)
+
+    def test_the_label_split_around_its_date(self) -> None:
+        text = "Ausgabedatum/: 08/31/2020\nSeite: 1/19\nÜberarbeitungsdatum"
+
+        assert _extract_issue_date(text) == date(2020, 8, 31)
