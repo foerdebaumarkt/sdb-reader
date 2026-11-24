@@ -892,3 +892,44 @@ def test_ghs08_without_its_reason_on_another_product_is_a_finding(
     )
 
     assert _findings(parsed) == [("pictogram-not-expected", {"pictogram": "GHS08"})]
+
+
+@pytest.mark.spec("SDB-211")
+@pytest.mark.parametrize(
+    ("items", "forms"),
+    [
+        ([["GHS07"]], {"GHS07": ["picture"]}),
+        ([["GHS07"], "GHS07"], {"GHS07": ["code", "picture"]}),
+        (["GHS07"], {"GHS07": ["code"]}),
+    ],
+)
+def test_the_reading_says_how_the_label_prints_each_pictogram(
+    tmp_path: Path, items: list[str | list[str]], forms: dict[str, list[str]]
+) -> None:
+    path = _pages(tmp_path / "sheet.pdf", [*_HEAD, *items, *_TAIL])
+
+    label = _parsed(path).sheet.hazard_statements
+
+    assert label.pictogram_forms == forms
+
+
+@pytest.mark.spec("SDB-211")
+def test_a_picture_in_2_1_makes_no_picture_of_the_label(tmp_path: Path) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [*_HEAD[:6], ["GHS07"], *_HEAD[6:], "GHS07", *_TAIL],
+    )
+
+    assert _parsed(path).sheet.hazard_statements.pictogram_forms == {"GHS07": ["code"]}
+
+
+@pytest.mark.spec("SDB-211", "SDW-47")
+def test_a_stored_reading_keeps_the_forms(tmp_path: Path) -> None:
+    reading = read_sheet(_pages(tmp_path / "sheet.pdf", [*_HEAD, ["GHS07"], *_TAIL]))
+    assert reading.parser_result is not None
+
+    back = sheet_from_dict(
+        sheet_to_dict(reading.parser_result.sheet, reading.extraction)
+    )
+
+    assert back.hazard_statements.pictogram_forms == {"GHS07": ["picture"]}

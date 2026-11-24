@@ -117,6 +117,7 @@ def _label_fields(label: HazardStatements, *, further: bool = True) -> dict[str,
         "supplemental_codes": label.supplemental_codes,
         "signal_word": label.signal_word,
         "pictograms": label.pictograms,
+        "pictogram_forms": label.pictogram_forms,
         "hazard_text": label.hazard_text,
         "precautionary_text": label.precautionary_text,
         "supplemental_text": label.supplemental_text,
@@ -156,6 +157,10 @@ def _label_from_dict(label: Mapping[str, Any]) -> HazardStatements:
         supplemental_codes=_texts(label["supplemental_codes"]),
         signal_word=_optional_text(label["signal_word"]),
         pictograms=_texts(label["pictograms"]),
+        pictogram_forms={
+            _text(code): _texts(forms)
+            for code, forms in label.get("pictogram_forms", {}).items()
+        },
         hazard_text=_optional_text(label["hazard_text"]),
         precautionary_text=_optional_text(label["precautionary_text"]),
         supplemental_text=_optional_text(label["supplemental_text"]),

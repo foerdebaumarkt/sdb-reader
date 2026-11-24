@@ -888,6 +888,17 @@
             "pattern": "^GHS\\d{1,2}$"
           }
         },
+        "pictogram_forms": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["code", "picture"]
+            }
+          },
+          "description": "How the label prints each pictogram: \"code\" where its text names it, \"picture\" where its drawing shows it (SDB-211). Missing in a reading stored before."
+        },
         "hazard_text": {
           "type": [
             "string",
@@ -1045,6 +1056,17 @@
                 "type": "string",
                 "pattern": "^GHS\\d{1,2}$"
               }
+            },
+            "pictogram_forms": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["code", "picture"]
+                }
+              },
+              "description": "How the label prints each pictogram: \"code\" where its text names it, \"picture\" where its drawing shows it (SDB-211). Missing in a reading stored before."
             },
             "hazard_text": {
               "type": [

@@ -2607,6 +2607,10 @@ def _read_labels(
         signal_word=_strongest_signal_word(r.signal_word for r in readings),
         pictograms=sorted(set().union(*(r.pictograms for r in readings))),
     )
+    # Named in the text; the drawing adds its pictures (reading.py, SDB-211).
+    hazard_statements.pictogram_forms = {
+        code: ["code"] for code in hazard_statements.pictograms
+    }
     # The file's label states none only where every sheet's label does
     # (SDB-176, SDB-180).
     hazard_statements.states_no_signal_word = (

@@ -8,7 +8,7 @@ and knowing which file it belongs to, is the caller's (BIB-2).
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -17,7 +17,7 @@ from .label_blocks import SMALL_PACKAGE_HEADING
 from .label_images import LabelImages, LabelImagesStatus, read_label_images
 from .messages import Message
 from .parser import ParsedSheet, SDSParser
-from .schema import FurtherLabel, LabelKind, SafetyDataSheet
+from .schema import FurtherLabel, HazardStatements, LabelKind, SafetyDataSheet
 from .verification import DocumentKind, SDSVerifier, Verification
 
 LINE_TOO_LONG = "line-too-long"
@@ -183,8 +183,17 @@ def with_label_images(parsed: ParsedSheet, images: LabelImages | None) -> None:
 
 def _add_pictograms(sheet: SafetyDataSheet, codes: set[str], *, read: bool) -> None:
     label = sheet.hazard_statements
-    label.pictograms = sorted(set(label.pictograms) | codes)
+    _add_pictures(label, codes)
     label.drawing_read = read
+
+
+def _add_pictures(label: HazardStatements, codes: Collection[str]) -> None:
+    """Give *label* the pictograms its drawing shows, as pictures (SDB-211)."""
+    label.pictograms = sorted(set(label.pictograms) | set(codes))
+    forms = {code: set(found) for code, found in label.pictogram_forms.items()}
+    for code in codes:
+        forms.setdefault(code, set()).add("picture")
+    label.pictogram_forms = {code: sorted(forms[code]) for code in sorted(forms)}
 
 
 def _drawn(further: FurtherLabel) -> bool:
@@ -206,7 +215,7 @@ def _add_small_packages(
         return
     for further, found, missed in zip(drawn, codes, unrecognised, strict=True):
         label = further.label
-        label.pictograms = sorted(set(label.pictograms) | set(found))
+        _add_pictures(label, found)
         label.drawing_read = not missed
 
 
