@@ -113,6 +113,7 @@ Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
 | `supplemental_codes` | die Codes der ergänzenden Gefahrenmerkmale (EUH) |
 | `signal_word` | `Gefahr` oder `Achtung`, wie die Kennzeichnung es druckt, oder nichts |
 | `pictograms` | die Codes der Piktogramme, die die Kennzeichnung druckt, `GHS01` bis `GHS09`: die, die ihr Text nennt, und die, die sie als Bild zeigt |
+| `pictogram_forms` | wie die Kennzeichnung jedes davon druckt: `code`, wo ihr Text es nennt, `picture`, wo sie es als Bild zeigt, oder beides (`{"GHS07": ["code", "picture"]}`) |
 | `drawing_read` | ob die Kennzeichnung als Bild angesehen und jede rote Raute darin benannt ist |
 | `states_no_signal_word`, `states_no_pictograms` | ob die Kennzeichnung angibt, keines zu tragen („Signalwort entfällt“, „Gefahrenpiktogramme: keine“) |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |

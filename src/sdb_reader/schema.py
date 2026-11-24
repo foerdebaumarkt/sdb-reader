@@ -62,6 +62,9 @@ class HazardStatements:
     # The pictograms the label names in its text or shows as pictures
     # (SDB-179), as printed.
     pictograms: list[str] = field(default_factory=list)
+    # How the label prints each of them (SDB-211): "code" where its text names
+    # it, "picture" where its drawing shows it, or both.
+    pictogram_forms: dict[str, list[str]] = field(default_factory=dict)
     hazard_text: str | None = None
     precautionary_text: str | None = None
     supplemental_text: str | None = None

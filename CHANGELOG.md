@@ -18,6 +18,13 @@ Versions follow the tags of this repository.
   block stands in 2.1. Where the label then shows no pictogram, the reading
   has none and `pictogram-not-found` names the sheet's error (SDB-209).
 
+### Added
+
+- **`pictogram_forms`** in a label (`HazardStatements`) and in the record of
+  `read`: how the label prints each pictogram, `code` where its text names
+  it, `picture` where its drawing shows it, or both (SDB-211). A picture in
+  2.1 does not count. Missing in readings stored before.
+
 ### Fixed
 
 - **A label headed otherwise than "Kennzeichnungselemente"** is found: any

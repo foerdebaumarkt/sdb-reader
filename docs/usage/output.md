@@ -111,6 +111,7 @@ The label always stands in the reading as the sheet prints it.
 | `supplemental_codes` | the codes of the supplemental statements (EUH) |
 | `signal_word` | `Gefahr` or `Achtung` as the label prints it, or nothing |
 | `pictograms` | the codes of the pictograms the label prints, `GHS01` to `GHS09`: those its text names and those it shows as pictures |
+| `pictogram_forms` | how the label prints each of them: `code` where its text names it, `picture` where it shows it as a picture, or both (`{"GHS07": ["code", "picture"]}`) |
 | `drawing_read` | whether the label was looked at as drawn and every red diamond in it named |
 | `states_no_signal_word`, `states_no_pictograms` | whether the label states it has none ("Signalwort entfällt", "Gefahrenpiktogramme: keine") |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
