@@ -35,7 +35,7 @@ with any release, the parts that ask a language model included.
   ``extraction_stage`` and ``label_images_stage`` say whether what was kept
   still holds.
 - Judging a sheet: ``sheet_findings`` and the checks it is made of,
-  ``classification`` and ``requires_sheet``; ``clp_expected`` gives the
+  ``classification`` and ``sheet_duty`` (``SheetDuty``); ``clp_expected`` gives the
   signal word and pictograms a label's codes call for and where the reading
   differs (``ClpExpected``).
 - Statements and pictograms: ``label_statements`` with the regulation's
@@ -54,12 +54,13 @@ with any release, the parts that ask a language model included.
 
 from .compliance import (
     Classification,
+    SheetDuty,
     classification,
     contradicts_label,
     euh_outside_label,
     predates_annex_ii,
     predates_clp,
-    requires_sheet,
+    sheet_duty,
     sheet_findings,
 )
 from .current import Choice, ChoiceReason, SheetState, current_state
@@ -157,6 +158,7 @@ __all__ = [
     "ParsedSheet",
     "SafetyDataSheet",
     "Section",
+    "SheetDuty",
     "SheetPart",
     "SheetReading",
     "SheetState",
@@ -191,7 +193,7 @@ __all__ = [
     "read_sheet",
     "reading_to_dict",
     "render_statements",
-    "requires_sheet",
+    "sheet_duty",
     "sheet_findings",
     "sheet_from_dict",
     "sheet_to_dict",

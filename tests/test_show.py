@@ -568,7 +568,7 @@ def test_a_sheet_that_calls_itself_voluntary_or_its_product_an_article_says_so()
 ):
     record = _record(PAINT)
     record["sheet"].update(
-        sheet_required=False, stated_voluntary=True, stated_article=True
+        sheet_duty="not-required", stated_voluntary=True, stated_article=True
     )
 
     report = show.report(record, "x.pdf", shipped_catalog())

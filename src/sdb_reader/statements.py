@@ -960,8 +960,11 @@ def _wording_pattern(wording: str, *, partial: bool = False) -> re.Pattern[str]:
 
 
 @lru_cache(maxsize=2)
-def _euh_patterns(partial: bool = False) -> tuple[tuple[str, re.Pattern[str]], ...]:
-    """Each EUH statement that a wording identifies, longest wording first.
+def _euh_patterns(
+    partial: bool = False,
+) -> tuple[tuple[str, re.Pattern[str], bool], ...]:
+    """Each EUH statement that a wording identifies, longest wording first,
+    and whether its wording has a hole.
 
     Fixed ones before those with a hole, so EUH204's "Enthält Isocyanate. Kann
     allergische Reaktionen hervorrufen." is read as EUH204 and not as EUH208
@@ -979,7 +982,11 @@ def _euh_patterns(partial: bool = False) -> tuple[tuple[str, re.Pattern[str]], .
         key=lambda item: (item[1]["kind"] == "parameter", -len(item[1]["text"]))
     )
     return tuple(
-        (code, _wording_pattern(entry["text"], partial=partial))
+        (
+            code,
+            _wording_pattern(entry["text"], partial=partial),
+            entry["kind"] == "parameter",
+        )
         for code, entry in entries
     )
 
@@ -1003,7 +1010,11 @@ OLD_REQUEST_SENTENCE = re.compile(
 
 
 def euh_statements_by_wording(
-    text: str, *, skip: Collection[str] = (), partial: bool = False
+    text: str,
+    *,
+    skip: Collection[str] = (),
+    partial: bool = False,
+    standing: bool = False,
 ) -> list[tuple[str, str]]:
     """The EUH statements *text* prints by their wording, in the order it prints them.
 
@@ -1016,15 +1027,43 @@ def euh_statements_by_wording(
     alone. That is too loose to label a product with, but enough to notice a
     sheet that means EUH208 and writes it in a form the regulation does not
     ("… Kann allergische Reaktionen hervorrufen. 2-Butanonoxim.").
+
+    *standing* takes a sentence only where it begins its line or follows
+    its code (SDB-219): one that runs on from other words on its line is
+    part of a description, not a statement printed without its code. A
+    sentence with a hole is exempt: what it begins with is the sheet's own.
+
+    >>> euh_statements_by_wording(
+    ...     "Kann Augen reizen. Wiederholter Kontakt\\nkann zu spröder oder "
+    ...     "rissiger Haut führen.",
+    ...     standing=True,
+    ... )
+    []
+    >>> euh_statements_by_wording(
+    ...     "EUH066 Wiederholter Kontakt kann zu spröder oder rissiger Haut führen.",
+    ...     standing=True,
+    ... )
+    [('EUH066', 'Wiederholter Kontakt kann zu spröder oder rissiger Haut führen.')]
     """
     if not text:
         return []
     found: list[tuple[int, str, str]] = []
     haystack = text
-    for code, pattern in _euh_patterns(partial):
+    for code, pattern, holed in _euh_patterns(partial):
         # A code in *skip* still consumes its wording: printed as "EUH204
         # Enthält Isocyanate. Kann allergische …", it is not EUH208 as well.
         for match in [] if code in skip else pattern.finditer(haystack):
+            # Where the sentence itself begins: a match may take the space
+            # before it.
+            begins = match.start() + len(match.group(0)) - len(match.group(0).lstrip())
+            if (
+                standing
+                and not holed
+                and not _STANDS.fullmatch(
+                    text[text.rfind("\n", 0, begins) + 1 : begins]
+                )
+            ):
+                continue
             # A name broken at a line's end is joined as the reader joins
             # it (SDB-54), also across the empty line the reader leaves where
             # a column ends (SDB-45).
@@ -1033,6 +1072,10 @@ def euh_statements_by_wording(
             found.append((match.start(), code, sentence))
         haystack = pattern.sub(lambda m: " " * len(m.group(0)), haystack)
     return [(code, sentence) for _, code, sentence in sorted(found)]
+
+
+# What may stand before a statement on its line: a mark of a list, its code.
+_STANDS = re.compile(r"[\s·•∙*\-–]*(?:EUH\s?\d{3}[A-Za-z]?\s*[:.\-–]?\s*)?")
 
 
 @dataclass(frozen=True, slots=True)

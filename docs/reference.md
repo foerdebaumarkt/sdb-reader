@@ -139,7 +139,10 @@ See [Judging a sheet](api/judging.md).
    :members:
    :undoc-members:
 
-.. autofunction:: requires_sheet
+.. autofunction:: sheet_duty
+
+.. autoclass:: SheetDuty
+   :members:
 
 .. autofunction:: contradicts_label
 

@@ -56,7 +56,7 @@ mitbringt. Prüfen Sie ein solches Blatt genauer.
 | `countries` | die Länder, für die das Blatt ausgestellt ist, aus `DE`, `AT`, `CH`; leer, wo es keines nennt |
 | `stated_classification` | was Abschnitt 2 über die Einstufung sagt, siehe unten |
 | `stated_voluntary`, `stated_article` | ob das Blatt sich selbst freiwillig oder nicht vorgeschrieben nennt, und ob es das Produkt dabei ein Erzeugnis nennt, siehe unten |
-| `sheet_required` | ob das Produkt nach dem Gesetz ein Sicherheitsdatenblatt braucht, siehe unten |
+| `sheet_duty` | ob das Produkt nach dem Gesetz ein Sicherheitsdatenblatt braucht: `required`, `not-required` oder `not-checked`, siehe unten |
 | `hazard_statements` | die Kennzeichnung aus Abschnitt 2.2, siehe unten |
 | `contact_info` | der Lieferant aus Abschnitt 1.3 mit Name, Anschrift, Telefon, E-Mail und Internetseite, und die Notrufnummer aus Abschnitt 1.4, wie gedruckt mit dem, was das Blatt zu ihr sagt („(24 h)“, der Name des Giftnotrufs); `information_email` ist die E-Mail-Adresse der auskunftgebenden Stelle: die der sachkundigen Person („E-Mail-Adresse der sachkundigen Person“), sonst die einer auskunftgebenden Stelle („Auskunftgebender Bereich“). Sie ist leer, wo keine Adresse unter einer solchen Bezeichnung steht, kann dieselbe sein wie `email` und kann die eines Büros sein, das das Blatt für den Lieferanten erstellt hat |
 | `section_text` | der Text jedes gefundenen Abschnitts |
@@ -75,9 +75,10 @@ mitbringt. Prüfen Sie ein solches Blatt genauer.
 
 ### Ob das Produkt ein Blatt braucht
 
-`sheet_required` ist `true`, wo Abschnitt 2 das Produkt einstuft oder die
+`sheet_duty` ist `required`, wo Abschnitt 2 das Produkt einstuft oder die
 Kennzeichnung einen Gefahrenhinweis (H oder EUH), ein Signalwort oder ein
-Piktogramm trägt. Jedes andere Blatt ist freiwillig ausgestellt.
+Piktogramm trägt. Jedes andere Blatt ist freiwillig ausgestellt:
+`not-required`.
 Sicherheitshinweise (P) allein zählen nicht: Ein Lieferant darf sie auf jedes
 Produkt drucken.
 
@@ -90,17 +91,24 @@ vorgeschrieben“). `stated_article` ist `true`, wo es das Produkt neben
 diesem Satz ein Erzeugnis nennt, oder wo es sagt, das Produkt sei ein
 Erzeugnis und deshalb nicht kennzeichnungspflichtig („Dieses Produkt ist ein
 Erzeugnis, deshalb ist es … nicht kennzeichnungspflichtig“); ein solches
-Blatt muss sich nicht freiwillig nennen. Was daraus für `sheet_required`
+Blatt muss sich nicht freiwillig nennen. Was daraus für `sheet_duty`
 folgt:
 
-| Das Blatt … | `sheet_required` |
+| Das Blatt … | `sheet_duty` |
 | --- | --- |
-| nennt das Produkt ein Erzeugnis | `false`, auch wenn die Kennzeichnung H-Sätze druckt |
-| nennt sich freiwillig, und das Produkt ist nicht eingestuft (Abschnitt 2 stuft nicht ein, kein H-Satz) | `false` |
-| nennt sich freiwillig, aber das Gemisch ist eingestuft und kein Erzeugnis genannt | `true`: Einem Händler oder gewerblichen Anwender, der es verlangt, ist das Blatt geschuldet |
-| druckt in der Kennzeichnung EUH210 oder den Satz „auf Anfrage erhältlich“ | `true`, in jedem Fall |
+| nennt das Produkt ein Erzeugnis | `not-required`, auch wenn die Kennzeichnung H-Sätze druckt |
+| nennt sich freiwillig, und das Produkt ist nicht eingestuft (Abschnitt 2 stuft nicht ein, kein H-Satz) | `not-required` |
+| nennt sich freiwillig, aber das Gemisch ist eingestuft und kein Erzeugnis genannt | `required`: Einem Händler oder gewerblichen Anwender, der es verlangt, ist das Blatt geschuldet |
+| druckt in der Kennzeichnung EUH210 oder den Satz „auf Anfrage erhältlich“ | `required`, in jedem Fall |
 
-Die Kennzeichnung steht immer in der Lesung, wie das Blatt sie druckt.
+Wo die Lesung keine Kennzeichnung hält (`label_withheld`), ist es
+`not-checked`, nicht nach geltendem Recht geprüft: immer bei einem Blatt
+der Regeln vor Juni 2017, dessen Einstufung ebenfalls nicht zählt, und bei
+einer unvollständigen Kennzeichnung, außer Abschnitt 2 stuft das Produkt
+ein. Was aus `not-checked` folgt, entscheidet der Aufrufer.
+
+Die Kennzeichnung steht in der Lesung, wie das Blatt sie druckt, außer die
+Lesung hält sie zurück.
 
 ### Die Kennzeichnung
 

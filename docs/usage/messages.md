@@ -46,6 +46,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `no-safety-data-sheet` | – | The document has neither the title nor the layout of a safety data sheet. |
 | `not-a-sheet` | – | The file is not a German safety data sheet; nothing was parsed. |
 | `unreadable` | – | The file's text could not be read; nothing was verified. |
+| `label-incomplete` | `findings` | The label surely lacks what it has to show ({findings}); it is withheld. Read with --accept-incomplete-label to have it as printed. |
 
 ## Reading the sheet
 
@@ -194,6 +195,7 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `show-no-statements` | – | no H, P or EUH statements |
 | `show-needs-sheet` | – | Needs a safety data sheet: yes |
 | `show-needs-no-sheet` | – | Needs a safety data sheet: no |
+| `show-sheet-not-checked` | – | Needs a safety data sheet: not checked under the rules in force |
 | `show-stated-voluntary` | – | The sheet calls itself voluntary or not prescribed. |
 | `show-stated-article` | – | The sheet calls its product an article. |
 | `show-no-notes` | – | none |

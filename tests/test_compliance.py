@@ -8,11 +8,12 @@ import pytest
 
 from sdb_reader.compliance import (
     Classification,
+    SheetDuty,
     classification,
     contradicts_label,
     euh_outside_label,
     predates_annex_ii,
-    requires_sheet,
+    sheet_duty,
     sheet_findings,
 )
 from sdb_reader.messages import Message
@@ -278,8 +279,11 @@ class TestSheetFindings:
             sections=_BEFORE_2020,
             stated=StatedClassification.CLASSIFIED,
         )
-        # Due for renewal: the findings on its age only (SDW-49).
-        assert _kinds(sheet) == ["old-format"]
+        # Due for renewal, and its label read all the same (SDB-216): the
+        # findings on its age and on its label.
+        found = _kinds(sheet)
+        assert found[0] == "old-format"
+        assert "label-without-hazard-statement" in found
 
     @pytest.mark.spec("SDW-8", "SDB-75")
     def test_a_sheet_that_states_no_classification_and_no_label(self) -> None:
@@ -353,7 +357,7 @@ class TestWhatCallsForASheet:
     def test_what_a_sheet_says_about_its_product(
         self, hazards: dict[str, object], stated: str | None, required: bool
     ) -> None:
-        assert requires_sheet(_stating(hazards, stated)) is required
+        assert (sheet_duty(_stating(hazards, stated)) is SheetDuty.REQUIRED) is required
 
 
 class TestLabelOfAClassifiedProduct:
@@ -444,28 +448,40 @@ class TestLabelOfAClassifiedProduct:
 
 
 class TestSheetDueForRenewal:
-    """A sheet revised before 2021, or since then in the layout from before
-    2020/878, gets the findings on its age and no other (SDW-49)."""
+    """A sheet whose label the reading withholds gets the findings on its age
+    and no other (SDW-49, SDB-216); one due for renewal whose label is read
+    gets all its findings."""
 
-    @pytest.mark.spec("SDW-49")
-    @pytest.mark.parametrize("revised", [date(2013, 9, 2), date(2020, 12, 31)])
-    def test_before_2021_only_the_age(self, revised: date) -> None:
+    @pytest.mark.spec("SDW-49", "SDB-216")
+    def test_a_withheld_label_only_the_age(self) -> None:
+        sheet = _sheet(
+            revised=date(2013, 9, 2),
+            hazards=HazardStatements(),
+            stated=StatedClassification.CLASSIFIED,
+        )
+        sheet.label_withheld = "before-2017-06"
+        assert _kinds(sheet, [Message("label-before-clp")]) == ["predates-annex-ii"]
+
+    @pytest.mark.spec("SDW-49", "SDB-216")
+    @pytest.mark.parametrize(
+        ("revised", "sections", "age"),
+        [
+            (date(2020, 12, 31), None, "predates-annex-ii"),
+            (date(2023, 3, 1), _BEFORE_2020, "old-format"),
+        ],
+    )
+    def test_due_for_renewal_with_its_label_read_all_findings(
+        self, revised: date, sections: dict[Section, str] | None, age: str
+    ) -> None:
         sheet = _sheet(
             revised=revised,
             hazards=HazardStatements(),
+            sections=sections,
             stated=StatedClassification.CLASSIFIED,
         )
-        assert _kinds(sheet, [Message("label-before-clp")]) == ["predates-annex-ii"]
-
-    @pytest.mark.spec("SDW-49")
-    def test_in_the_old_layout_only_the_age(self) -> None:
-        sheet = _sheet(
-            revised=date(2023, 3, 1),
-            hazards=HazardStatements(),
-            sections=_BEFORE_2020,
-            stated=StatedClassification.CLASSIFIED,
-        )
-        assert _kinds(sheet) == ["old-format"]
+        found = _kinds(sheet)
+        assert found[0] == age
+        assert "label-without-hazard-statement" in found
 
     @pytest.mark.spec("SDW-49", "SDB-170")
     def test_without_a_date_the_findings_stay(self) -> None:

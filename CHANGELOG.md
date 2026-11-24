@@ -12,11 +12,44 @@ Versions follow the tags of this repository.
   (`read_label_images`, about a tenth of a second per sheet, a second per
   scanned page); readings kept from before should be made again.
   `EXTRACTION_VERSION` stays 2: stored texts stay valid.
+- **A label that surely lacks what it has to show is withheld** unless asked
+  for: where the reading carries `pictogram-not-found`,
+  `signal-word-not-found`, `label-without-hazard-statement`,
+  `label-not-found`, `hazard-statement-not-in-label` or
+  `pictograms-not-recognised`, `read_sheet` and `read_extraction` return it
+  with the error `label-incomplete` and an empty `hazard_statements`;
+  `accept_incomplete_label=True` (`--accept-incomplete-label` for `read` and
+  `show`) gives it as printed, with its findings (SDB-217, BIB-26). So no
+  program shows a hazardous product without its warnings by mistake.
+- **The label of a sheet of the rules before June 2017 is not read**
+  (revised, or else issued, by 31 May 2017, or classified or labelled under
+  Directives 67/548/EEC or 1999/45/EC): `hazard_statements` is empty and
+  `label_withheld` says `before-2017-06` (SDB-216). New in the sheet and its
+  record: `label_withheld`.
+- **A sheet due for renewal whose label is read gets all findings**, no
+  longer only those on its age: revised from June 2017 to 2020, or in the
+  format before 2020/878 (SDW-49). On a stock of 11,529 sheets that is 44
+  findings more.
+- **`requires_sheet` is `sheet_duty`** and answers with a `SheetDuty`:
+  `required`, `not-required` or `not-checked`, not checked under the rules
+  in force (SDB-218). A sheet of the rules before June 2017 is always
+  `not-checked`, since a sheet of the transition may classify one way under
+  the old directives and another under CLP; a withheld incomplete label is
+  `required` where section 2 classifies the product, else `not-checked`.
+  The record's `sheet.sheet_required` (a boolean) is `sheet.sheet_duty` (one
+  of the three), and `show` says "not checked under the rules in force".
 - **Pictograms above the label's heading are no longer the label's.** The
   rule of 0.12.0 that a block of pictograms directly above "2.2
   Kennzeichnungselemente" belongs to the label (SDB-187) is withdrawn: such a
   block stands in 2.1. Where the label then shows no pictogram, the reading
   has none and `pictogram-not-found` names the sheet's error (SDB-209).
+
+### Changed
+
+- **An EUH wording in running text outside the label is not reported**
+  (`euh-outside-label`): a sentence that follows other words on its line
+  describes an effect (SDB-219). One that begins its line, or follows its
+  code, is still reported.
 
 ### Added
 

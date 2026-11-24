@@ -218,7 +218,7 @@ def test_a_sheet_says_what_its_product_needs_and_for_which_countries(
 
     _, [record], _ = _run(capsys, str(path))
 
-    assert record["sheet"]["sheet_required"] is True
+    assert record["sheet"]["sheet_duty"] == "required"
     assert record["sheet"]["stated_classification"] in {"classified", "not-stated"}
     assert record["sheet"]["countries"] == ["DE"]
 

@@ -46,7 +46,7 @@ named as in the output of `read`:
 | `field` | What is compared |
 | --- | --- |
 | `kind` | what the file is |
-| `stated_classification`, `stated_voluntary`, `stated_article`, `sheet_required`, `countries` | what section 2 says about the classification, whether the sheet calls itself voluntary and the product an article there, whether the product needs a sheet, the countries |
+| `stated_classification`, `stated_voluntary`, `stated_article`, `sheet_duty`, `countries` | what section 2 says about the classification, whether the sheet calls itself voluntary and the product an article there, whether the product needs a sheet, the countries |
 | `signal_word`, `pictograms` | the signal word and the pictograms |
 | `hazard_codes`, `precautionary_codes`, `supplemental_codes` | the codes of the H, P and EUH statements |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the texts of the statements |

@@ -137,8 +137,9 @@ classification is `sheet.stated_classification`
 
 ## Whether the product needs a sheet
 
-`requires_sheet(sheet)` says whether a
-sheet is one its product needs by law: section 2 classifies the product, or
+`sheet_duty(sheet)` says whether a
+sheet is one its product needs by law (`SheetDuty.REQUIRED`) or not
+(`SheetDuty.NOT_REQUIRED`): section 2 classifies the product, or
 the label carries an H or EUH statement, a signal word or a pictogram, or
 says that a safety data sheet is to be had on request (also in the old
 directive's words, which a label by the old directives prints without a
@@ -158,13 +159,13 @@ user who asks is owed it. EUH210 or the request sentence at the label
 outweigh the word in every case.
 
 ```python
-from sdb_reader import HazardStatements, StatedClassification, requires_sheet
+from sdb_reader import HazardStatements, SheetDuty, StatedClassification, sheet_duty
 
-assert requires_sheet(sheet) is True
+assert sheet_duty(sheet) is SheetDuty.REQUIRED
 
 # The same label on a sheet that calls its product an article.
 as_article = dataclasses.replace(sheet, stated_article=True)
-assert requires_sheet(as_article) is False
+assert sheet_duty(as_article) is SheetDuty.NOT_REQUIRED
 
 # Only P statements, and nothing said in section 2.
 advice = dataclasses.replace(
@@ -172,10 +173,22 @@ advice = dataclasses.replace(
     hazard_statements=HazardStatements(precautionary_codes=["P102"]),
     stated_classification=StatedClassification.NOT_STATED,
 )
-assert requires_sheet(advice) is False
+assert sheet_duty(advice) is SheetDuty.NOT_REQUIRED
 ```
 
-`reading_to_dict` puts the answer into the record as `sheet.sheet_required`.
+Where the reading holds no label (`sheet.label_withheld`), the answer is
+`SheetDuty.NOT_CHECKED`: not checked under the rules in force. That is so
+for every sheet of the rules before June 2017, whose classification in
+section 2 does not count either, and for an incomplete label unless section
+2 classifies the product, since the label might carry EUH210. What to do
+then is yours to decide.
+
+```python
+old = dataclasses.replace(sheet, label_withheld="before-2017-06")
+assert sheet_duty(old) is SheetDuty.NOT_CHECKED
+```
+
+`reading_to_dict` puts the answer into the record as `sheet.sheet_duty`.
 
 ### Judging a sheet you stored
 
@@ -189,7 +202,7 @@ stored = sheet_to_dict(sheet, reading.extraction)
 kept = sheet_from_dict(stored)
 
 assert kept == sheet
-assert requires_sheet(kept) is stored["sheet_required"]
+assert sheet_duty(kept) == stored["sheet_duty"]
 ```
 
 It reads what this version of the library writes. A record that lacks a key

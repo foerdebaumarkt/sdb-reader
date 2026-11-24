@@ -76,7 +76,8 @@ def test_a_scanned_sheet_is_read_by_the_real_program(tmp_path: Path) -> None:
     assert "Sicherheitsdatenblatt" in extraction.text
     assert "H315" in extraction.text
 
-    reading = read_sheet(path)
+    # A label of H315 alone lacks GHS07, so it is read as printed (SDB-217).
+    reading = read_sheet(path, accept_incomplete_label=True)
     assert reading_to_dict(reading)["extraction"]["tesseract"] == version
 
     assert reading.verification.kind is DocumentKind.SAFETY_DATA_SHEET

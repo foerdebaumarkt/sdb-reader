@@ -10,7 +10,7 @@ from datetime import date
 import pytest
 
 from sdb_reader import read_extraction, reading_to_dict
-from sdb_reader.compliance import requires_sheet, sheet_findings
+from sdb_reader.compliance import SheetDuty, sheet_duty, sheet_findings
 from sdb_reader.extraction import ExtractionResult
 from sdb_reader.parser import (
     ParsedSheet,
@@ -90,7 +90,7 @@ def _sheet(
 
 
 def _required(result: ParsedSheet) -> bool:
-    return requires_sheet(result.sheet)
+    return sheet_duty(result.sheet) is SheetDuty.REQUIRED
 
 
 def _stating(
@@ -256,8 +256,13 @@ def test_a_classified_mixture_needs_its_sheet_whatever_the_sheet_calls_itself(
     assert sheet.hazard_statements.hazard_codes == ["H314"]
     assert _required(result) is True
     # By the label alone as well, where section 2 is not read as classifying.
-    assert requires_sheet(_stating({"hazard_codes": ["H314"]}, voluntary=True)) is True
-    assert requires_sheet(_stating(stated="classified", voluntary=True)) is True
+    assert (
+        sheet_duty(_stating({"hazard_codes": ["H314"]}, voluntary=True))
+        is SheetDuty.REQUIRED
+    )
+    assert (
+        sheet_duty(_stating(stated="classified", voluntary=True)) is SheetDuty.REQUIRED
+    )
 
 
 @pytest.mark.spec("SDB-142")
@@ -359,7 +364,7 @@ def test_the_record_says_both() -> None:
     assert record["verification"]["kind"] == "safety-data-sheet"
     assert record["sheet"]["stated_voluntary"] is True
     assert record["sheet"]["stated_article"] is True
-    assert record["sheet"]["sheet_required"] is False
+    assert record["sheet"]["sheet_duty"] == "not-required"
     assert record["sheet"]["hazard_statements"]["hazard_codes"] == ["H314"]
 
 
@@ -469,7 +474,10 @@ def test_an_article_needs_no_sheet_though_the_sheet_does_not_call_itself_volunta
     assert sheet.hazard_statements.hazard_codes == ["H314"]
     assert sheet.stated_classification is StatedClassification.CLASSIFIED
     assert _required(result) is False
-    assert requires_sheet(_stating(stated="classified", article=True)) is False
+    assert (
+        sheet_duty(_stating(stated="classified", article=True))
+        is SheetDuty.NOT_REQUIRED
+    )
 
 
 @pytest.mark.spec("SDB-154")
@@ -479,8 +487,8 @@ def test_a_label_that_offers_the_sheet_on_request_goes_first_for_an_article() ->
     assert result.sheet.stated_article is True
     assert _required(result) is True
     assert (
-        requires_sheet(_stating({"supplemental_codes": ["EUH210"]}, article=True))
-        is True
+        sheet_duty(_stating({"supplemental_codes": ["EUH210"]}, article=True))
+        is SheetDuty.REQUIRED
     )
 
 

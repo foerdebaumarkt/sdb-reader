@@ -159,3 +159,8 @@ class SafetyDataSheet:
     # Whether it calls the product an article: beside that sentence (SDB-142)
     # or by saying that as an article it needs no labelling (SDB-154).
     stated_article: bool = False
+    # Why the reading holds no label although the sheet prints one (SDB-216,
+    # SDB-217): "before-2017-06" for a sheet of the rules before June 2017,
+    # "incomplete" where the label surely lacks what it must show; None where
+    # the label is read.
+    label_withheld: str | None = None

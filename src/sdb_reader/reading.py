@@ -8,19 +8,44 @@ and knowing which file it belongs to, is the caller's (BIB-2).
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field, replace
+from datetime import date
 from pathlib import Path
 
+from .compliance import sheet_findings
 from .extraction import ExtractionError, ExtractionResult, extract_pdf_text
 from .label_blocks import SMALL_PACKAGE_HEADING
 from .label_images import LabelImages, LabelImagesStatus, read_label_images
 from .messages import Message
-from .parser import ParsedSheet, SDSParser
-from .schema import FurtherLabel, HazardStatements, LabelKind, SafetyDataSheet
+from .parser import CLASSIFIED_BEFORE_CLP, ParsedSheet, SDSParser
+from .schema import (
+    FurtherLabel,
+    HazardStatements,
+    LabelKind,
+    SafetyDataSheet,
+    StatedClassification,
+)
 from .verification import DocumentKind, SDSVerifier, Verification
 
 LINE_TOO_LONG = "line-too-long"
+# The label surely lacks what it has to show, and was withheld (SDB-217).
+LABEL_INCOMPLETE = "label-incomplete"
+# The findings and the warning that withhold a label (SDB-217): it lacks a
+# pictogram, the signal word or a hazard statement its codes or its
+# classification call for, or shows a pictogram that was not recognised.
+_INCOMPLETE = frozenset(
+    {
+        "pictogram-not-found",
+        "signal-word-not-found",
+        "label-without-hazard-statement",
+        "label-not-found",
+        "hazard-statement-not-in-label",
+    }
+)
+# The last day a sheet of the rules before Regulation (EU) 2015/830 could be
+# supplied, and a mixture labelled under Directive 1999/45/EC be sold (SDB-216).
+LAST_DAY_OF_OLD_RULES = date(2017, 5, 31)
 # The label was not looked at as a picture, and why (SDB-179).
 LABEL_IMAGES_NOT_READ = "label-images-not-read"
 # Red diamonds in the label that no reference matched (SDB-179).
@@ -50,12 +75,18 @@ class SheetReading:
     errors: list[Message] = field(default_factory=list)
 
 
-def read_sheet(path: Path, *, max_pages: int | None = None) -> SheetReading:
+def read_sheet(
+    path: Path, *, max_pages: int | None = None, accept_incomplete_label: bool = False
+) -> SheetReading:
     """Read the PDF at *path*, judge what kind of document it is, and parse a sheet.
 
     The file is judged by its content alone; its name says nothing. *max_pages*
     bounds how many pages are read, by default all. A file that cannot be read
     gives a reading with ``extraction`` None and the reason in ``errors``.
+
+    A label that surely lacks what it has to show is withheld, with the error
+    ``label-incomplete``, unless *accept_incomplete_label* (SDB-217); the label
+    of a sheet of the rules before June 2017 is not read (SDB-216).
     """
     # Read the document once: the verdict and the parser work on the same text.
     try:
@@ -69,11 +100,18 @@ def read_sheet(path: Path, *, max_pages: int | None = None) -> SheetReading:
             warnings=[Message("unreadable")],
             errors=errors,
         )
-    return _read(extraction, lambda: read_label_images(path, max_pages=max_pages))
+    return _read(
+        extraction,
+        lambda: read_label_images(path, max_pages=max_pages),
+        accept_incomplete_label=accept_incomplete_label,
+    )
 
 
 def read_extraction(
-    extraction: ExtractionResult, label_images: LabelImages | None = None
+    extraction: ExtractionResult,
+    label_images: LabelImages | None = None,
+    *,
+    accept_incomplete_label: bool = False,
 ) -> SheetReading:
     """Judge and parse a text that was read from a PDF before (BIB-3).
 
@@ -106,11 +144,18 @@ def read_extraction(
     >>> label.hazard_codes, label.signal_word
     (['H315'], 'Achtung')
     """
-    return _read(extraction, lambda: label_images)
+    return _read(
+        extraction,
+        lambda: label_images,
+        accept_incomplete_label=accept_incomplete_label,
+    )
 
 
 def _read(
-    extraction: ExtractionResult, label_images: Callable[[], LabelImages | None]
+    extraction: ExtractionResult,
+    label_images: Callable[[], LabelImages | None],
+    *,
+    accept_incomplete_label: bool,
 ) -> SheetReading:
     """The reading of *extraction*; the label's drawing is looked at only for
     a German safety data sheet."""
@@ -126,12 +171,64 @@ def _read(
     parsed.warnings[:0] = too_long
     images = label_images()
     with_label_images(parsed, images)
+    errors = _withhold_labels(parsed, accept_incomplete_label=accept_incomplete_label)
     return SheetReading(
         verification=verification,
         extraction=extraction,
         parser_result=parsed,
         label_images=images,
+        errors=errors,
     )
+
+
+def _withhold_labels(
+    parsed: ParsedSheet, *, accept_incomplete_label: bool
+) -> list[Message]:
+    """Withhold the labels *parsed* must not give (SDB-216, SDB-217); the
+    error, where one is withheld as incomplete."""
+    sheets = [
+        (parsed.sheet, parsed.warnings),
+        *((p.sheet, p.warnings) for p in parsed.parts),
+    ]
+    for sheet, notes in sheets:
+        if _of_old_rules(sheet, notes):
+            _withhold(sheet, "before-2017-06")
+    if accept_incomplete_label or parsed.sheet.label_withheld is not None:
+        return []
+    lacking = {
+        finding.code
+        for finding in sheet_findings(parsed.sheet, parsed.warnings, parts=parsed.parts)
+        if finding.code in _INCOMPLETE
+    }
+    if any(
+        noted.code == PICTOGRAMS_NOT_RECOGNISED
+        for _, notes in sheets
+        for noted in notes
+    ):
+        lacking.add(PICTOGRAMS_NOT_RECOGNISED)
+    if not lacking:
+        return []
+    for sheet, _ in sheets:
+        if sheet.label_withheld is None:
+            _withhold(sheet, "incomplete")
+    return [Message(LABEL_INCOMPLETE, {"findings": ", ".join(sorted(lacking))})]
+
+
+def _of_old_rules(sheet: SafetyDataSheet, notes: Sequence[Message]) -> bool:
+    """Whether *sheet* is of the rules before June 2017 (SDB-216): revised, or
+    else issued, no later than 31 May 2017, or classified or labelled under
+    the directives before CLP."""
+    dated = sheet.revision_date or sheet.issue_date
+    if dated is not None and dated <= LAST_DAY_OF_OLD_RULES:
+        return True
+    return sheet.stated_classification is StatedClassification.OLD_SYSTEM or any(
+        noted.code == CLASSIFIED_BEFORE_CLP for noted in notes
+    )
+
+
+def _withhold(sheet: SafetyDataSheet, reason: str) -> None:
+    sheet.hazard_statements = HazardStatements()
+    sheet.label_withheld = reason
 
 
 def with_label_images(parsed: ParsedSheet, images: LabelImages | None) -> None:

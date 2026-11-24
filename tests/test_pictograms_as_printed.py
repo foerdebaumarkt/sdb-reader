@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from functools import partial
 from pathlib import Path
 
 import pymupdf
@@ -34,6 +35,11 @@ from sdb_reader import (
 from sdb_reader.extraction import ExtractionError, ExtractionResult
 from sdb_reader.messages import Message
 from sdb_reader.parser import ParsedSheet, states_no_pictograms
+
+# These tests are about what a label lacks, so they read it as printed
+# instead of withheld (SDB-217).
+read_sheet = partial(read_sheet, accept_incomplete_label=True)
+read_extraction = partial(read_extraction, accept_incomplete_label=True)
 
 DRAWINGS = Path(__file__).parent.parent / "tools" / "pictograms" / "drawings"
 

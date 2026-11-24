@@ -7,6 +7,7 @@ the references are made from.
 
 from __future__ import annotations
 
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ from sdb_reader import (
     LabelImages,
     LabelImagesStatus,
     LabelKind,
+    SheetDuty,
     clp_expected,
     extraction_from_dict,
     label_images_from_dict,
@@ -27,12 +29,17 @@ from sdb_reader import (
     read_extraction,
     read_label_images,
     read_sheet,
-    requires_sheet,
+    sheet_duty,
     sheet_findings,
     sheet_from_dict,
     sheet_to_dict,
 )
 from sdb_reader.parser import ParsedSheet, omitted_codes, split_label_blocks
+
+# These tests are about what a label lacks, so they read it as printed
+# instead of withheld (SDB-217).
+read_sheet = partial(read_sheet, accept_incomplete_label=True)
+read_extraction = partial(read_extraction, accept_incomplete_label=True)
 
 _SHEET = (
     "Sicherheitsdatenblatt\n"
@@ -71,6 +78,7 @@ def _parsed(label: str, classification: str = "Skin Sens. 1, H317") -> ParsedShe
 def _findings(
     label: str, classification: str = "Skin Sens. 1, H317"
 ) -> list[tuple[str, str]]:
+
     result = _parsed(label, classification)
     return [
         (finding.code, next(iter(finding.params.values()), ""))
@@ -678,7 +686,7 @@ def test_a_small_package_s_label_speaks_of_the_product_s_sheet() -> None:
     assert sheet.hazard_statements.supplemental_codes == []
     [small] = sheet.hazard_statements.further_labels
     assert small.label.supplemental_codes == ["EUH208"]
-    assert requires_sheet(sheet)
+    assert sheet_duty(sheet) is SheetDuty.REQUIRED
 
 
 @pytest.mark.spec("SDB-197", "SDW-42")

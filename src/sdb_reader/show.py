@@ -19,6 +19,12 @@ _INDENT = "  "
 # columns of a file's line in a folder.
 _BETWEEN = " · "
 _SHEET = "safety-data-sheet"
+# What the record says of the sheet's duty, and how that is said (SDB-218).
+_SHEET_DUTY = {
+    "required": "show-needs-sheet",
+    "not-required": "show-needs-no-sheet",
+    "not-checked": "show-sheet-not-checked",
+}
 # What the parser notes about a label that lacks one kind of statement. For a
 # sheet that prints no label at all they only repeat that (SDW-38).
 _REPEATS_NO_LABEL = frozenset({"no-hazard-codes", "no-precautionary-codes"})
@@ -253,7 +259,7 @@ def _sheet_block(
     lines.append(
         _say(
             catalog,
-            "show-needs-sheet" if sheet["sheet_required"] else "show-needs-no-sheet",
+            _SHEET_DUTY[sheet["sheet_duty"]],
         )
     )
     if sheet["stated_voluntary"]:
@@ -314,10 +320,8 @@ def report(record: Mapping[str, Any], name: str, catalog: Catalog) -> list[str]:
     # them does, and the findings compare them with one another.
     lines.append("")
     lines.append(_INDENT + _say(catalog, "show-whole-file"))
-    needs = record["sheet"]["sheet_required"]
     lines.append(
-        _INDENT * 2
-        + _say(catalog, "show-needs-sheet" if needs else "show-needs-no-sheet")
+        _INDENT * 2 + _say(catalog, _SHEET_DUTY[record["sheet"]["sheet_duty"]])
     )
     lines.append(_INDENT * 2 + _oldest(record, catalog))
     lines.append("")
