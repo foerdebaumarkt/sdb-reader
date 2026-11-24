@@ -254,14 +254,29 @@ def _lines(page: pymupdf.Page) -> list[_Line]:
 def _page_lines(
     document: pymupdf.Document, pages: range
 ) -> dict[int, list[_Line]] | None:
-    """The lines of each page; read by text recognition where the file has no
-    text layer (SDB-204). None where it has none and recognition cannot run."""
-    if any(document[number].get_text("text").strip() for number in pages):
-        return {number: _lines(document[number]) for number in pages}
-    try:
-        return {number: ocr_lines(document[number]) for number in pages[:OCR_MAX_PAGES]}
-    except ExtractionError:
+    """The lines of each page; read by text recognition on a page without a
+    text layer, as the text is (SDB-204, SDB-46), at most OCR_MAX_PAGES of
+    them. None where no page has one and recognition cannot run; a page
+    recognition cannot read otherwise has no lines."""
+    lines: dict[int, list[_Line]] = {}
+    recognised = 0
+    for number in pages:
+        page = document[number]
+        if page.get_text("text").strip():
+            lines[number] = _lines(page)
+            continue
+        if recognised >= OCR_MAX_PAGES:
+            lines[number] = []
+            continue
+        recognised += 1
+        try:
+            lines[number] = ocr_lines(page)
+        except ExtractionError:
+            lines[number] = []
+    if not any(lines.values()) and recognised:
+        # Pictures only, and recognition read nothing of them or cannot run.
         return None
+    return lines
 
 
 def _body(lines: dict[int, list[_Line]]) -> dict[int, tuple[float, float]]:
@@ -412,6 +427,11 @@ def _red(pixmap: pymupdf.Pixmap) -> bytearray:
     return mask
 
 
+# Red pixels this close belong to one area: a frame drawn as many thin strips
+# of a picture has gaps of a pixel between them (SDB-208).
+_REACH = (-2, -1, 0, 1, 2)
+
+
 def _components(
     mask: bytearray, width: int, height: int
 ) -> Iterator[tuple[int, int, int, int, int]]:
@@ -430,11 +450,11 @@ def _components(
             count += 1
             px, py = p % width, p // width
             x0, x1, y0, y1 = min(x0, px), max(x1, px), min(y0, py), max(y1, py)
-            for dy in (-1, 0, 1):
+            for dy in _REACH:
                 ny = py + dy
                 if not 0 <= ny < height:
                     continue
-                for dx in (-1, 0, 1):
+                for dx in _REACH:
                     nx = px + dx
                     if 0 <= nx < width:
                         q = ny * width + nx
@@ -500,6 +520,25 @@ def _candidates(
             return
 
 
+def _tightened(
+    mask: bytearray, width: int, box: tuple[int, int, int, int]
+) -> tuple[int, int, int, int]:
+    """*box* shrunk to the red pixels inside it: a row of touching diamonds is
+    split evenly, and each part then fits its own frame (SDB-208)."""
+    x0, y0, x1, y1 = box
+    xs = [
+        x
+        for x in range(x0, x1 + 1)
+        if any(mask[y * width + x] for y in range(y0, y1 + 1))
+    ]
+    ys = [
+        y
+        for y in range(y0, y1 + 1)
+        if any(mask[y * width + x] for x in range(x0, x1 + 1))
+    ]
+    return (xs[0], ys[0], xs[-1], ys[-1]) if xs and ys else box
+
+
 def _diamonds(page: pymupdf.Page, top: float, bottom: float) -> list[pymupdf.Rect]:
     """The red-framed diamonds in the band from *top* to *bottom*, in reading
     order, in page points."""
@@ -518,7 +557,8 @@ def _diamonds(page: pymupdf.Page, top: float, bottom: float) -> list[pymupdf.Rec
     for x0, y0, x1, y1, count in _components(mask, width, height):
         if count / ((x1 - x0 + 1) * (y1 - y0 + 1)) > 0.6:
             continue  # a filled red area is no frame
-        for box in _candidates(x0, y0, x1, y1):
+        for split in _candidates(x0, y0, x1, y1):
+            box = _tightened(mask, width, split)
             bw, bh = box[2] - box[0] + 1, box[3] - box[1] + 1
             if not (_MIN_SIDE <= bw <= _MAX_SIDE and _MIN_SIDE <= bh <= _MAX_SIDE):
                 continue
