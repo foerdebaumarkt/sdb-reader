@@ -12,8 +12,24 @@ Versions follow the tags of this repository.
   (`read_label_images`, about a tenth of a second per sheet, a second per
   scanned page); readings kept from before should be made again.
   `EXTRACTION_VERSION` stays 2: stored texts stay valid.
+- **Pictograms above the label's heading are no longer the label's.** The
+  rule of 0.12.0 that a block of pictograms directly above "2.2
+  Kennzeichnungselemente" belongs to the label (SDB-187) is withdrawn: such a
+  block stands in 2.1. Where the label then shows no pictogram, the reading
+  has none and `pictogram-not-found` names the sheet's error (SDB-209).
 
 ### Fixed
+
+- **A label headed otherwise than "Kennzeichnungselemente"** is found: any
+  heading numbered 2.2 that begins with "Kennzeichnung" ("2.2 Kennzeichnung
+  nach GHS:", "2.2 Kennzeichnung des Gemischs nach CLP-Verordnung"), in the
+  text and in the picture (SDB-209).
+- **A sentence behind a printed code stays with that code.** "P502
+  Inhalt/Behälter der Problemabfallentsorgung zuführen." is P502 as printed,
+  no longer P502 and P501 (SDB-210). On a set of about 14,500 sheets 6
+  readings change: 3 lose the pictograms above "2.2" and get
+  `pictogram-not-found`, 2 read P502 without P501, one finds its label and
+  with it GHS07.
 
 - **Pictograms where the label was not found as a picture.** A label headed
   "GHS-Kennzeichnung" instead of "Kennzeichnungselemente" is a label, in the

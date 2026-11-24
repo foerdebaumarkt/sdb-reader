@@ -85,20 +85,22 @@ _LABEL_BELOW_ITS_PICTOGRAMS = (
 )
 
 
-@pytest.mark.spec("SDB-187")
+@pytest.mark.spec("SDB-4", "SDB-202", "SDB-209")
 @pytest.mark.parametrize(
     "block",
     [
         "Gefahrenpiktogramme\n\nGHS05\nGHS07\n",
         "Piktogramme:\nGHS05 GHS07\n",
         "· Gefahrenpiktogramme\nGHS05, GHS07\n\n",
+        # Pictograms of the classification in 2.1, without a title of their own.
+        "GHS05 Ätzwirkung\nEye Dam. 1 H318 Verursacht schwere Augenschäden.\nGHS07\n",
     ],
 )
-def test_pictograms_set_above_the_label_heading_belong_to_the_label(
+def test_pictograms_above_the_label_heading_are_no_part_of_the_label(
     block: str,
 ) -> None:
-    """The page prints the pictograms of 2.2 above its heading; the text
-    brings them between the classification and the heading."""
+    """Above "2.2" they stand in 2.1, even where the sheet meant them for the
+    label: the label begins at its heading (SDB-187 withdrawn)."""
     label = read(
         CLASSIFIED
         + "Seite 1 von 9\nMusterprodukt\n"
@@ -106,26 +108,43 @@ def test_pictograms_set_above_the_label_heading_belong_to_the_label(
         + _LABEL_BELOW_ITS_PICTOGRAMS
     )
 
-    assert label.pictograms == ["GHS05", "GHS07"]
+    assert label.pictograms == []
     assert label.hazard_codes == ["H315", "H318"]
 
 
-@pytest.mark.spec("SDB-187")
+@pytest.mark.spec("SDB-209")
 @pytest.mark.parametrize(
-    "above",
+    "heading",
     [
-        # Pictograms of the classification in 2.1, without a title of their own.
-        "GHS05 Ätzwirkung\nEye Dam. 1 H318 Verursacht schwere Augenschäden.\nGHS07\n",
-        # A title with more than the codes under it.
-        "Piktogramme: GHS07\nZu kennzeichnende Komponenten: Musterstoff\n",
+        "2.2 Kennzeichnung nach GHS:",
+        "2.2 Kennzeichnung des Gemischs nach CLP-Verordnung",
     ],
 )
-def test_only_a_block_of_pictograms_directly_above_the_heading_counts(
-    above: str,
-) -> None:
-    label = read(CLASSIFIED + above + _LABEL_BELOW_ITS_PICTOGRAMS)
+def test_any_heading_2_2_on_labelling_begins_the_label(heading: str) -> None:
+    parsed = _parse(
+        CLASSIFIED
+        + heading
+        + "\nSignalwort\nGefahr\nH318 Verursacht schwere Augenschäden.\n"
+        + "P280 Schutzhandschuhe tragen.\n2.3 Sonstige Gefahren\nKeine.\n"
+    )
 
-    assert label.pictograms == []
+    label = parsed.sheet.hazard_statements
+    assert label.hazard_codes == ["H318"]
+    assert "no-label-section" not in [m.code for m in parsed.warnings]
+
+
+@pytest.mark.spec("SDB-210")
+def test_a_sentence_behind_a_printed_code_stays_with_that_code() -> None:
+    label = read(
+        CLASSIFIED
+        + "2.2 Kennzeichnungselemente\nSignalwort\nGefahr\n"
+        + "H318 Verursacht schwere Augenschäden.\n"
+        + "P502 Inhalt/Behälter der Problemabfallentsorgung zuführen.\n"
+        + "2.3 Sonstige Gefahren\nKeine.\n"
+    )
+
+    assert label.precautionary_codes == ["P502"]
+    assert label.codes_from_wording == []
 
 
 @pytest.mark.spec("SDB-119")
