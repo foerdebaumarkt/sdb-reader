@@ -82,6 +82,12 @@ _PAGE_NUMBER = re.compile(
 _SEARCH_DPI = 100
 # A diamond is between 10 and 160 pixels wide at that resolution (2.5 mm to 4 cm).
 _MIN_SIDE, _MAX_SIDE = 10, 160
+# Black or grey: a red frame printed in grey turns out about 130, so up to
+# this value, and nearly without colour (SDB-212).
+_DARK = 170
+# A diamond with a black or grey frame is at least this many pixels wide, so
+# that no letter or bullet of the text passes for one (SDB-212).
+_MIN_DARK_SIDE = 18
 # Diamonds set side by side with touching corners form one red area; up to
 # this many in a row or column are split again.
 _MAX_IN_A_ROW = 5
@@ -524,9 +530,42 @@ def _tightened(
     return (xs[0], ys[0], xs[-1], ys[-1]) if xs and ys else box
 
 
+def _dark(pixmap: pymupdf.Pixmap) -> bytearray:
+    """A mask of the pixels of *pixmap* in the black or grey of a pictogram's
+    frame printed without red (SDB-212)."""
+    width, height, n, stride = pixmap.width, pixmap.height, pixmap.n, pixmap.stride
+    samples = pixmap.samples
+    mask = bytearray(width * height)
+    for y in range(height):
+        row = y * stride
+        for x in range(width):
+            i = row + x * n
+            r, g, b = samples[i], samples[i + 1], samples[i + 2]
+            if max(r, g, b) < _DARK and max(r, g, b) - min(r, g, b) < 40:
+                mask[y * width + x] = 1
+    return mask
+
+
+def _framed(
+    mask: bytearray, width: int, height: int, min_side: int
+) -> Iterator[tuple[int, int, int, int]]:
+    """The boxes of the diamonds whose frame *mask* draws."""
+    for x0, y0, x1, y1, count in _components(mask, width, height):
+        if count / ((x1 - x0 + 1) * (y1 - y0 + 1)) > 0.6:
+            continue  # a filled area is no frame
+        for split in _candidates(x0, y0, x1, y1):
+            box = _tightened(mask, width, split)
+            bw, bh = box[2] - box[0] + 1, box[3] - box[1] + 1
+            if not (min_side <= bw <= _MAX_SIDE and min_side <= bh <= _MAX_SIDE):
+                continue
+            if _is_diamond(mask, width, box):
+                yield box
+
+
 def _diamonds(page: pymupdf.Page, top: float, bottom: float) -> list[pymupdf.Rect]:
-    """The red-framed diamonds in the band from *top* to *bottom*, in reading
-    order, in page points."""
+    """The framed diamonds in the band from *top* to *bottom*, in reading
+    order, in page points: those with a red frame, and those with a black or
+    grey one that is not inside a red one (SDB-212)."""
     clip = pymupdf.Rect(
         0, max(0.0, top - 4), page.rect.width, min(page.rect.height, bottom + 4)
     )
@@ -536,26 +575,22 @@ def _diamonds(page: pymupdf.Page, top: float, bottom: float) -> list[pymupdf.Rec
         dpi=_SEARCH_DPI, clip=clip, colorspace=pymupdf.csRGB, alpha=False
     )
     width, height = pixmap.width, pixmap.height
-    mask = _red(pixmap)
     scale = 72 / _SEARCH_DPI
-    found: list[pymupdf.Rect] = []
-    for x0, y0, x1, y1, count in _components(mask, width, height):
-        if count / ((x1 - x0 + 1) * (y1 - y0 + 1)) > 0.6:
-            continue  # a filled red area is no frame
-        for split in _candidates(x0, y0, x1, y1):
-            box = _tightened(mask, width, split)
-            bw, bh = box[2] - box[0] + 1, box[3] - box[1] + 1
-            if not (_MIN_SIDE <= bw <= _MAX_SIDE and _MIN_SIDE <= bh <= _MAX_SIDE):
-                continue
-            if _is_diamond(mask, width, box):
-                found.append(
-                    pymupdf.Rect(
-                        clip.x0 + box[0] * scale,
-                        clip.y0 + box[1] * scale,
-                        clip.x0 + (box[2] + 1) * scale,
-                        clip.y0 + (box[3] + 1) * scale,
-                    )
-                )
+
+    def rect(box: tuple[int, int, int, int]) -> pymupdf.Rect:
+        return pymupdf.Rect(
+            clip.x0 + box[0] * scale,
+            clip.y0 + box[1] * scale,
+            clip.x0 + (box[2] + 1) * scale,
+            clip.y0 + (box[3] + 1) * scale,
+        )
+
+    found = [rect(box) for box in _framed(_red(pixmap), width, height, _MIN_SIDE)]
+    red = list(found)
+    for box in _framed(_dark(pixmap), width, height, _MIN_DARK_SIDE):
+        dark = rect(box)
+        if not any(dark.intersects(other) for other in red):
+            found.append(dark)
     found.sort(key=lambda rect: (round(rect.y0 / 20), rect.x0))
     return found
 
@@ -639,10 +674,9 @@ def _references() -> dict[str, list[list[float]]]:
     }
 
 
-def name_pictogram(vector: Sequence[float]) -> str | None:
-    """The code of the pictogram whose references *vector* is most like, or
-    None where no pictogram is clearly most like it."""
-    scores = sorted(
+def _scores(vector: Sequence[float]) -> list[tuple[float, str]]:
+    """How like each pictogram's references *vector* is, the likest first."""
+    return sorted(
         (
             (
                 max(
@@ -654,6 +688,12 @@ def name_pictogram(vector: Sequence[float]) -> str | None:
         ),
         reverse=True,
     )
+
+
+def name_pictogram(vector: Sequence[float]) -> str | None:
+    """The code of the pictogram whose references *vector* is most like, or
+    None where no pictogram is clearly most like it."""
+    scores = _scores(vector)
     (best, code), (second, _) = scores[0], scores[1]
     accepted = any(
         best >= likeness and best - second >= margin for likeness, margin in ACCEPTED
@@ -668,6 +708,69 @@ def _name(page: pymupdf.Page, rect: pymupdf.Rect) -> str | None:
         pixmap = page.get_pixmap(
             dpi=dpi, clip=rect, colorspace=pymupdf.csRGB, alpha=False
         )
-        if (code := name_pictogram(fingerprint(grey(pixmap)))) is not None:
+        vector = fingerprint(grey(pixmap))
+        (best, first), (_, second) = _scores(vector)[:2]
+        if {first, second} == _FLAMES and best >= _FLAME_LIKENESS:
+            # The flame alone or over a circle: the ring decides (SDB-213).
+            ring = page.get_pixmap(
+                dpi=_RING_DPI, clip=rect, colorspace=pymupdf.csRGB, alpha=False
+            )
+            return "GHS03" if has_ring(grey(ring)) else "GHS02"
+        if (code := name_pictogram(vector)) is not None:
             return code
     return None
+
+
+# GHS02 (flame) and GHS03 (flame over circle) differ only in the ring under the
+# flame, which a fingerprint of the whole diamond can miss where a sheet draws
+# the flame's foot broad and round (SDB-213). Where they are the two likest
+# and the likeness says it is one of them, the ring decides.
+_FLAMES = frozenset({"GHS02", "GHS03"})
+_FLAME_LIKENESS = 0.5
+_RING_DPI = 300
+# The middle of the diamond, where the symbol stands, as a share of its box;
+# a little lower than the centre, as the flame's foot is.
+_SYMBOL_SHARE = 0.56
+_SYMBOL_LOWER = 0.04
+# What is lighter than this is white; a hole is at least this share of the box.
+_WHITE = 140
+_HOLE_SHARE = 0.004
+
+
+def has_ring(rows: list[list[int]]) -> bool:
+    """Whether the symbol in a diamond drawn as *rows* of grey values encloses
+    a white area: the ring of GHS03, which the flame of GHS02 lacks (SDB-213)."""
+    height, width = len(rows), len(rows[0]) if rows else 0
+    box_width, box_height = int(width * _SYMBOL_SHARE), int(height * _SYMBOL_SHARE)
+    left = (width - box_width) // 2
+    top = (height - box_height) // 2 + int(height * _SYMBOL_LOWER)
+    white = [
+        [rows[y][x] >= _WHITE for x in range(left, left + box_width)]
+        for y in range(top, min(height, top + box_height))
+    ]
+    box_height = len(white)
+    seen = [[False] * box_width for _ in range(box_height)]
+    for start_y in range(box_height):
+        for start_x in range(box_width):
+            if not white[start_y][start_x] or seen[start_y][start_x]:
+                continue
+            queue = deque([(start_y, start_x)])
+            seen[start_y][start_x] = True
+            size, touches_edge = 0, False
+            while queue:
+                y, x = queue.popleft()
+                size += 1
+                if y in (0, box_height - 1) or x in (0, box_width - 1):
+                    touches_edge = True
+                for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+                    if (
+                        0 <= ny < box_height
+                        and 0 <= nx < box_width
+                        and white[ny][nx]
+                        and not seen[ny][nx]
+                    ):
+                        seen[ny][nx] = True
+                        queue.append((ny, nx))
+            if not touches_edge and size >= _HOLE_SHARE * box_height * box_width:
+                return True
+    return False
