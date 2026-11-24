@@ -5,6 +5,24 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.12.0 – 2026-11-24
+
+This release reads the label strictly as printed, pictures included, and
+reports a deviation from the CLP Regulation only where it is certain. The
+pictograms are those the sheet prints, as codes or as pictures read from
+the PDF in a third stage, and what the codes call for comes from
+`clp_expected`. A second label in 2.2, for a package of at most 125 ml or
+under the Biocidal Products or the Detergents Regulation, stands apart
+under `further_labels`, with the conditions the sheet prints. Where a
+finding depends on what the sheet does not say (the package, its size, who
+buys it), there is none; a sheet due for renewal gets only the findings on
+its age, and a date in the future is no date. New findings name a label
+statement the classification does not, a signal word that conflicts with
+the codes, and what a small package's label lacks. `PARSER_VERSION` rises
+to 21; the label's pictures have to be read from the PDFs once. 0.11.1 was
+not released: its documentation is part of this release, and the site gets
+the editions of 0.11.0 and of this one.
+
 ### Breaking
 
 - **The label is only the product's label.** A second label in 2.2, for a
@@ -64,7 +82,7 @@ Versions follow the tags of this repository.
 - **`read_extraction` without the pictures** gives only the pictograms the
   text names. A caller that keeps texts keeps the pictures beside them
   (`label_images_to_dict`) and passes them back; see "Keeping texts".
-- **`PARSER_VERSION` is 21** (0.11.1: 20); a record of a file with several
+- **`PARSER_VERSION` is 21** (0.11.0: 20); a record of a file with several
   sheets also carries new keys. `EXTRACTION_VERSION` stays 2:
   stored texts stay valid, but the pictures have to be read from the PDFs
   once, about a tenth of a second per sheet; readings kept from before
@@ -235,14 +253,6 @@ Versions follow the tags of this repository.
 - **A signal word with an exclamation mark behind its label** ("Signalwort:
   Achtung!") is read; only a sentence that goes on after the mark on the
   same line is the opening of EUH211 or EUH212 (SDB-176).
-
-## 0.11.1 – 2026-11-21
-
-A documentation release: the README answers why one would not just give a
-PDF to a language model, and "How it works" sets out the philosophy behind
-the reader. The code is that of 0.11.0; `PARSER_VERSION` stays 20. The
-documentation site gets the edition of 0.11.0, which its release did not
-deploy, together with this one.
 
 ### Documentation
 
