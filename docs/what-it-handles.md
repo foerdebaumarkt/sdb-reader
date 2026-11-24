@@ -8,6 +8,7 @@ what the reader deals with, each point as *the sheet does this, the reader
 does that*. The IDs in brackets name the rules behind a point; the rules are
 in German, in [specs/](../specs/README.md). How a file passes through the
 library step by step is told in [How it works](how-it-works.md).
+The short list: [Features at a glance](features.md).
 Deutsch: [Was es abdeckt](was-es-abdeckt.md).
 
 ## The file
