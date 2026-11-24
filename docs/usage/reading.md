@@ -50,7 +50,7 @@ For a sheet the record looks like this, shortened:
       "stated_classification": "classified",
       "stated_voluntary": false,
       "stated_article": false,
-      "sheet_required": true,
+      "sheet_duty": "required",
       "hazard_statements": {
         "signal_word": "Achtung",
         "pictograms": ["GHS07"],

@@ -81,13 +81,35 @@ reading = read_sheet(path)
 
 assert reading.verification.kind is DocumentKind.SAFETY_DATA_SHEET
 assert reading.parser_result is not None
+assert reading.parser_result.sheet.product_identifier == "Musterreiniger"
+```
+
+`read_sheet` does not raise for a file it cannot read or that is something
+else; the reading says so.
+
+This sheet's label prints H315 but not the pictogram GHS07 that H315 calls
+for. A label that surely lacks what it has to show (a pictogram, the signal
+word or a hazard statement its codes call for) is not given: the reading has
+the error `label-incomplete` and an empty `hazard_statements`, so that no
+program shows a hazardous product without its warnings by mistake.
+
+```python
+assert [error.code for error in reading.errors] == ["label-incomplete"]
+assert reading.parser_result.sheet.hazard_statements.hazard_codes == []
+assert reading.parser_result.sheet.label_withheld == "incomplete"
+```
+
+To have such a label as printed, with findings that say what it lacks, ask
+for it. The rest of this guide does:
+
+```python
+reading = read_sheet(path, accept_incomplete_label=True)
 sheet = reading.parser_result.sheet
 
-assert sheet.product_identifier == "Musterreiniger"
 assert sheet.hazard_statements.hazard_codes == ["H315"]
 assert sheet.hazard_statements.signal_word == "Achtung"
 ```
 
-`read_sheet` does not raise for a file it cannot read or that is something
-else; the reading says so. [A reading and its parts](reading.md) goes through
+The label of a sheet of the rules before June 2017 is not read at all
+(`label_withheld` is `"before-2017-06"`). [A reading and its parts](reading.md) goes through
 what comes back.

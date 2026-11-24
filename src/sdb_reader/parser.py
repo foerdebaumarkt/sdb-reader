@@ -3135,7 +3135,8 @@ def _euh_wordings_outside(
     one ("Wiederholter Kontakt kann zu spröder oder
     rissiger Haut führen." under "Mögliche schädliche Wirkungen") -- but where
     it stands is the supplier's to put right, so it is reported: one
-    sealant prints EUH208 under "2.4 Zusätzliche Hinweise".
+    sealant prints EUH208 under "2.4 Zusätzliche Hinweise". Not where it runs
+    on from other words on its line (SDB-219): that is a description.
     """
     outside = hazards_text
     for label in labels:
@@ -3149,7 +3150,7 @@ def _euh_wordings_outside(
     return [
         Message(EUH_WORDING_OUTSIDE_LABEL, {"statement": code, "sentence": sentence})
         for code, sentence in euh_statements_by_wording(
-            outside, skip=on_label, partial=True
+            outside, skip=on_label, partial=True, standing=True
         )
     ]
 

@@ -56,7 +56,7 @@ Check such a sheet more carefully.
 | `countries` | the countries the sheet is issued for, of `DE`, `AT`, `CH`; empty where it names none |
 | `stated_classification` | what section 2 says about the classification, see below |
 | `stated_voluntary`, `stated_article` | whether the sheet calls itself voluntary or not prescribed, and whether it calls the product an article there, see below |
-| `sheet_required` | whether the product needs a safety data sheet by law, see below |
+| `sheet_duty` | whether the product needs a safety data sheet by law: `required`, `not-required` or `not-checked`, see below |
 | `hazard_statements` | the label of section 2.2, see below |
 | `contact_info` | the supplier of section 1.3 with name, address, phone, e-mail and website, and the emergency phone of section 1.4, as printed with what the sheet says about it ("(24 h)", the poison centre's name); `information_email` is the address the sheet names for whoever answers for it: the competent person's ("E-Mail-Adresse der sachkundigen Person"), else an information office's ("Auskunftgebender Bereich"). It is null where no such label stands at an address, it may equal `email`, and it may be the address of a firm that wrote the sheet for the supplier |
 | `section_text` | the text of each section that was found |
@@ -75,9 +75,9 @@ Check such a sheet more carefully.
 
 ### Whether the product needs a sheet
 
-`sheet_required` is `true` where section 2 classifies the product, or where
+`sheet_duty` is `required` where section 2 classifies the product, or where
 the label carries a hazard statement (H or EUH), a signal word or a
-pictogram. Every other sheet was issued voluntarily. Precautionary statements
+pictogram. Every other sheet was issued voluntarily: `not-required`. Precautionary statements
 (P) alone do not count: a supplier may print them on any product.
 
 `stated_voluntary` is `true` where the sheet says of itself that it was
@@ -89,16 +89,23 @@ freiwillig erstellt", "… für Erzeugnisse nicht vorgeschrieben").
 ("Erzeugnis") beside that sentence, or where it says the product is an
 article and therefore not subject to labelling ("Dieses Produkt ist ein
 Erzeugnis, deshalb ist es … nicht kennzeichnungspflichtig"); such a sheet
-need not call itself voluntary. What follows for `sheet_required`:
+need not call itself voluntary. What follows for `sheet_duty`:
 
-| The sheet … | `sheet_required` |
+| The sheet … | `sheet_duty` |
 | --- | --- |
-| calls the product an article | `false`, also where the label prints H statements |
-| calls itself voluntary, and the product is not classified (section 2 does not classify it, no H statement) | `false` |
-| calls itself voluntary, but the mixture is classified and no article is named | `true`: the sheet is due to a distributor or downstream user who asks for it |
-| prints EUH210 or the sentence "auf Anfrage erhältlich" at the label | `true`, in every case |
+| calls the product an article | `not-required`, also where the label prints H statements |
+| calls itself voluntary, and the product is not classified (section 2 does not classify it, no H statement) | `not-required` |
+| calls itself voluntary, but the mixture is classified and no article is named | `required`: the sheet is due to a distributor or downstream user who asks for it |
+| prints EUH210 or the sentence "auf Anfrage erhältlich" at the label | `required`, in every case |
 
-The label always stands in the reading as the sheet prints it.
+Where the reading holds no label (`label_withheld`), it is `not-checked`, not
+checked under the rules in force: always for a sheet of the rules before
+June 2017, whose classification does not count either, and for an
+incomplete label unless section 2 classifies the product. What follows from
+`not-checked` is the caller's to decide.
+
+The label stands in the reading as the sheet prints it, unless the reading
+withholds it.
 
 ### The label
 

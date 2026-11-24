@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from sdb_reader.compliance import requires_sheet
+from sdb_reader.compliance import SheetDuty, sheet_duty
 from sdb_reader.extraction import ExtractionResult
 from sdb_reader.parser import ParsedSheet, SDSParser
 from sdb_reader.schema import HazardStatements, StatedClassification
@@ -496,15 +496,15 @@ class TestTheOldDirectivesRequestSentence:
         assert result.sheet.stated_classification is StatedClassification.NOT_CLASSIFIED
         assert label.supplemental_codes == []
         assert label.supplemental_text == sentence
-        assert requires_sheet(result.sheet)
+        assert sheet_duty(result.sheet) is SheetDuty.REQUIRED
         result.sheet.hazard_statements = HazardStatements(
             supplemental_text="Kein Blatt erforderlich."
         )
-        assert requires_sheet(result.sheet) is False
+        assert sheet_duty(result.sheet) is SheetDuty.NOT_REQUIRED
         result.sheet.hazard_statements = HazardStatements(
             supplemental_text="Sicherheitsdatenblatt auf Anfrage erhältlich."
         )
-        assert requires_sheet(result.sheet)
+        assert sheet_duty(result.sheet) is SheetDuty.REQUIRED
 
     @pytest.mark.spec("SDB-123")
     def test_a_sheet_that_prints_the_code_under_clp_keeps_it(self) -> None:

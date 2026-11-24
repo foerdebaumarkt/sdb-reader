@@ -32,6 +32,7 @@
 
 "not-a-sheet" = "The file is not a German safety data sheet; nothing was parsed."
 "unreadable" = "The file's text could not be read; nothing was verified."
+"label-incomplete" = "The label surely lacks what it has to show ({findings}); it is withheld. Read with --accept-incomplete-label to have it as printed."
 
 "line-too-long" = "{count} lines of more than 2,000 characters were not read, the longest with {length}; a sheet prints no lines that long."
 "no-label-section" = "Section 2.2 (Kennzeichnungselemente) was not found; the whole of section 2 was read instead."
@@ -152,6 +153,7 @@
 "show-no-statements" = "no H, P or EUH statements"
 "show-needs-sheet" = "Needs a safety data sheet: yes"
 "show-needs-no-sheet" = "Needs a safety data sheet: no"
+"show-sheet-not-checked" = "Needs a safety data sheet: not checked under the rules in force"
 "show-stated-voluntary" = "The sheet calls itself voluntary or not prescribed."
 "show-stated-article" = "The sheet calls its product an article."
 "show-no-notes" = "none"

@@ -63,6 +63,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "no-safety-data-sheet",
             "not-a-sheet",
             "unreadable",
+            "label-incomplete",
         ),
     ),
     (
@@ -218,6 +219,7 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "show-no-statements",
             "show-needs-sheet",
             "show-needs-no-sheet",
+            "show-sheet-not-checked",
             "show-stated-voluntary",
             "show-stated-article",
             "show-no-notes",

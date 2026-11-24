@@ -1018,7 +1018,13 @@ def test_read_and_ask_count_the_same_sheets(
     read, asked = tmp_path / "read.jsonl", tmp_path / "ask.jsonl"
     model.answers_in_turn(RESIN_ANSWER, HARDENER_ANSWER)
 
-    assert cli.main(["read", str(path), "--output", str(read)]) == 0
+    # The two compare the labels as printed (SDB-217).
+    assert (
+        cli.main(
+            ["read", str(path), "--accept-incomplete-label", "--output", str(read)]
+        )
+        == 0
+    )
     assert (
         cli.main(
             [

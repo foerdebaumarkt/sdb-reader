@@ -257,7 +257,7 @@
         "product_identifier",
         "revision_date",
         "section_text",
-        "sheet_required",
+        "sheet_duty",
         "stated_classification",
         "version"
       ],
@@ -329,9 +329,25 @@
           "type": "boolean",
           "description": "Whether the sheet calls its product an article: beside the sentence that makes it voluntary, or by saying that as an article it is not subject to labelling."
         },
-        "sheet_required": {
-          "type": "boolean",
-          "description": "Whether, by this sheet, its product needs a safety data sheet."
+        "label_withheld": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "before-2017-06",
+            "incomplete",
+            null
+          ],
+          "description": "Why the reading holds no label although the sheet prints one: a sheet of the rules before June 2017 (SDB-216), or a label that surely lacks what it must show (SDB-217). Missing in a reading stored before."
+        },
+        "sheet_duty": {
+          "enum": [
+            "required",
+            "not-required",
+            "not-checked"
+          ],
+          "description": "Whether, by this sheet, its product needs a safety data sheet: not-checked where the reading holds no label and section 2 alone does not say that one is due (SDB-218)."
         },
         "hazard_statements": {
           "$ref": "#/$defs/label"
@@ -676,6 +692,7 @@
             "show-no-statements",
             "show-needs-sheet",
             "show-needs-no-sheet",
+            "show-sheet-not-checked",
             "show-stated-voluntary",
             "show-stated-article",
             "show-no-notes",
@@ -764,6 +781,7 @@
             "undated",
             "unknown",
             "unreadable",
+            "label-incomplete",
             "wording-deviates"
           ],
           "description": "What is noted. The same in every language."

@@ -82,6 +82,7 @@ def test_a_file_is_read_from_its_path_alone(tmp_path: Path) -> None:
     assert list(inspect.signature(sdb_reader.read_sheet).parameters) == [
         "path",
         "max_pages",
+        "accept_incomplete_label",
     ]
 
 
@@ -172,7 +173,7 @@ def test_a_stored_sheet_is_read_back_as_the_sheet_it_was(tmp_path: Path) -> None
 
     assert back == sheet
     assert back.section_text.keys() == sheet.section_text.keys() != set()
-    assert sdb_reader.requires_sheet(back) is stored["sheet_required"] is True
+    assert sdb_reader.sheet_duty(back) == stored["sheet_duty"] == "required"
     assert sdb_reader.contradicts_label(back) is False
     # A key a later version may add is no reason to refuse the rest.
     assert sdb_reader.sheet_from_dict({**stored, "added_later": 1}) == sheet

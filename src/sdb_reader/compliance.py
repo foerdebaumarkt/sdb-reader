@@ -123,10 +123,22 @@ def lacks_annex_ii_2020(section_text: Mapping[Section, str]) -> bool:
     return not any(_ENDOCRINE.search(text or "") for text in section_text.values())
 
 
-def requires_sheet(sheet: SafetyDataSheet) -> bool:
+class SheetDuty(StrEnum):
+    """Whether a product needs a safety data sheet, by its sheet (SDB-76, SDB-218)."""
+
+    # REACH Article 31 asks for one.
+    REQUIRED = "required"
+    # Not by what the sheet says: it is issued voluntarily.
+    NOT_REQUIRED = "not-required"
+    # The reading holds no label (SDB-216, SDB-217), and section 2 alone does
+    # not say that a sheet is due: not checked under the rules in force.
+    NOT_CHECKED = "not-checked"
+
+
+def sheet_duty(sheet: SafetyDataSheet) -> SheetDuty:
     """Whether a sheet is issued for a product that needs one.
 
-    SDB-76, SDB-142, SDB-154.
+    SDB-76, SDB-142, SDB-154, SDB-218.
 
     REACH Article 31(1) requires a safety data sheet for a classified product
     and Article 31(3) one on request where the label carries EUH210. So a
@@ -161,13 +173,13 @@ def requires_sheet(sheet: SafetyDataSheet) -> bool:
     ...         None, None, None, None, "de",
     ...         hazard_statements=label or HazardStatements(), **stated
     ...     )
-    >>> requires_sheet(sheet(HazardStatements(hazard_codes=["H315"])))
-    True
-    >>> requires_sheet(sheet(HazardStatements(supplemental_codes=["EUH210"])))
-    True
-    >>> requires_sheet(sheet(HazardStatements(precautionary_codes=["P102"])))
-    False
-    >>> requires_sheet(
+    >>> sheet_duty(sheet(HazardStatements(hazard_codes=["H315"])))
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(HazardStatements(supplemental_codes=["EUH210"])))
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(HazardStatements(precautionary_codes=["P102"])))
+    <SheetDuty.NOT_REQUIRED: 'not-required'>
+    >>> sheet_duty(
     ...     sheet(
     ...         HazardStatements(
     ...             supplemental_text="Sicherheitsdatenblatt auf Anfrage für "
@@ -175,41 +187,62 @@ def requires_sheet(sheet: SafetyDataSheet) -> bool:
     ...         )
     ...     )
     ... )
-    True
-    >>> requires_sheet(sheet(stated_classification=StatedClassification.CLASSIFIED))
-    True
-    >>> requires_sheet(
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(stated_classification=StatedClassification.CLASSIFIED))
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(
     ...     sheet(
     ...         HazardStatements(hazard_codes=["H314"]),
     ...         stated_voluntary=True,
     ...         stated_article=True,
     ...     )
     ... )
-    False
-    >>> requires_sheet(
+    <SheetDuty.NOT_REQUIRED: 'not-required'>
+    >>> sheet_duty(
     ...     sheet(
     ...         stated_classification=StatedClassification.CLASSIFIED,
     ...         stated_article=True,
     ...     )
     ... )
-    False
-    >>> requires_sheet(
+    <SheetDuty.NOT_REQUIRED: 'not-required'>
+    >>> sheet_duty(
     ...     sheet(HazardStatements(supplemental_codes=["EUH210"]), stated_article=True)
     ... )
-    True
-    >>> requires_sheet(
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(
     ...     sheet(HazardStatements(hazard_codes=["H314"]), stated_voluntary=True)
     ... )
-    True
-    >>> requires_sheet(
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(
     ...     sheet(HazardStatements(supplemental_codes=["EUH208"]), stated_voluntary=True)
     ... )
-    False
-    >>> requires_sheet(
+    <SheetDuty.NOT_REQUIRED: 'not-required'>
+    >>> sheet_duty(
     ...     sheet(HazardStatements(supplemental_codes=["EUH210"]), stated_voluntary=True)
     ... )
-    True
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(label_withheld="before-2017-06"))
+    <SheetDuty.NOT_CHECKED: 'not-checked'>
+    >>> sheet_duty(
+    ...     sheet(
+    ...         stated_classification=StatedClassification.CLASSIFIED,
+    ...         label_withheld="incomplete",
+    ...     )
+    ... )
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(label_withheld="incomplete"))
+    <SheetDuty.NOT_CHECKED: 'not-checked'>
     """
+    if sheet.label_withheld == "before-2017-06":
+        return SheetDuty.NOT_CHECKED
+    if sheet.label_withheld is not None:
+        classified = _label_requires_sheet(
+            HazardStatements(),
+            sheet.stated_classification,
+            voluntary=sheet.stated_voluntary,
+            article=sheet.stated_article,
+        )
+        return SheetDuty.REQUIRED if classified else SheetDuty.NOT_CHECKED
     # What a small package's label carries speaks of the same product: its
     # contents do not change with the package (SDB-76, SDB-188).
     labels = [
@@ -220,7 +253,7 @@ def requires_sheet(sheet: SafetyDataSheet) -> bool:
             if further.kind is LabelKind.SMALL_PACKAGE
         ),
     ]
-    return any(
+    required = any(
         _label_requires_sheet(
             label,
             sheet.stated_classification,
@@ -229,6 +262,7 @@ def requires_sheet(sheet: SafetyDataSheet) -> bool:
         )
         for label in labels
     )
+    return SheetDuty.REQUIRED if required else SheetDuty.NOT_REQUIRED
 
 
 def _label_requires_sheet(
@@ -238,7 +272,7 @@ def _label_requires_sheet(
     voluntary: bool = False,
     article: bool = False,
 ) -> bool:
-    """``requires_sheet`` for a label and what the sheet states beside it."""
+    """``sheet_duty`` for a label and what the sheet states beside it."""
     # In the words of the directive before CLP the sentence stands under no
     # code (SDB-123): it is what asks for the sheet.
     on_request = (
@@ -1192,7 +1226,7 @@ def _old_format(sheet: SafetyDataSheet, revised: date | None) -> list[Message]:
     if (
         revised is not None
         and not predates_annex_ii(revised)
-        and requires_sheet(sheet)
+        and sheet_duty(sheet) is SheetDuty.REQUIRED
         and lacks_annex_ii_2020(sheet.section_text)
     ):
         return [Message("old-format", {"revised": revised.isoformat()})]
@@ -1229,11 +1263,6 @@ def oldest_sheet(
     return best
 
 
-# The findings that say a sheet has to be renewed: revised before 2021, or
-# since then in the layout from before 2020/878 (SDW-49).
-_RENEWAL_DUE = frozenset({"predates-annex-ii", "old-format"})
-
-
 def sheet_findings(
     sheet: SafetyDataSheet,
     parser_warnings: Sequence[Message],
@@ -1243,9 +1272,10 @@ def sheet_findings(
 ) -> list[Message]:
     """What is wrong with *sheet* as a document (SDW-7, SDW-9, SDW-50).
 
-    A sheet that has to be renewed anyway (revised before 2021, or since in
-    the layout from before 2020/878) gets only the findings on its age and
-    those on a file of several sheets (SDW-49).
+    A sheet whose label the reading withholds (``label_withheld``: a sheet of
+    the rules before June 2017, SDB-216, or an incomplete label, SDB-217)
+    gets only the findings on its age and those on a file of several sheets
+    (SDW-49).
 
     *parts* are the sheets of a file that holds several
     (``ParsedSheet.parts``); with them, what they say about each other
@@ -1284,9 +1314,11 @@ def sheet_findings(
     """
     revised = counted_date(sheet, today, parts)
     age = [*_dated(sheet, today, revised), *_old_format(sheet, revised)]
-    if any(finding.code in _RENEWAL_DUE for finding in age):
-        # A sheet that has to be renewed anyway gets only the findings on its
-        # age; what else it lacks is the new edition's to put right (SDW-49).
+    if sheet.label_withheld is not None:
+        # A sheet whose label is not given gets only the findings on its age:
+        # one of the rules before June 2017 is to be renewed and its label is
+        # not read (SDW-49, SDB-216); for an incomplete one the error names
+        # what the label lacks (SDB-217).
         return [*age, *several_sheets_findings(parts)]
 
     findings: list[Message] = []

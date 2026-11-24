@@ -46,6 +46,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `no-safety-data-sheet` | – | Das Dokument hat weder den Titel noch den Aufbau eines Sicherheitsdatenblatts. |
 | `not-a-sheet` | – | Die Datei ist kein deutsches Sicherheitsdatenblatt; ihr Inhalt wurde nicht ausgewertet. |
 | `unreadable` | – | Der Text der Datei ließ sich nicht lesen; es wurde nichts geprüft. |
+| `label-incomplete` | `findings` | Der Kennzeichnung fehlt sicher, was sie zeigen muss ({findings}); sie wird nicht ausgegeben. Mit --accept-incomplete-label steht sie, wie gedruckt, in der Lesung. |
 
 ## Das Blatt lesen
 
@@ -194,6 +195,7 @@ ist und wie man ihre Sprache wählt, steht unter [Die Ausgabe verstehen](ausgabe
 | `show-no-statements` | – | keine H-, P- oder EUH-Sätze |
 | `show-needs-sheet` | – | Braucht ein Sicherheitsdatenblatt: ja |
 | `show-needs-no-sheet` | – | Braucht ein Sicherheitsdatenblatt: nein |
+| `show-sheet-not-checked` | – | Braucht ein Sicherheitsdatenblatt: nicht nach geltendem Recht geprüft |
 | `show-stated-voluntary` | – | Das Blatt nennt sich freiwillig ausgestellt oder nicht vorgeschrieben. |
 | `show-stated-article` | – | Das Blatt nennt sein Produkt ein Erzeugnis. |
 | `show-no-notes` | – | keine |

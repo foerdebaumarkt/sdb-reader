@@ -13,7 +13,7 @@ from typing import Any
 from .compliance import (
     age_findings,
     oldest_sheet,
-    requires_sheet,
+    sheet_duty,
     sheet_findings,
     usable_dates,
 )
@@ -91,7 +91,8 @@ def _sheet_fields(sheet: SafetyDataSheet, content_hash: str | None) -> dict[str,
         # whatever the label prints, an unclassified mixture none either.
         "stated_voluntary": sheet.stated_voluntary,
         "stated_article": sheet.stated_article,
-        "sheet_required": requires_sheet(sheet),
+        "label_withheld": sheet.label_withheld,
+        "sheet_duty": sheet_duty(sheet).value,
         "hazard_statements": _label_fields(sheet.hazard_statements),
         "contact_info": {
             "supplier_name": sheet.contact_info.supplier_name,
@@ -192,8 +193,8 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
 
     Reads what this version writes: the ``sheet`` part of a record of
     ``read``, or of one of its ``parts``. ``content_hash`` and
-    ``sheet_required`` are not part of a sheet and are left out;
-    ``requires_sheet`` gives the second again. A key this version does not
+    ``sheet_duty`` are not part of a sheet and are left out;
+    the function ``sheet_duty`` gives the second again. A key this version does not
     know is ignored.
 
     A record that lacks a key, or holds a value of another kind, was stored
@@ -223,8 +224,8 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
     >>> sheet = sheet_from_dict(stored)
     >>> sheet.revision_date, sheet.hazard_statements.signal_word
     (datetime.date(2024, 3, 1), 'Achtung')
-    >>> requires_sheet(sheet)
-    True
+    >>> sheet_duty(sheet)
+    <SheetDuty.REQUIRED: 'required'>
     """
     try:
         label = stored["hazard_statements"]
@@ -253,6 +254,7 @@ def sheet_from_dict(stored: Mapping[str, Any]) -> SafetyDataSheet:
             stated_classification=StatedClassification(stored["stated_classification"]),
             stated_voluntary=_flag(stored["stated_voluntary"]),
             stated_article=_flag(stored["stated_article"]),
+            label_withheld=_optional_text(stored.get("label_withheld")),
         )
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
         raise ValueError(

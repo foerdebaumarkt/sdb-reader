@@ -88,6 +88,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Include the raw extracted text in the output.",
     )
+    _add_label_option(read)
 
     _add_run_options(read)
     _add_language_options(read)
@@ -114,6 +115,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         default=None,
         help="Read at most this many pages of each file (default: all).",
     )
+    _add_label_option(showing)
     _add_selection_options(showing)
     _add_language_options(showing)
 
@@ -340,6 +342,19 @@ class _ListPresets(argparse.Action):
         parser.exit()
 
 
+def _add_label_option(command: argparse.ArgumentParser) -> None:
+    """Whether a label that surely lacks what it must show is given (SDB-217)."""
+    command.add_argument(
+        "--accept-incomplete-label",
+        action="store_true",
+        help=(
+            "Give a label that surely lacks a pictogram, the signal word or a "
+            "hazard statement, with its findings, instead of withholding it "
+            "with the error label-incomplete."
+        ),
+    )
+
+
 def _add_run_options(command: argparse.ArgumentParser) -> None:
     """What a run over many files needs (SDW-21 to SDW-23)."""
     command.add_argument(
@@ -453,7 +468,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             args,
             catalog,
             # The day of the run, once for all its files (SDW-34).
-            _ReadOptions(args.max_pages, False, args.lang, args.messages, _today()),
+            _ReadOptions(
+                args.max_pages,
+                False,
+                args.lang,
+                args.messages,
+                _today(),
+                args.accept_incomplete_label,
+            ),
         )
     if args.resume and args.output is None:
         parser.error("--resume continues an output file: give --output FILE")
@@ -474,6 +496,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.messages,
             # The day of the run, once for all its files (SDW-34).
             _today(),
+            args.accept_incomplete_label,
         ),
         processes=True,
     )
@@ -546,6 +569,7 @@ class _ReadOptions:
     lang: str
     messages: Path | None
     today: date
+    accept_incomplete_label: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -739,7 +763,11 @@ def _read_one(path: Path, options: _ReadOptions) -> Outcome:
     catalog = _catalog_for(options.lang, options.messages)
     said: list[str] = []
     try:
-        reading = read_sheet(path, max_pages=options.max_pages)
+        reading = read_sheet(
+            path,
+            max_pages=options.max_pages,
+            accept_incomplete_label=options.accept_incomplete_label,
+        )
         # A file no text could be read from is in the output, named on
         # stderr, and fails the exit code (SDW-4). It may be no PDF at
         # all, so nothing is looked for inside it.

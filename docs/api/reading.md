@@ -1,7 +1,9 @@
 # A reading and its parts
 
-`read_sheet(path, *, max_pages=None)` returns a `SheetReading`. `max_pages`
-bounds how many pages are read; by default all.
+`read_sheet(path, *, max_pages=None, accept_incomplete_label=False)` returns
+a `SheetReading`. `max_pages` bounds how many pages are read; by default all.
+`accept_incomplete_label` gives a label that surely lacks what it has to show
+as printed instead of withholding it.
 
 | Attribute | Type | Holds |
 | --- | --- | --- |
@@ -10,7 +12,7 @@ bounds how many pages are read; by default all.
 | `parser_result` | `ParsedSheet` or None | the parsed sheet; set only for a German safety data sheet |
 | `label_images` | `LabelImages` or None | the pictograms the label shows as pictures; set only where the label of a German safety data sheet was looked at |
 | `warnings` | list of `Message` | that nothing was read further: `not-a-sheet` or `unreadable` |
-| `errors` | list of `Message` | why no text could be read |
+| `errors` | list of `Message` | why no text could be read; `label-incomplete` where the label is withheld |
 
 ## What the file is
 
@@ -56,7 +58,8 @@ file holds [several sheets](#several-sheets-in-one-file).
 | `stated_classification` | `StatedClassification` | what section 2 says: `CLASSIFIED`, `OLD_SYSTEM`, `NOT_CLASSIFIED`, `NOT_STATED` |
 | `stated_voluntary` | bool | whether the sheet says of itself that it is issued voluntarily or that none is prescribed for its product |
 | `stated_article` | bool | whether it calls the product an article, beside that sentence or by saying that as an article it needs no labelling |
-| `hazard_statements` | `HazardStatements` | the label of section 2.2 |
+| `hazard_statements` | `HazardStatements` | the label of section 2.2; empty where it is withheld |
+| `label_withheld` | str or None | why the label is not given: `before-2017-06` for a sheet of the rules before June 2017, `incomplete` for a label that surely lacks what it has to show; None where it is given |
 | `contact_info` | `ContactInfo` | the supplier of section 1.3 and the emergency phone of 1.4 |
 | `section_text` | dict of `Section` to str | the text of each section found |
 
@@ -296,7 +299,7 @@ from sdb_reader import reading_to_dict
 record = reading_to_dict(reading)
 
 assert record["verification"]["kind"] == "safety-data-sheet"
-assert record["sheet"]["sheet_required"] is True
+assert record["sheet"]["sheet_duty"] == "required"
 assert [s["code"] for s in record["statements"]] == ["H315", "P102"]
 assert [f["code"] for f in record["findings"]] == ["pictogram-not-found"]
 assert json.dumps(record)  # plain JSON types throughout

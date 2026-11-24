@@ -54,6 +54,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     # The reading as a whole.
     "not-a-sheet": (),
     "unreadable": (),
+    "label-incomplete": ("findings",),
     # Parsing the sheet.
     "line-too-long": ("count", "length"),
     "no-label-section": (),
@@ -182,6 +183,7 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "show-no-statements": (),
     "show-needs-sheet": (),
     "show-needs-no-sheet": (),
+    "show-sheet-not-checked": (),
     "show-stated-voluntary": (),
     "show-stated-article": (),
     "show-no-notes": (),

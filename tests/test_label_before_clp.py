@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+from functools import partial
+
 import pytest
 
 from sdb_reader import extraction_from_dict, read_extraction
 from sdb_reader.compliance import sheet_findings
 from sdb_reader.parser import label_before_clp
+
+# These tests are about what a label lacks, so they read it as printed
+# instead of withheld (SDB-217).
+read_extraction = partial(read_extraction, accept_incomplete_label=True)
 
 _SECTION_2 = (
     "Sicherheitsdatenblatt\n"

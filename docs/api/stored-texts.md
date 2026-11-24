@@ -39,7 +39,9 @@ kept = json.dumps({"text": stored, "pictures": pictures})  # beside your record
 both = json.loads(kept)
 stored = both["text"]
 again = read_extraction(
-    extraction_from_dict(stored), label_images_from_dict(both["pictures"])
+    extraction_from_dict(stored),
+    label_images_from_dict(both["pictures"]),
+    accept_incomplete_label=True,  # as the reading it is compared with
 )
 
 assert reading_to_dict(again) == reading_to_dict(reading)

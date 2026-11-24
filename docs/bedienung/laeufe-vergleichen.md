@@ -47,7 +47,7 @@ Felder heißen wie in der Ausgabe von `read`:
 | `field` | Was verglichen wird |
 | --- | --- |
 | `kind` | was die Datei ist |
-| `stated_classification`, `stated_voluntary`, `stated_article`, `sheet_required`, `countries` | was Abschnitt 2 zur Einstufung sagt, ob das Blatt sich freiwillig nennt und das Produkt dabei ein Erzeugnis, ob das Produkt ein Blatt braucht, die Länder |
+| `stated_classification`, `stated_voluntary`, `stated_article`, `sheet_duty`, `countries` | was Abschnitt 2 zur Einstufung sagt, ob das Blatt sich freiwillig nennt und das Produkt dabei ein Erzeugnis, ob das Produkt ein Blatt braucht, die Länder |
 | `signal_word`, `pictograms` | das Signalwort und die Piktogramme |
 | `hazard_codes`, `precautionary_codes`, `supplemental_codes` | die Codes der H-, P- und EUH-Sätze |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Texte der Sätze |

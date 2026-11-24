@@ -2609,6 +2609,21 @@ class TestEuhStatementsByTheirWording:
             in result.warnings
         )
 
+    @pytest.mark.spec("SDB-219")
+    def test_a_wording_in_running_text_is_not_reported(self, parser: SDSParser) -> None:
+        """One supplier describes the effects of dust under 2.3."""
+        text = _label("H319 Verursacht schwere Augenreizung.") + (
+            "Durch mechanische Einwirkungen können Schädigungen erfolgen. "
+            "Wiederholter Kontakt\nkann zu spröder oder rissiger Haut führen. "
+            "Staub kann die Augen reizen.\n"
+            "ABSCHNITT 3: Zusammensetzung/Angaben zu Bestandteilen\n"
+        )
+
+        result = parser.parse(_build_extraction(text))
+
+        assert result.sheet.hazard_statements.supplemental_codes == []
+        assert not any(w.code == "euh-wording-outside-label" for w in result.warnings)
+
     @pytest.mark.spec("SDB-28")
     def test_a_printed_code_is_read_once(self, parser: SDSParser) -> None:
         text = _label(
