@@ -344,6 +344,21 @@ def test_the_head_of_the_next_page_is_no_part_of_the_label(tmp_path: Path) -> No
     assert read_label_images(path).labels == [["GHS02", "GHS07"]]
 
 
+@pytest.mark.spec("SDB-205")
+def test_a_pictogram_embedded_as_a_picture_on_the_next_page_is_read(
+    tmp_path: Path,
+) -> None:
+    path = _pages(tmp_path / "sheet.pdf", [*_HEAD], ["Gefahrenpiktogramme", *_TAIL])
+    with pymupdf.open(DRAWINGS / "GHS07.svg") as drawing:
+        as_pdf = pymupdf.open("pdf", drawing.convert_to_pdf())
+    with as_pdf, pymupdf.open(path) as document:
+        picture = as_pdf[0].get_pixmap(dpi=150, alpha=True)
+        document[1].insert_image(pymupdf.Rect(60, 64, 110, 114), pixmap=picture)
+        document.saveIncr()
+
+    assert read_label_images(path).labels == [["GHS07"]]
+
+
 @pytest.mark.spec("SDB-206")
 def test_a_pictogram_the_first_look_cannot_name_is_looked_at_closer(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch

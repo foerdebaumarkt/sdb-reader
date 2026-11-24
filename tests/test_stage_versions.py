@@ -25,7 +25,7 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
     "LABEL_IMAGES_VERSION": (
         ("label_blocks.py", "label_images.py", "pictogram_references.json"),
         2,
-        "3b9641b9a162335d",
+        "9d2d64da51ed2323",
     ),
     "PARSER_VERSION": (
         (
