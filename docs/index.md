@@ -43,6 +43,7 @@ You read sheets from a Python program, or you want to change the reader.
 
 | | |
 | --- | --- |
+| **[What it handles](what-it-handles.md)** · [Was es abdeckt](was-es-abdeckt.md) | what is hard about safety data sheets, and what the reader does about each case |
 | **[How it works](how-it-works.md)** | the path of a file through the library on one page, with the rules that govern each step |
 | **[Changelog](changelog.md)** | what each version changed for its users |
 | **[specs/](../specs/README.md)** | the binding rules, in German, in the repository |
@@ -107,6 +108,8 @@ reference
 :hidden:
 :caption: Background
 
+what-it-handles
+was-es-abdeckt
 how-it-works
 changelog
 ```
