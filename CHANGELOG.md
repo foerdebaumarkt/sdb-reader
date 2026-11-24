@@ -197,6 +197,17 @@ Versions follow the tags of this repository.
 
 ### Fixed
 
+- **A label heading with a colon before a statement's last words no longer
+  cuts the statement short.** "P101 Ist ärztlicher Rat erforderlich,
+  Verpackung oder" over "Sicherheitshinweise: Kennzeichnungsetikett
+  bereithalten." is read as the whole P101, as SDB-184 does for a heading on
+  a line of its own (SDB-200). On a set of about 14,500 sheets one reading
+  changes and loses `wording-deviates`.
+- **A date that can only be read month first is read so.** "08/31/2020" is
+  31 August 2020; a date that can be read either way is still read day
+  first. "Ausgabedatum/" with the rest of its label below the date labels
+  the issue date (SDB-201). On a set of about 14,500 sheets 3 sheets that
+  were undated get their issue date.
 - **Pictograms printed above the label's heading** belong to the label.
   Where a sheet sets "Gefahrenpiktogramme" and nothing but the codes
   directly above "2.2 Kennzeichnungselemente", the codes are read and the

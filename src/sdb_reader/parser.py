@@ -388,7 +388,9 @@ REVISION_DATE_GRID_PATTERN = re.compile(
 # "Ausgabe:" counts only at the start of its line: "Datum der letzten Ausgabe:"
 # names the sheet before this one.
 ISSUE_DATE_PATTERN = re.compile(
-    r"(?:ausstellungsdatum|ausgabedatum|erstellungsdatum|erstelldatum"
+    # "Ausgabedatum/: 08/31/2020" with "Überarbeitungsdatum" a line lower: the
+    # label split around its value by the layout (SDB-201).
+    r"(?:ausstellungsdatum|ausgabedatum/?|erstellungsdatum|erstelldatum"
     r"|erstellt(?:\s+am|\s*:)"
     # "Erste Fassung: 15.12.2025" (SDB-57).
     r"|erste\s+fassung|erstfassung"
@@ -3554,6 +3556,29 @@ class _StatementReader:
         statement = " ".join([*self.current, following])
         return _wording_complete(statement, following, self.whole)
 
+    def finishes_after_heading(self, line: str) -> str | None:
+        """The rest of *line* behind a heading of the label, where it finishes
+        the statement (SDB-200).
+
+        As SDB-184, but the heading stands at the line's start with a colon
+        and the statement's last words behind it: "… Verpackung oder" /
+        "Sicherheitshinweise: Kennzeichnungsetikett bereithalten.".
+        """
+        head, colon, rest = line.partition(":")
+        rest = rest.strip()
+        if (
+            not colon
+            or not rest
+            or not self.worded
+            or self.complete
+            or _SENTENCE_END.search(self.current[-1])
+            or not _LABEL_HEADING.match(f"{head.strip()}:")
+            or _ANY_STATEMENT_CODE.search(line)
+        ):
+            return None
+        statement = " ".join([*self.current, rest])
+        return rest if _wording_complete(statement, rest, self.whole) else None
+
     def is_over_before(self, line: str) -> bool:
         """Whether the statement is whole and *line* does not begin it again (SDB-51)."""
         if not self.complete or self.complete != len(self.current):
@@ -3723,6 +3748,9 @@ def _extract_statement_text(
         if reader.resumes_below(normalized, lines[index + 1 :]):
             # "… die Gebrauchsanleitung" / "EUH Sätze" / "einhalten.": the
             # label's column heading set into the sentence (SDB-184).
+            continue
+        if (rest := reader.finishes_after_heading(normalized)) is not None:
+            reader.add(_clean_value(rest))
             continue
         if _ends_statement(normalized) or (
             not reader.keeps_sentences and _CONTENTS_LINE.match(normalized)
@@ -5605,6 +5633,10 @@ def _parse_date_parts(day: str, month: str, year: str) -> date | None:
     """Build a date from "23", "Nov", "2023" or "23", "11", "2023"."""
     if month.isdigit():
         month_number = int(month)
+        if month_number > 12 and day.isdigit() and 1 <= int(day) <= 12:
+            # "08/31/2020": month first, the only way the date can be read
+            # (SDB-201).
+            day, month_number = month, int(day)
     else:
         month_number = _MONTH_NAMES.get(month.casefold().rstrip(".")[:3], 0)
     try:
