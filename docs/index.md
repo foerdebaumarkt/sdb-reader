@@ -43,6 +43,7 @@ You read sheets from a Python program, or you want to change the reader.
 
 | | |
 | --- | --- |
+| **[Features at a glance](features.md)** · [Funktionen auf einen Blick](funktionen.md) | the short list, bullet points only |
 | **[What it handles](what-it-handles.md)** · [Was es abdeckt](was-es-abdeckt.md) | what is hard about safety data sheets, and what the reader does about each case |
 | **[How it works](how-it-works.md)** | the path of a file through the library on one page, with the rules that govern each step |
 | **[Changelog](changelog.md)** | what each version changed for its users |
@@ -108,6 +109,8 @@ reference
 :hidden:
 :caption: Background
 
+features
+funktionen
 what-it-handles
 was-es-abdeckt
 how-it-works

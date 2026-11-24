@@ -9,6 +9,7 @@ Punkt in der Form *das Blatt tut dies, der Leser tut das*. Die Nummern in
 Klammern nennen die Regeln dahinter; sie stehen in [specs/](../specs/README.md).
 Wie eine Datei Schritt für Schritt durch die Bibliothek läuft, erzählt
 [How it works](how-it-works.md) (Englisch).
+Die kurze Liste: [Funktionen auf einen Blick](funktionen.md).
 English: [What it handles](what-it-handles.md).
 
 ## Die Datei
