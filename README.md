@@ -31,11 +31,9 @@ same as a report:
 sdb-reader show sheet.pdf
 ```
 
-Behind these few points lie many cases: several sheets in one file, scans,
-labels for small packages, pictograms printed only as pictures, sheets of the
-old rules beside the new. [What it
+[What it
 handles](https://foerdebaumarkt.github.io/sdb-reader/latest/what-it-handles.html)
-lists them.
+says on one page, without technical terms, what the reader does.
 
 ## Why not just give the PDF to a language model?
 
@@ -100,7 +98,6 @@ edition per released version. The same pages are in the repository under
 | --- | --- |
 | run the command and understand what it prints | [Using the command line](https://foerdebaumarkt.github.io/sdb-reader/latest/usage/README.html), in German: [Bedienung](https://foerdebaumarkt.github.io/sdb-reader/latest/bedienung/README.html) |
 | read sheets from a Python program | [Using the library](https://foerdebaumarkt.github.io/sdb-reader/latest/api/README.html) |
-| see what the reader does, in short | [Features at a glance](https://foerdebaumarkt.github.io/sdb-reader/latest/features.html), in German: [Funktionen auf einen Blick](https://foerdebaumarkt.github.io/sdb-reader/latest/funktionen.html) |
 | see what the reader deals with | [What it handles](https://foerdebaumarkt.github.io/sdb-reader/latest/what-it-handles.html), in German: [Was es abdeckt](https://foerdebaumarkt.github.io/sdb-reader/latest/was-es-abdeckt.html) |
 | understand how a file becomes a reading | [How it works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html) |
 | change the reader | [Contributing](https://foerdebaumarkt.github.io/sdb-reader/latest/contributing/README.html) |
