@@ -27,6 +27,13 @@ Versions follow the tags of this repository.
 
 ### Fixed
 
+- **Black-and-white and grey pictograms** are found as pictures, as REACH
+  Annex II 2.2 allows them on a safety data sheet (SDB-212).
+- **The flame (GHS02) and the flame over circle (GHS03)** are told apart by
+  the ring under the flame, so a flame drawn broad and round at its foot is
+  no longer left unnamed (SDB-213). On a set of about 14,500 sheets the
+  picture of 6 labels changes (3 grey, 3 flames); one reading gains a
+  pictogram, GHS02, the others had it from its code already.
 - **A label headed otherwise than "Kennzeichnungselemente"** is found: any
   heading numbered 2.2 that begins with "Kennzeichnung" ("2.2 Kennzeichnung
   nach GHS:", "2.2 Kennzeichnung des Gemischs nach CLP-Verordnung"), in the

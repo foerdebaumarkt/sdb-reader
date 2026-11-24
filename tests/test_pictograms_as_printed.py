@@ -933,3 +933,61 @@ def test_a_stored_reading_keeps_the_forms(tmp_path: Path) -> None:
     )
 
     assert back.hazard_statements.pictogram_forms == {"GHS07": ["picture"]}
+
+
+@pytest.mark.spec("SDB-212")
+def test_a_pictogram_printed_in_grey_is_found(tmp_path: Path) -> None:
+    path = _pages(tmp_path / "sheet.pdf", [*_HEAD, "", "", "", "", *_TAIL])
+    with pymupdf.open(DRAWINGS / "GHS07.svg") as drawing:
+        as_pdf = pymupdf.open("pdf", drawing.convert_to_pdf())
+    with as_pdf, pymupdf.open(path) as document:
+        picture = as_pdf[0].get_pixmap(dpi=150, colorspace=pymupdf.csGRAY)
+        top = 60 + 14 * len(_HEAD)
+        document[0].insert_image(pymupdf.Rect(60, top, 110, top + 50), pixmap=picture)
+        document.saveIncr()
+
+    assert read_label_images(path).labels == [["GHS07"]]
+
+
+@pytest.mark.spec("SDB-212")
+def test_a_black_square_is_no_pictogram(tmp_path: Path) -> None:
+    path = _sheet(tmp_path / "sheet.pdf", [])
+    with pymupdf.open(path) as document:
+        top = 60 + 14 * len(_HEAD)
+        document[0].draw_rect(
+            pymupdf.Rect(60, top, 110, top + 50), color=(0, 0, 0), width=4
+        )
+        document.saveIncr()
+
+    images = read_label_images(path)
+
+    assert images.labels == [[]]
+    assert images.unrecognised == [0]
+
+
+def _drawn(code: str) -> list[list[int]]:
+    with pymupdf.open(DRAWINGS / f"{code}.svg") as drawing:
+        as_pdf = pymupdf.open("pdf", drawing.convert_to_pdf())
+    with as_pdf:
+        return label_images.grey(as_pdf[0].get_pixmap(dpi=150))
+
+
+@pytest.mark.spec("SDB-213")
+@pytest.mark.parametrize(("code", "ring"), [("GHS02", False), ("GHS03", True)])
+def test_only_the_flame_over_circle_has_a_ring(code: str, ring: bool) -> None:
+    assert label_images.has_ring(_drawn(code)) is ring
+
+
+@pytest.mark.spec("SDB-213")
+@pytest.mark.parametrize("code", ["GHS02", "GHS03"])
+def test_the_ring_decides_between_two_flames_alike(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, code: str
+) -> None:
+    path = _sheet(tmp_path / "sheet.pdf", [code])
+
+    def alike(vector: list[float]) -> list[tuple[float, str]]:
+        return [(0.68, "GHS02"), (0.66, "GHS03"), (0.1, "GHS07")]
+
+    monkeypatch.setattr(label_images, "_scores", alike)
+
+    assert read_label_images(path).labels == [[code]]
