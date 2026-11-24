@@ -30,6 +30,9 @@ Versions follow the tags of this repository.
 - **A page's head and foot are no part of the label.** Where the label runs
   on to the next page its picture is read below that page's head and above
   its foot, so a red logo in the head is no unrecognised pictogram (SDB-205).
+- **A pictogram embedded as a picture on the label's next page** is no
+  longer lost: reading that page's lines with their images made PyMuPDF
+  render it without them afterwards (SDB-205).
 - **Small pictograms** that the first look names none of are looked at again
   in finer detail (SDB-206). Checked against the codes 4,022 pictograms carry
   below them on a set of about 14,500 sheets: none is named otherwise than

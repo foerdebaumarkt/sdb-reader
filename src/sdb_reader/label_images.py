@@ -239,7 +239,9 @@ _Line = tuple[float, float, str]
 def _lines(page: pymupdf.Page) -> list[_Line]:
     """The top, bottom and text of each line of *page*, from the top down."""
     found: list[tuple[float, float, float, str]] = []
-    for block in page.get_text("dict")["blocks"]:
+    # Text only: asked for its images too, PyMuPDF renders the page without
+    # them afterwards, and a pictogram embedded as a picture is gone (SDB-205).
+    for block in page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]:
         for line in block.get("lines", []):
             text = "".join(span["text"] for span in line["spans"]).strip()
             if text:
