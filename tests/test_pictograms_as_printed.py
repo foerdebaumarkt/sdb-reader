@@ -7,6 +7,8 @@ are the public-domain drawings the references are made from.
 
 from __future__ import annotations
 
+import os
+import shutil
 from pathlib import Path
 
 import pymupdf
@@ -18,6 +20,7 @@ from sdb_reader import (
     LabelImagesStatus,
     clp_expected,
     extraction_from_dict,
+    label_images,
     label_images_from_dict,
     label_images_stage,
     label_images_to_dict,
@@ -28,7 +31,7 @@ from sdb_reader import (
     sheet_from_dict,
     sheet_to_dict,
 )
-from sdb_reader.extraction import ExtractionResult
+from sdb_reader.extraction import ExtractionError, ExtractionResult
 from sdb_reader.messages import Message
 from sdb_reader.parser import ParsedSheet, states_no_pictograms
 
@@ -188,6 +191,24 @@ def test_a_red_square_is_no_pictogram(tmp_path: Path) -> None:
     assert images.unrecognised == [0]
 
 
+@pytest.mark.spec("SDB-207")
+def test_an_orange_symbol_of_the_old_directive_is_no_pictogram(tmp_path: Path) -> None:
+    path = _sheet(tmp_path / "sheet.pdf", [])
+    with pymupdf.open(path) as document:
+        page = document[0]
+        top = 60 + 14 * len(_HEAD)
+        square = pymupdf.Rect(60, top, 110, top + 50)
+        page.draw_rect(square, color=(0, 0, 0), fill=(1, 0.55, 0), width=1)
+        page.draw_line((70, top + 10), (100, top + 40), color=(0, 0, 0), width=6)
+        page.draw_line((100, top + 10), (70, top + 40), color=(0, 0, 0), width=6)
+        document.saveIncr()
+
+    images = read_label_images(path)
+
+    assert images.labels == [[]]
+    assert images.unrecognised == [0]
+
+
 @pytest.mark.spec("SDB-179")
 def test_a_red_diamond_with_no_pictogram_in_it_is_counted_not_named(
     tmp_path: Path,
@@ -206,15 +227,44 @@ def test_a_red_diamond_with_no_pictogram_in_it_is_counted_not_named(
     assert images.unrecognised == [1]
 
 
-@pytest.mark.spec("SDB-179")
-def test_a_pdf_without_a_text_layer_is_not_looked_at(tmp_path: Path) -> None:
-    drawn = _sheet(tmp_path / "drawn.pdf", ["GHS07"])
-    scanned = tmp_path / "scanned.pdf"
+def _scan(drawn: Path, scanned: Path) -> Path:
+    """*drawn* as a scan: each page a picture, no text layer."""
     with pymupdf.open(drawn) as document, pymupdf.open() as copy:
-        picture = document[0].get_pixmap(dpi=72)
-        page = copy.new_page(width=595, height=842)
-        page.insert_image(page.rect, pixmap=picture)
+        for source in document:
+            picture = source.get_pixmap(dpi=200)
+            page = copy.new_page(width=595, height=842)
+            page.insert_image(page.rect, pixmap=picture)
         copy.save(scanned)
+    return scanned
+
+
+@pytest.mark.spec("SDB-204")
+@pytest.mark.real_tesseract
+@pytest.mark.skipif(
+    shutil.which("tesseract") is None and not os.environ.get("CI"),
+    reason="tesseract is not installed on this machine",
+)
+def test_a_scanned_label_is_found_by_text_recognition(tmp_path: Path) -> None:
+    scanned = _scan(
+        _sheet(tmp_path / "drawn.pdf", ["GHS07"], elsewhere=["GHS06"]),
+        tmp_path / "scanned.pdf",
+    )
+
+    images = read_label_images(scanned)
+
+    assert images.status is LabelImagesStatus.READ
+    assert images.labels == [["GHS07"]]
+
+
+@pytest.mark.spec("SDB-204")
+def test_a_scan_is_not_looked_at_without_text_recognition(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unavailable(page: pymupdf.Page) -> list[tuple[float, float, str]]:
+        raise ExtractionError(Message("ocr-unavailable"))
+
+    monkeypatch.setattr(label_images, "ocr_lines", unavailable)
+    scanned = _scan(_sheet(tmp_path / "drawn.pdf", ["GHS07"]), tmp_path / "scanned.pdf")
 
     images = read_label_images(scanned)
 
@@ -222,13 +272,118 @@ def test_a_pdf_without_a_text_layer_is_not_looked_at(tmp_path: Path) -> None:
     assert images.labels == []
 
 
-@pytest.mark.spec("SDB-179")
-def test_a_page_without_a_label_heading_has_no_label(tmp_path: Path) -> None:
+@pytest.mark.spec("SDB-202")
+def test_without_a_label_heading_the_pictograms_of_section_2_count(
+    tmp_path: Path,
+) -> None:
     head = [line for line in _HEAD if "Kennzeichnungselemente" not in line]
+
+    images = read_label_images(
+        _sheet(tmp_path / "sheet.pdf", ["GHS07"], head=head, elsewhere=["GHS06"])
+    )
+
+    assert images.status is LabelImagesStatus.READ
+    assert images.labels == [["GHS07"]]
+
+
+@pytest.mark.spec("SDB-202")
+def test_where_the_label_is_found_the_pictograms_of_2_1_do_not_count(
+    tmp_path: Path,
+) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [
+            *_HEAD[:6],
+            ["GHS07"],
+            "Skin Irrit. 2, H315; Eye Dam. 1, H318",
+            "2.2 Kennzeichnungselemente",
+            ["GHS05"],
+            *_TAIL,
+        ],
+    )
+
+    assert read_label_images(path).labels == [["GHS05"]]
+
+
+@pytest.mark.spec("SDB-202")
+def test_a_label_headed_ghs_kennzeichnung_is_a_label(tmp_path: Path) -> None:
+    head = [
+        *(line for line in _HEAD if "Kennzeichnungselemente" not in line),
+        "GHS-Kennzeichnung",
+        "Symbol(e)",
+    ]
+
+    images = read_label_images(_sheet(tmp_path / "sheet.pdf", ["GHS02"], head=head))
+
+    assert images.status is LabelImagesStatus.READ
+    assert images.labels == [["GHS02"]]
+
+
+@pytest.mark.spec("SDB-202")
+def test_without_a_label_or_section_2_there_is_no_label(tmp_path: Path) -> None:
+    head = [
+        line
+        for line in _HEAD
+        if "Kennzeichnungselemente" not in line and "ABSCHNITT 2" not in line
+    ]
 
     images = read_label_images(_sheet(tmp_path / "sheet.pdf", ["GHS07"], head=head))
 
     assert images.status is LabelImagesStatus.NO_LABEL
+
+
+@pytest.mark.spec("SDB-205")
+def test_the_head_of_the_next_page_is_no_part_of_the_label(tmp_path: Path) -> None:
+    header = ["Sicherheitsdatenblatt Musterlack", "Version 1.0"]
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [["GHS06"], *header, *_HEAD, ["GHS02"]],
+        [["GHS06"], *header, ["GHS07"], *_TAIL],
+    )
+
+    assert read_label_images(path).labels == [["GHS02", "GHS07"]]
+
+
+@pytest.mark.spec("SDB-206")
+def test_a_pictogram_the_first_look_cannot_name_is_looked_at_closer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = _sheet(tmp_path / "sheet.pdf", ["GHS07"])
+    widths: list[int] = []
+    named = label_images.name_pictogram
+
+    def short_sighted(vector: list[float]) -> str | None:
+        widths.append(len(vector))
+        return None if len(widths) == 1 else named(vector)
+
+    monkeypatch.setattr(label_images, "name_pictogram", short_sighted)
+
+    assert read_label_images(path).labels == [["GHS07"]]
+    assert len(widths) == 2
+
+
+@pytest.mark.spec("SDB-203")
+@pytest.mark.parametrize(
+    ("printed", "read"),
+    [
+        ("GHS007", ["GHS07"]),
+        ("GHS 05", ["GHS05"]),
+        ("GHS0009", ["GHS09"]),
+        ("GHS 8.0", []),
+    ],
+)
+def test_a_pictogram_code_misread_with_zeros_is_read(
+    printed: str, read: list[str]
+) -> None:
+    text = "\n".join([*_HEAD, printed, *_TAIL])
+    reading = read_extraction(
+        extraction_from_dict(
+            {"text": text, "extractor": "pymupdf", "pages_sampled": 1, "warnings": []}
+        )
+    )
+    assert reading.parser_result is not None
+
+    assert reading.parser_result.sheet.hazard_statements.pictograms == read
 
 
 @pytest.mark.spec("SDB-179")

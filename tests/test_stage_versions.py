@@ -20,12 +20,12 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
     "EXTRACTION_VERSION": (
         ("extraction.py", "layout.py", "line_breaks.py"),
         2,
-        "edd646c6bcd02e5a",
+        "55ec13f248cd3554",
     ),
     "LABEL_IMAGES_VERSION": (
         ("label_blocks.py", "label_images.py", "pictogram_references.json"),
-        1,
-        "ddfa8701e2f1ac3e",
+        2,
+        "3b9641b9a162335d",
     ),
     "PARSER_VERSION": (
         (
@@ -42,8 +42,8 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
             "statements.py",
             "verification.py",
         ),
-        21,
-        "5ac86e0a4ad3a4c2",
+        22,
+        "2bf0bcf7d2658436",
     ),
 }
 

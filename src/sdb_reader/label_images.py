@@ -3,8 +3,11 @@
 Most sheets print their pictograms as pictures, not as text: the text of a
 sheet then holds no ``GHS07`` the parser could read. This stage looks at the
 label as it is drawn. It finds the label on the PDF's pages by its text
-positions, from the line with "Kennzeichnungselemente" (or a block of
-pictograms just above it) to the next subsection, renders that band, looks
+positions, from the line with "Kennzeichnungselemente" or "GHS-Kennzeichnung"
+(or a block of pictograms just above it) to the next subsection, without the
+heads and feet of the pages; where there is none, section 2 (SDB-202, SDB-205).
+On a scan the positions come from text recognition (SDB-204). It renders that
+band, looks
 for the red-framed diamonds every GHS
 pictogram has, and names each by comparing its inside with references made
 from the public-domain drawings of the nine pictograms.
@@ -19,7 +22,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections import deque
+from collections import Counter, deque
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -30,12 +33,16 @@ from typing import Any
 
 import pymupdf
 
+from .extraction import OCR_MAX_PAGES, ExtractionError, ocr_lines
 from .label_blocks import SMALL_PACKAGE_HEADING
 from .versions import label_images_stage
 
 # Where a label begins and ends on the page: the heading of 2.2, and the next
 # subsection or the section after it.
-_LABEL_START = re.compile(r"Kennzeichnungselemente", re.IGNORECASE)
+# "GHS-Kennzeichnung" heads the label of a sheet without a 2.2 (SDB-202).
+_LABEL_START = re.compile(
+    r"Kennzeichnungselemente|^\s*GHS-Kennzeichnung\b", re.IGNORECASE
+)
 # Inside a label only the heading with its number begins another, as the text
 # parser reads one label from "2.2 Kennzeichnungselemente" to its end (SDB-4):
 # "Kennzeichnungselemente (CLP):" under it, or "ergänzende
@@ -53,6 +60,22 @@ _LABEL_END = re.compile(
 )
 # A label with no end found runs over at most this many pages.
 _LABEL_PAGES = 2
+# Section 2, where no label is found in it (SDB-202): from its heading to that
+# of section 3, over at most this many pages.
+_SECTION_TWO = re.compile(
+    r"^\s*(?:[·•]\s*)?(?:ABSCHNITT\s*0?2\b|2\s*\.?\s+M[öo]gliche\s+Gefahren)",
+    re.IGNORECASE,
+)
+_SECTION_THREE = re.compile(
+    r"^\s*(?:[·•]\s*)?(?:ABSCHNITT\s*0?3\b|3\s*\.?\s+Zusammensetzung)", re.IGNORECASE
+)
+_SECTION_TWO_PAGES = 3
+# A page number, which stands in the page's head or foot.
+_PAGE_NUMBER = re.compile(
+    r"^(?:Seite|Page)\s*:?\s*\d{1,3}(?:\s*(?:/|von|of)\s*\d{1,3})?$"
+    r"|^\d{1,3}\s*(?:/|von)\s*\d{1,3}$",
+    re.IGNORECASE,
+)
 
 # The band is searched at this resolution: a pictogram of 1 cm is 39 pixels.
 _SEARCH_DPI = 100
@@ -63,6 +86,8 @@ _MIN_SIDE, _MAX_SIDE = 10, 160
 _MAX_IN_A_ROW = 5
 # A diamond is named from a rendering at this resolution.
 _NAME_DPI = 150
+# The second look, where the first names none (SDB-206).
+_FINER_DPI = 300
 
 # The fingerprint: the inside of the diamond, grey on white, cropped, scaled to
 # _SIZE x _SIZE and cut to the diamond's inner part, so the red frame all
@@ -92,10 +117,10 @@ class LabelImagesStatus(StrEnum):
 
     # The label was found on the pages and searched for pictograms.
     READ = "read"
-    # The PDF has no text layer: its pages are pictures, and the label cannot be
-    # found on them by its text.
+    # The PDF has no text layer, and text recognition, which finds the label on
+    # its pictures, is not at hand (SDB-204).
     NO_TEXT_LAYER = "no-text-layer"
-    # No line "Kennzeichnungselemente" was found on the pages.
+    # Neither a label nor section 2 was found on the pages (SDB-202).
     NO_LABEL = "no-label-region"
 
 
@@ -164,9 +189,13 @@ def read_label_images(path: Path, *, max_pages: int | None = None) -> LabelImage
             if max_pages is None
             else min(max_pages, document.page_count)
         )
-        if not any(document[number].get_text("text").strip() for number in pages):
+        lines = _page_lines(document, pages)
+        if lines is None:
             return LabelImages(label_images_stage(), LabelImagesStatus.NO_TEXT_LAYER)
-        regions = _label_regions(document, pages)
+        regions = _label_regions(document, lines)
+        if not regions and (section := _section_two(document, lines)):
+            # No label on the pages: what section 2 shows is its (SDB-202).
+            regions = [(section, [])]
         if not regions:
             return LabelImages(label_images_stage(), LabelImagesStatus.NO_LABEL)
         labels: list[list[str]] = []
@@ -203,27 +232,81 @@ def read_label_images(path: Path, *, max_pages: int | None = None) -> LabelImage
 
 # A band of one page: its number and the top and bottom of the band in points.
 _Band = tuple[int, float, float]
+# A line of a page: its top and bottom in points and its text.
+_Line = tuple[float, float, str]
 
 
-def _lines(page: pymupdf.Page) -> list[tuple[float, str]]:
-    """The top and text of each line of *page*, from the top down."""
-    found: list[tuple[float, float, str]] = []
+def _lines(page: pymupdf.Page) -> list[_Line]:
+    """The top, bottom and text of each line of *page*, from the top down."""
+    found: list[tuple[float, float, float, str]] = []
     for block in page.get_text("dict")["blocks"]:
         for line in block.get("lines", []):
             text = "".join(span["text"] for span in line["spans"]).strip()
             if text:
-                x0, y0 = line["bbox"][0], line["bbox"][1]
-                found.append((round(y0), x0, text))
+                x0, y0, _, y1 = line["bbox"]
+                found.append((round(y0), x0, y1, text))
     found.sort()
-    return [(float(top), text) for top, _, text in found]
+    return [(float(top), bottom, text) for top, _, bottom, text in found]
 
 
-def _pictograms_above(lines: Sequence[tuple[float, str]], heading: int) -> float:
+def _page_lines(
+    document: pymupdf.Document, pages: range
+) -> dict[int, list[_Line]] | None:
+    """The lines of each page; read by text recognition where the file has no
+    text layer (SDB-204). None where it has none and recognition cannot run."""
+    if any(document[number].get_text("text").strip() for number in pages):
+        return {number: _lines(document[number]) for number in pages}
+    try:
+        return {number: ocr_lines(document[number]) for number in pages[:OCR_MAX_PAGES]}
+    except ExtractionError:
+        return None
+
+
+def _body(lines: dict[int, list[_Line]]) -> dict[int, tuple[float, float]]:
+    """Where the body of each page begins and ends: below its head and above its
+    foot, the lines that repeat on the pages and the page numbers (SDB-205).
+    A label that runs on to the next page goes on below that page's head."""
+    # A line of the head or foot stands at the same place on the pages, and
+    # says something: a ":" or a bullet repeated in the body is no head.
+    counts = Counter(
+        key for page in lines.values() for key in {_place(t, x) for t, _, x in page}
+    )
+    repeated = max(2, (len(lines) + 1) // 2)
+
+    def furniture(top: float, text: str) -> bool:
+        if _PAGE_NUMBER.match(text):
+            return True
+        return len(_WORDS.findall(text)) >= 3 and counts[_place(top, text)] >= repeated
+
+    body: dict[int, tuple[float, float]] = {}
+    for number, page in lines.items():
+        top, bottom = 0.0, float("inf")
+        for line_top, line_bottom, text in page:
+            if not furniture(line_top, text):
+                break
+            top = line_bottom
+        for line_top, _, text in reversed(page):
+            if not furniture(line_top, text) or line_top <= top:
+                break
+            bottom = line_top
+        body[number] = (top, bottom)
+    return body
+
+
+_WORDS = re.compile(r"\w")
+
+
+def _place(top: float, text: str) -> tuple[int, str]:
+    """A line's text and its height on the page, to the nearest few points."""
+    return round(top / 4), text
+
+
+def _pictograms_above(lines: Sequence[_Line], heading: int) -> float:
     """The top of the label whose heading is *lines[heading]*: that of a block
     of pictograms directly above it on the page, else the heading's (SDB-187).
     Lines beside the heading, at its height, stand between neither."""
     y = lines[heading][0]
-    for top, text in reversed(lines[:heading]):
+    for top, _, text in reversed(lines[:heading]):
         if top >= y or _PICTOGRAM_CODES.fullmatch(text):
             continue
         return top if _PICTOGRAMS_TITLE.fullmatch(text) else y
@@ -236,18 +319,20 @@ _Split = tuple[int, float]
 
 
 def _label_regions(
-    document: pymupdf.Document, pages: range
+    document: pymupdf.Document, page_lines: dict[int, list[_Line]]
 ) -> list[tuple[list[_Band], list[_Split]]]:
     """Each label of the file as the bands of the pages it covers, with the
-    places where a small package's label begins in it (SDB-188)."""
+    places where a small package's label begins in it (SDB-188); on a page it
+    runs on to, below the page's head, and to its foot (SDB-205)."""
     labels: list[tuple[list[_Band], list[_Split]]] = []
     current: list[_Band] | None = None
     splits: list[_Split] = []
-    for number in pages:
+    body = _body(page_lines)
+    for number, lines in page_lines.items():
         page = document[number]
-        top: float | None = 0.0 if current is not None else None
-        lines = _lines(page)
-        for index, (y, text) in enumerate(lines):
+        head, foot = body[number]
+        top: float | None = head if current is not None else None
+        for index, (y, _, text) in enumerate(lines):
             if _LABEL_START.search(text) and (
                 current is None
                 or top is None
@@ -276,13 +361,38 @@ def _label_regions(
             if current is not None and SMALL_PACKAGE_HEADING.match(text):
                 splits.append((number, y))
         if current is not None:
-            current.append((number, top or 0.0, page.rect.height))
+            current.append((number, top or head, min(foot, page.rect.height)))
             if len(current) >= _LABEL_PAGES:
                 labels.append((current, splits))
                 current, splits = None, []
     if current:
         labels.append((current, splits))
     return labels
+
+
+def _section_two(
+    document: pymupdf.Document, page_lines: dict[int, list[_Line]]
+) -> list[_Band]:
+    """Section 2 as the bands of the pages it covers, without their heads and
+    feet (SDB-202, SDB-205); empty where its heading is not found."""
+    bands: list[_Band] = []
+    body = _body(page_lines)
+    top: float | None = None
+    for number, lines in page_lines.items():
+        head, foot = body[number]
+        if top is not None:
+            top = head
+        for y, _, text in lines:
+            if top is None and _SECTION_TWO.search(text):
+                top = y
+            elif top is not None and y > top and _SECTION_THREE.search(text):
+                bands.append((number, top, y))
+                return bands
+        if top is not None:
+            bands.append((number, top, min(foot, document[number].rect.height)))
+            if len(bands) >= _SECTION_TWO_PAGES:
+                return bands
+    return bands
 
 
 def _red(pixmap: pymupdf.Pixmap) -> bytearray:
@@ -525,7 +635,12 @@ def name_pictogram(vector: Sequence[float]) -> str | None:
 
 
 def _name(page: pymupdf.Page, rect: pymupdf.Rect) -> str | None:
-    pixmap = page.get_pixmap(
-        dpi=_NAME_DPI, clip=rect, colorspace=pymupdf.csRGB, alpha=False
-    )
-    return name_pictogram(fingerprint(grey(pixmap)))
+    """The code of the pictogram in *rect*; looked at once more in finer detail
+    where the first look names none, which a small one needs (SDB-206)."""
+    for dpi in (_NAME_DPI, _FINER_DPI):
+        pixmap = page.get_pixmap(
+            dpi=dpi, clip=rect, colorspace=pymupdf.csRGB, alpha=False
+        )
+        if (code := name_pictogram(fingerprint(grey(pixmap)))) is not None:
+            return code
+    return None
