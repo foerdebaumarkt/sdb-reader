@@ -32,6 +32,11 @@ bekommt dasselbe mit `show` als Bericht:
 sdb-reader show sheet.pdf
 ```
 
+Hinter diesen wenigen Punkten stehen viele Fälle: mehrere Blätter in einer
+Datei, Scans, Kennzeichnungen für kleine Verpackungen, Piktogramme nur als
+Bild, Blätter nach altem Recht neben denen nach neuem. [Was es
+abdeckt](docs/was-es-abdeckt.md) zählt sie auf.
+
 ## Warum nicht einfach das PDF einem Sprachmodell geben?
 
 Für ein einzelnes Blatt, das man sich selbst ansieht, funktioniert das gut. In
@@ -100,6 +105,7 @@ Repository unter [docs/](docs/README.md).
 | --- | --- |
 | den Befehl benutzen und verstehen, was er ausgibt | [Bedienung](docs/bedienung/README.md), auf Englisch: [Using the command line](docs/usage/README.md) |
 | Blätter aus einem Python-Programm lesen | [Using the library](docs/api/README.md) (englisch) |
+| sehen, womit der Leser umgeht | [Was es abdeckt](docs/was-es-abdeckt.md), auf Englisch: [What it handles](docs/what-it-handles.md) |
 | verstehen, wie aus einer Datei eine Lesung wird | [How it works](docs/how-it-works.md) (englisch) |
 | am Leser mitarbeiten | [Contributing](docs/contributing/README.md) (englisch) |
 | wissen, was eine Version geändert hat | [CHANGELOG.md](CHANGELOG.md) (englisch) |

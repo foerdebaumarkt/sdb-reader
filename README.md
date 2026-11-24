@@ -31,6 +31,12 @@ same as a report:
 sdb-reader show sheet.pdf
 ```
 
+Behind these few points lie many cases: several sheets in one file, scans,
+labels for small packages, pictograms printed only as pictures, sheets of the
+old rules beside the new. [What it
+handles](https://foerdebaumarkt.github.io/sdb-reader/latest/what-it-handles.html)
+lists them.
+
 ## Why not just give the PDF to a language model?
 
 For a single sheet you look at yourself, that works well. In a test in
@@ -94,6 +100,7 @@ edition per released version. The same pages are in the repository under
 | --- | --- |
 | run the command and understand what it prints | [Using the command line](https://foerdebaumarkt.github.io/sdb-reader/latest/usage/README.html), in German: [Bedienung](https://foerdebaumarkt.github.io/sdb-reader/latest/bedienung/README.html) |
 | read sheets from a Python program | [Using the library](https://foerdebaumarkt.github.io/sdb-reader/latest/api/README.html) |
+| see what the reader deals with | [What it handles](https://foerdebaumarkt.github.io/sdb-reader/latest/what-it-handles.html), in German: [Was es abdeckt](https://foerdebaumarkt.github.io/sdb-reader/latest/was-es-abdeckt.html) |
 | understand how a file becomes a reading | [How it works](https://foerdebaumarkt.github.io/sdb-reader/latest/how-it-works.html) |
 | change the reader | [Contributing](https://foerdebaumarkt.github.io/sdb-reader/latest/contributing/README.html) |
 | know what a version changed | [CHANGELOG.md](https://foerdebaumarkt.github.io/sdb-reader/latest/changelog.html) |
