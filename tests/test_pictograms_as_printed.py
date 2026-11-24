@@ -747,10 +747,12 @@ def test_a_missing_ghs05_beside_h318_is_a_finding(tmp_path: Path) -> None:
 _CLASSIFIED = _HEAD[:7]
 
 
-@pytest.mark.spec("SDB-179", "SDB-187")
-def test_pictograms_set_above_the_label_heading_belong_to_the_label(
+@pytest.mark.spec("SDB-179", "SDB-202", "SDB-209")
+def test_pictograms_set_above_the_label_heading_are_no_part_of_it(
     tmp_path: Path,
 ) -> None:
+    """The sheet errs: its label in 2.2 shows no pictogram, and the finding
+    says so (SDB-187 withdrawn)."""
     path = _pages(
         tmp_path / "sheet.pdf",
         [
@@ -766,12 +768,25 @@ def test_pictograms_set_above_the_label_heading_belong_to_the_label(
     images = read_label_images(path)
     parsed = _parsed(path)
 
-    assert images.labels == [["GHS02", "GHS07"]]
-    assert parsed.sheet.hazard_statements.pictograms == ["GHS02", "GHS07"]
-    assert _findings(parsed) == []
+    assert images.labels == [[]]
+    assert parsed.sheet.hazard_statements.pictograms == []
+    assert [code for code, _ in _findings(parsed)] == [
+        "pictogram-not-found",
+        "pictogram-not-found",
+    ]
 
 
-@pytest.mark.spec("SDB-179", "SDB-187")
+@pytest.mark.spec("SDB-209")
+def test_a_label_headed_2_2_kennzeichnung_is_read_as_a_picture(tmp_path: Path) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [*_CLASSIFIED, "2.2 Kennzeichnung nach GHS:", ["GHS02"], *_TAIL],
+    )
+
+    assert read_label_images(path).labels == [["GHS02"]]
+
+
+@pytest.mark.spec("SDB-179", "SDB-202")
 def test_pictograms_above_the_heading_without_a_title_stay_outside(
     tmp_path: Path,
 ) -> None:

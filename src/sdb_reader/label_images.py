@@ -41,19 +41,20 @@ from .versions import label_images_stage
 # subsection or the section after it.
 # "GHS-Kennzeichnung" heads the label of a sheet without a 2.2 (SDB-202).
 _LABEL_START = re.compile(
-    r"Kennzeichnungselemente|^\s*GHS-Kennzeichnung\b", re.IGNORECASE
+    r"Kennzeichnungselemente|^\s*GHS-Kennzeichnung\b"
+    # "2.2 Kennzeichnung nach GHS:" (SDB-209).
+    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+Kennzeichnung",
+    re.IGNORECASE,
 )
 # Inside a label only the heading with its number begins another, as the text
 # parser reads one label from "2.2 Kennzeichnungselemente" to its end (SDB-4):
 # "Kennzeichnungselemente (CLP):" under it, or "ergänzende
 # Kennzeichnungselemente" further down, is a line of the label.
-_LABEL_HEADING = re.compile(r"2\s*\.\s*2\s*\.?\s*Kennzeichnungselemente", re.IGNORECASE)
-# A block of pictograms set directly above that heading belongs to the label
-# (SDB-187): its title, then nothing but the codes printed under the pictures.
-_PICTOGRAMS_TITLE = re.compile(
-    r"(?:[·•∙*]\s*)?(?:Gefahren)?piktogramm\w*\s*:?", re.IGNORECASE
+_LABEL_HEADING = re.compile(
+    r"2\s*\.\s*2\s*\.?\s*Kennzeichnungselemente"
+    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+Kennzeichnung",
+    re.IGNORECASE,
 )
-_PICTOGRAM_CODES = re.compile(r"(?:GHS\s?0?\d{1,2}[\s,;]*)+", re.IGNORECASE)
 _LABEL_END = re.compile(
     r"^\s*(?:·\s*)?(?:2\.3\.?\s|ABSCHNITT\s*3\b|3\.?\s+Zusammensetzung|Sonstige Gefahren)",
     re.IGNORECASE,
@@ -318,18 +319,6 @@ def _place(top: float, text: str) -> tuple[int, str]:
     return round(top / 4), text
 
 
-def _pictograms_above(lines: Sequence[_Line], heading: int) -> float:
-    """The top of the label whose heading is *lines[heading]*: that of a block
-    of pictograms directly above it on the page, else the heading's (SDB-187).
-    Lines beside the heading, at its height, stand between neither."""
-    y = lines[heading][0]
-    for top, _, text in reversed(lines[:heading]):
-        if top >= y or _PICTOGRAM_CODES.fullmatch(text):
-            continue
-        return top if _PICTOGRAMS_TITLE.fullmatch(text) else y
-    return y
-
-
 # Where a small package's label begins in a label: the page and the top of its
 # heading (SDB-188).
 _Split = tuple[int, float]
@@ -349,17 +338,13 @@ def _label_regions(
         page = document[number]
         head, foot = body[number]
         top: float | None = head if current is not None else None
-        for index, (y, _, text) in enumerate(lines):
+        for y, _, text in lines:
             if _LABEL_START.search(text) and (
                 current is None
                 or top is None
                 or (y > top and _LABEL_HEADING.search(text) is not None)
             ):
-                start = (
-                    _pictograms_above(lines, index)
-                    if _LABEL_HEADING.search(text)
-                    else y
-                )
+                start = y
                 if current is not None and top is not None:
                     current.append((number, top, start))
                     labels.append((current, splits))

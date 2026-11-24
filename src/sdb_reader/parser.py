@@ -453,8 +453,12 @@ SHORT_YEAR_DATE_PATTERN = re.compile(
 # -- typically H400 next to H410, where only H410 is labelled. Reading the whole
 # hazards section conflates the two, so the block is located on its own.
 LABEL_SECTION_START_PATTERN = re.compile(
-    r"2\s*\.\s*2\s*\.?\s*(?:Kennzeichnungselemente|Label\s+elements)",
-    re.IGNORECASE,
+    r"2\s*\.\s*2\s*\.?\s*(?:Kennzeichnungselemente|Label\s+elements)"
+    # Any heading numbered 2.2 that begins with "Kennzeichnung": "2.2
+    # Kennzeichnung nach GHS:", "2.2 Kennzeichnung des Gemischs nach
+    # CLP-Verordnung" (SDB-209).
+    r"|^[ \t]*(?:[·•∙*][ \t]*)?(?<!\d)2[ \t]*\.[ \t]*2\.?[ \t]+Kennzeichnung\w*",
+    re.IGNORECASE | re.MULTILINE,
 )
 # The same heading without its number, for sheets written before the REACH
 # restructuring: they number their sections 1 to 17 and put the label at
@@ -1651,7 +1655,7 @@ def find_label_section(text: str) -> str | None:
         rest = text[start.end() :]
         end = _label_section_end(rest)
         block = rest[: end.start()] if end else rest[:LABEL_SECTION_MAX_CHARS]
-        return (_pictograms_above(text, start.start()) + block) or None
+        return block or None
 
     # No "2.2". The heading may still be there under another number, which is
     # how sheets from before the REACH restructuring are written. Those are
@@ -1671,39 +1675,6 @@ def find_label_section(text: str) -> str | None:
     if not end:
         return None
     return rest[: end.start()] or None
-
-
-# A block of the label's pictograms set above its heading (SDB-187): its title
-# on a line of its own, then nothing but the codes, then "2.2
-# Kennzeichnungselemente". Bullets and the mark of a changed section may stand
-# before the heading's number.
-_PICTOGRAMS_TITLE = re.compile(
-    r"[ \t]*(?:[·•∙*][ \t]*)?(?:Gefahren)?piktogramm\w*[ \t]*:?[ \t]*", re.IGNORECASE
-)
-_PICTOGRAM_CODES_LINE = re.compile(r"[ \t]*(?:GHS\s?0?\d{1,2}[ \t,;]*)*", re.IGNORECASE)
-_BEFORE_HEADING = re.compile(r"[ \t]*(?:[·•∙*][ \t]*)?")
-
-
-def _pictograms_above(text: str, heading: int) -> str:
-    """The block of pictograms that stands directly above the label's heading
-    at *heading* in *text*, with its line breaks, or nothing (SDB-187).
-
-    >>> text = "H302 …\\nGefahrenpiktogramme\\nGHS07\\n* 2.2 Kennzeichnungselemente"
-    >>> _pictograms_above(text, text.index("2.2"))
-    'Gefahrenpiktogramme\\nGHS07\\n'
-    """
-    line = text.rfind("\n", 0, heading) + 1
-    if not _BEFORE_HEADING.fullmatch(text, line, heading):
-        return ""
-    top = line
-    while top > 0:
-        above = text.rfind("\n", 0, top - 1) + 1
-        if _PICTOGRAMS_TITLE.fullmatch(text, above, top - 1):
-            return text[above:line]
-        if not _PICTOGRAM_CODES_LINE.fullmatch(text, above, top - 1):
-            return ""
-        top = above
-    return ""
 
 
 def _label_section_ends(rest: str) -> Iterator[re.Match[str]]:
@@ -3248,9 +3219,18 @@ _DISPOSAL = re.compile(
 
 
 def _disposal_sentence(label_text: str) -> str | None:
-    """The label's disposal sentence without its code, as printed (SDB-166)."""
-    found = _DISPOSAL.search(join_broken_words(_before_next_subsection(label_text)))
-    return " ".join(found.group(0).split()) if found else None
+    """The label's disposal sentence without its code, as printed (SDB-166).
+
+    Not one behind a code the sheet prints on its line: that sentence is the
+    code's, also where the regulation knows no such code ("P502 Inhalt/
+    Behälter der Problemabfallentsorgung zuführen.", SDB-210).
+    """
+    text = join_broken_words(_before_next_subsection(label_text))
+    for found in _DISPOSAL.finditer(text):
+        line = text[text.rfind("\n", 0, found.start()) + 1 : found.start()]
+        if not _ANY_STATEMENT_CODE.search(line):
+            return " ".join(found.group(0).split())
+    return None
 
 
 def _read_label(
