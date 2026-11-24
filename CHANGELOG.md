@@ -33,13 +33,17 @@ Versions follow the tags of this repository.
 - **A pictogram embedded as a picture on the label's next page** is no
   longer lost: reading that page's lines with their images made PyMuPDF
   render it without them afterwards (SDB-205).
+- **Pictograms drawn from thin strips of a picture,** whose red frame has
+  gaps of a pixel, are found; touching pictograms are each cut to their own
+  frame (SDB-208). **A page without a text layer** in a file whose other
+  pages have one has its label found by text recognition too (SDB-204).
 - **Small pictograms** that the first look names none of are looked at again
   in finer detail (SDB-206). Checked against the codes 4,022 pictograms carry
   below them on a set of about 14,500 sheets: none is named otherwise than
   its code says.
 
-On that set 8 sheets gain pictograms, each one their H statements call for,
-none loses one; on 270 the label's picture is now read, and 29 lose a wrong
+On that set 9 sheets gain pictograms, each one their H statements call for,
+none loses one; on 271 the label's picture is now read, and 29 lose a wrong
 `pictograms-not-recognised`. The orange symbols of Directive 67/548/EEC are
 still not taken for pictograms, on purpose (SDB-207).
 

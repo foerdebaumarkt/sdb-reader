@@ -359,6 +359,40 @@ def test_a_pictogram_embedded_as_a_picture_on_the_next_page_is_read(
     assert read_label_images(path).labels == [["GHS07"]]
 
 
+@pytest.mark.spec("SDB-208")
+def test_a_pictogram_drawn_in_strips_with_gaps_is_found(tmp_path: Path) -> None:
+    path = _sheet(tmp_path / "sheet.pdf", ["GHS07"])
+    with pymupdf.open(path) as document:
+        page = document[0]
+        top = 60 + 14 * len(_HEAD)
+        # White lines across the frame, as between the strips of a picture.
+        for y in range(top + 4, top + 50, 9):
+            page.draw_line((55, y), (115, y), color=(1, 1, 1), width=0.6)
+        document.saveIncr()
+
+    assert read_label_images(path).labels == [["GHS07"]]
+
+
+@pytest.mark.spec("SDB-204")
+@pytest.mark.real_tesseract
+@pytest.mark.skipif(
+    shutil.which("tesseract") is None and not os.environ.get("CI"),
+    reason="tesseract is not installed on this machine",
+)
+def test_a_scanned_page_in_a_file_with_text_has_its_label_found(
+    tmp_path: Path,
+) -> None:
+    scanned = _scan(_sheet(tmp_path / "drawn.pdf", ["GHS07"]), tmp_path / "scan.pdf")
+    with pymupdf.open(scanned) as document:
+        page = document.new_page(width=595, height=842)
+        page.insert_text((50, 60), "ABSCHNITT 16: Sonstige Angaben", fontsize=9)
+        document.save(tmp_path / "mixed.pdf")
+
+    images = read_label_images(tmp_path / "mixed.pdf")
+
+    assert images.labels == [["GHS07"]]
+
+
 @pytest.mark.spec("SDB-206")
 def test_a_pictogram_the_first_look_cannot_name_is_looked_at_closer(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
