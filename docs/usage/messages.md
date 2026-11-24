@@ -97,6 +97,8 @@ how to choose its language is in [Understanding the output](output.md#messages).
 | `signal-word-not-found` | `expected` | The label's codes call for the signal word '{expected}', and none was found (CLP Article 20). |
 | `small-package-hazard-statement-not-in-label` | `statement` | Section 2.1 names {statement} for the classification, and the statement was not found in the label for packages of up to 125 ml; CLP Annex I 1.5.2.1 does not let it be left out there. |
 | `small-package-signal-word-not-found` | `expected` | The codes of the label for packages of up to 125 ml call for the signal word '{expected}', and none was found; CLP Annex I 1.5.2.1 does not let it be left out there. |
+| `signal-word-conflicts` | `printed`, `expected` | The label prints the signal word '{printed}', and the product's codes call for: {expected} (CLP Article 20). Either the signal word or the classification deviates. |
+| `small-package-signal-word-conflicts` | `printed`, `expected` | The label for packages of up to 125 ml prints the signal word '{printed}', and the product's codes call for: {expected} (CLP Article 20; Annex I 1.5.2.1 does not let it go). |
 | `small-package-pictogram-not-found` | `pictogram` | The H statements of the label for packages of up to 125 ml call for the pictogram {pictogram}, and it was not found; CLP Annex I 1.5.2.1 does not let it be left out there. |
 | `different-products` | `products` | The file holds safety data sheets of different products: {products} |
 | `country-editions-differ` | `fields` | The sheets of the same product for different countries differ in: {fields} |

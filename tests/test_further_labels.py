@@ -381,14 +381,57 @@ def test_h290_calls_for_nothing_on_a_small_package() -> None:
     assert findings == []
 
 
-@pytest.mark.spec("SDB-193")
-def test_a_small_aerosol_s_own_statements_call_for_nothing() -> None:
+@pytest.mark.spec("SDB-198")
+def test_a_small_aerosol_keeps_its_own_elements() -> None:
     expected = clp_expected(
         HazardStatements(hazard_codes=["H222", "H229", "H336"]), small_package=True
     )
 
-    assert expected.signal_word == "Achtung"
-    assert expected.pictograms == ["GHS07"]
+    assert expected.signal_word == "Gefahr"
+    assert expected.pictograms == ["GHS02", "GHS07"]
+
+
+@pytest.mark.spec("SDB-198", "SDB-194")
+def test_an_aerosol_s_own_statements_are_reported_missing() -> None:
+    assert _findings(
+        "Signalwort: Achtung\nP210 Von Hitze fernhalten.", "Aerosol 3, H229"
+    ) == [("label-without-hazard-statement", "")]
+    assert ("small-package-hazard-statement-not-in-label", "H229") in _findings(
+        "Signalwort: Achtung\nH229 Behälter steht unter Druck: Kann bei Erwärmung bersten.\n"
+        f"P210 Von Hitze fernhalten.\n{_SMALL}\nSignalwort: Achtung\nGefahrenhinweise entfällt",
+        "Aerosol 3, H229",
+    )
+
+
+@pytest.mark.spec("SDB-199")
+def test_a_signal_word_that_conflicts_with_the_codes() -> None:
+    assert ("signal-word-conflicts", "Achtung") in _findings(
+        "Signalwort: Achtung\nH318 Verursacht schwere Augenschäden.\nP280 Augenschutz tragen.",
+        "Eye Dam. 1, H318",
+    )
+    assert ("signal-word-conflicts", "Gefahr") in _findings(
+        "Signalwort: Gefahr\nH315 Verursacht Hautreizungen.\nP280 Schutzhandschuhe tragen.",
+        "Skin Irrit. 2, H315",
+    )
+    # H228 is "Gefahr" in category 1 and "Achtung" in category 2.
+    assert not [
+        f
+        for f in _findings(
+            "Signalwort: Achtung\nH228 Entzündbarer Feststoff.\nP210 Von Hitze fernhalten.",
+            "Flam. Sol. 1, H228",
+        )
+        if f[0] == "signal-word-conflicts"
+    ]
+
+
+@pytest.mark.spec("SDB-199", "SDB-193")
+def test_a_small_package_s_signal_word_against_the_product_s_codes() -> None:
+    assert ("small-package-signal-word-conflicts", "Achtung") in _findings(
+        "Signalwort: Gefahr\nH270 Kann Brand verursachen oder verstärken; Oxidationsmittel.\n"
+        "H280 Enthält Gas unter Druck; kann bei Erwärmung explodieren.\n"
+        f"P220 Von Kleidung fernhalten.\n{_SMALL}\nSignalwort: Achtung\nGefahrenhinweise entfällt",
+        "Ox. Gas 1, H270\nPress. Gas, H280",
+    )
 
 
 @pytest.mark.spec("SDB-193", "SDB-179")
@@ -739,3 +782,17 @@ def test_a_small_aerosol_needs_no_pictogram_for_the_aspiration_hazard() -> None:
     assert result is not None
 
     assert sheet_findings(result.sheet, result.warnings) == []
+
+
+@pytest.mark.spec("SDB-199")
+def test_a_small_package_s_code_does_not_make_the_label_s_word_wrong() -> None:
+    # Only the small package's label prints H331 ("Gefahr"): the sheet is
+    # inconsistent, and the label's "Achtung" is not surely wrong.
+    findings = _findings(
+        "Signalwort: Achtung\nH317 Kann allergische Hautreaktionen verursachen.\n"
+        f"P280 Schutzhandschuhe tragen.\n{_SMALL}\nSignalwort: Gefahr\n"
+        "Gefahrenhinweise\nH317-H331",
+        "Skin Sens. 1, H317",
+    )
+
+    assert not [f for f in findings if f[0].endswith("signal-word-conflicts")]

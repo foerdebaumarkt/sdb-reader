@@ -27,6 +27,7 @@ from .parser import (
     classification_hazard_codes,
     without_lines,
 )
+from .pictograms import get_signal_word
 from .schema import (
     FurtherLabel,
     HazardStatements,
@@ -334,11 +335,8 @@ def label_not_found(
     hazards = sheet.section_text.get(Section.HAZARDS, "")
     classified = {base_code(c) for c in classification_hazard_codes(hazards)}
     small_may_be = not prints_small_package_label(label)
-    aerosol = _is_aerosol(hazards, classified | set(label.hazard_codes))
     if not label.hazard_codes and not (
-        small_may_be
-        and classified
-        and all(small_package_may_omit(code, aerosol=aerosol) for code in classified)
+        small_may_be and classified and all(map(small_package_may_omit, classified))
     ):
         findings.append(Message("label-without-hazard-statement"))
     product = classified | {base_code(c) for c in label.hazard_codes}
@@ -346,8 +344,7 @@ def label_not_found(
         small_may_be
         and product
         and all(
-            small_package_may_omit(code, aerosol=aerosol)
-            or code in _SMALL_PACKAGE_OMITS_PRECAUTIONS
+            small_package_may_omit(code) or code in _SMALL_PACKAGE_OMITS_PRECAUTIONS
             for code in product
         )
     ):
@@ -382,16 +379,12 @@ _SMALL_PACKAGE_OMITS_NOT_PUBLIC = frozenset(
 _SMALL_PACKAGE_OMITS_PRECAUTIONS = frozenset({"H362", "H412", "H413"})
 
 
-def small_package_may_omit(code: str, *, aerosol: bool) -> bool:
+def small_package_may_omit(code: str) -> bool:
     """Whether a package of at most 125 ml may go without the hazard statement
-    *code* (CLP Annex I 1.5.2.1.1 and 1.5.2.1.3; SDB-194). On an aerosol also
-    the statements of the aerosol class, for which 1.5.2.1.1 refers to
-    Directive 75/324/EEC."""
-    return (
-        code in _SMALL_PACKAGE_OMITS
-        or code in _SMALL_PACKAGE_OMITS_NOT_PUBLIC
-        or (aerosol and code in _AEROSOL_STATEMENTS)
-    )
+    *code* (CLP Annex I 1.5.2.1.1 and 1.5.2.1.3; SDB-194). Not an aerosol's
+    own statements: Directive 75/324/EEC, to which 1.5.2.1.1 refers, requires
+    them on every aerosol dispenser (Art. 8(1), Annex 2.2; SDB-198)."""
+    return code in _SMALL_PACKAGE_OMITS or code in _SMALL_PACKAGE_OMITS_NOT_PUBLIC
 
 
 def prints_small_package_label(label: HazardStatements) -> bool:
@@ -577,7 +570,8 @@ def hazard_statements_not_in_label(
     where the label carries H410 or H314 (CLP Article 27 with Annex III Part 1).
     Where the sheet prints no small package's label beside it, the label may be
     one, and a statement such a package may leave out gives no finding (CLP
-    Annex I 1.5.2.1; SDB-194): here H229 of an aerosol.
+    Annex I 1.5.2.1; SDB-194); an aerosol's own statements are none of them
+    (SDB-198).
 
     >>> from sdb_reader import HazardStatements
     >>> section = (
@@ -593,7 +587,7 @@ def hazard_statements_not_in_label(
     ...     section_text={Section.HAZARDS: section},
     ... )
     >>> [m.params["statement"] for m in hazard_statements_not_in_label(sheet, [])]
-    ['H317']
+    ['H229', 'H317']
     """
     noted = {warning.code for warning in parser_warnings}
     label = sheet.hazard_statements
@@ -636,13 +630,12 @@ def _not_carried(
         if own := wordings.get(code):
             label_text = label_text.replace(_comparable(own), " ")
     classified = {base_code(code) for code in classification_hazard_codes(hazards)}
-    aerosol = _is_aerosol(hazards, classified | on_label)
     missing: list[str] = []
     for code in sorted(classification_hazard_codes(hazards)):
         base = base_code(code)
         if base in on_label or _not_required(base, on_label, classified, sheet):
             continue
-        if small_package and small_package_may_omit(base, aerosol=aerosol):
+        if small_package and small_package_may_omit(base):
             continue
         # The label prints the statement's wording without its code.
         wording = wordings.get(base)
@@ -719,6 +712,123 @@ def hazard_statements_not_classified(
         if base_code(code) not in classified
         and _LEFT_OUT_BESIDE.get(base_code(code)) not in classified
     ]
+
+
+# The H codes whose signal word depends on the category, which the code does
+# not tell (Annex I Tables 2.1.2, 2.2.2, 2.7.2, 2.8.2, 2.12.2, 2.13.2/2.14.2,
+# 2.15.2): H207, H221, H228, H242, H261, H272 (SDB-199).
+_SIGNAL_WORD_BY_CATEGORY = frozenset({"H207", "H221", "H228", "H242", "H261", "H272"})
+
+
+def signal_word_conflict(printed: str | None, codes: Collection[str]) -> str | None:
+    """What *codes* call for where the printed signal word surely conflicts
+    with them (SDB-199), else None: "Gefahr" where "Achtung" is printed and a
+    code calls for "Gefahr" whatever its category (Art. 20(1), (3)); "Achtung"
+    or "none" where "Gefahr" is printed and no code can call for it.
+
+    >>> signal_word_conflict("Achtung", {"H270", "H280"})
+    'Gefahr'
+    >>> signal_word_conflict("Achtung", {"H228"}) is None
+    True
+    >>> signal_word_conflict("Gefahr", {"H315"})
+    'Achtung'
+    >>> signal_word_conflict("Gefahr", {"H412"})
+    'none'
+    """
+    words = {code: get_signal_word({code}) for code in codes}
+    if printed == "Achtung" and any(
+        word == "Gefahr" and base_code(code) not in _SIGNAL_WORD_BY_CATEGORY
+        for code, word in words.items()
+    ):
+        return "Gefahr"
+    if printed == "Gefahr" and not any(
+        word == "Gefahr" or base_code(code) in _SIGNAL_WORD_BY_CATEGORY
+        for code, word in words.items()
+    ):
+        return get_signal_word(set(codes)) or "none"
+    return None
+
+
+def _product_codes(sheet: SafetyDataSheet, *labels: HazardStatements) -> set[str]:
+    """The codes of the product (SDB-193): those of the classification in
+    2.1 and of *labels*, H and EUH; without H304 on an aerosol or where the
+    sheet names a sealed spray attachment (Annex I 1.3.3)."""
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    codes = set(classification_hazard_codes(hazards))
+    for label in labels:
+        codes |= {*label.hazard_codes, *label.supplemental_codes}
+    if _is_aerosol(hazards, codes) or _names_sealed_spray(sheet):
+        codes.discard("H304")
+    return codes
+
+
+def signal_word_conflicts(
+    sheet: SafetyDataSheet, parser_warnings: Iterable[Message]
+) -> list[Message]:
+    r"""Where the signal word a label prints conflicts with what the product's
+    codes call for (SDB-199): ``signal-word-conflicts`` for the label,
+    ``small-package-signal-word-conflicts`` for a small package's label, with
+    the word ``printed`` and the one ``expected`` ("none" for none). Either
+    side may be the wrong one.
+
+    "Gefahr" where none can be called for only where 2.1 names a code for
+    every class it names (SDB-197): a code it leaves out might call for it.
+    Not where the label states it has no signal word; with the exceptions of
+    SDB-170.
+
+    >>> from sdb_reader import HazardStatements
+    >>> section = "2.1 Einstufung\nOx. Gas 1, H270\nPress. Gas, H280\n2.2 Kennzeichnungselemente\n"
+    >>> sheet = SafetyDataSheet(
+    ...     None, None, None, None, "de",
+    ...     hazard_statements=HazardStatements(
+    ...         hazard_codes=["H270", "H280"], signal_word="Achtung"),
+    ...     stated_classification=StatedClassification.CLASSIFIED,
+    ...     section_text={Section.HAZARDS: section},
+    ... )
+    >>> [(m.code, m.params) for m in signal_word_conflicts(sheet, [])]
+    [('signal-word-conflicts', {'printed': 'Achtung', 'expected': 'Gefahr'})]
+    """
+    if not _label_is_judged(sheet, {w.code for w in parser_warnings}):
+        return []
+    hazards = sheet.section_text.get(Section.HAZARDS, "")
+    complete = classification_codes_complete(hazards)
+    label = sheet.hazard_statements
+
+    # The labels of a sheet speak of one product (SDB-76): any of them may
+    # hold the code that can call for "Gefahr". That a code calls for it is
+    # sure only of 2.1 and the label judged, beside a small package's the
+    # product's label; another label of an inconsistent sheet is not (SDB-199).
+    small = [
+        further.label
+        for further in label.further_labels
+        if further.kind is LabelKind.SMALL_PACKAGE
+    ]
+    every = _product_codes(sheet, label, *small)
+
+    def conflict(
+        printing: HazardStatements, *callers: HazardStatements
+    ) -> dict[str, str] | None:
+        if printing.signal_word is None:
+            return None
+        expected = signal_word_conflict(printing.signal_word, every)
+        if expected == "Gefahr" and (
+            signal_word_conflict(printing.signal_word, _product_codes(sheet, *callers))
+            != "Gefahr"
+        ):
+            return None
+        if expected is None or (expected != "Gefahr" and not complete):
+            return None
+        return {"printed": printing.signal_word, "expected": expected}
+
+    findings: list[Message] = []
+    if (found := conflict(label, label)) is not None:
+        findings.append(Message("signal-word-conflicts", found))
+    for further in label.further_labels:
+        if _judged_small_package(further) and (
+            found := conflict(further.label, label, further.label)
+        ):
+            findings.append(Message("small-package-signal-word-conflicts", found))
+    return findings
 
 
 def small_package_findings(
@@ -1231,6 +1341,15 @@ def sheet_findings(
     else:
         findings.extend(hazard_statements_not_classified(sheet, parser_warnings))
     findings.extend(small_package_findings(sheet, parser_warnings))
+    if parts:
+        conflicts: list[Message] = []
+        for part in parts:
+            for found in signal_word_conflicts(part.sheet, part.warnings):
+                if found not in conflicts:
+                    conflicts.append(found)
+        findings.extend(conflicts)
+    else:
+        findings.extend(signal_word_conflicts(sheet, parser_warnings))
 
     findings.extend(
         Message("euh-outside-label", dict(outside.params))

@@ -116,6 +116,8 @@ GROUPS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
             "signal-word-not-found",
             "small-package-hazard-statement-not-in-label",
             "small-package-signal-word-not-found",
+            "signal-word-conflicts",
+            "small-package-signal-word-conflicts",
             "small-package-pictogram-not-found",
             "different-products",
             "country-editions-differ",

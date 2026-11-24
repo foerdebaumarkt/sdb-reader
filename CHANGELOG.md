@@ -22,14 +22,15 @@ Versions follow the tags of this repository.
   most 125 ml, its label may be one, and CLP Annex I 1.5.2.1 lets such a
   package leave out the hazard statements of some categories (H225, H226,
   H315, H319, H400, H410, H411 and others; acute toxicity 4 and STOT 2 and
-  3 where not sold to the general public; an aerosol's own statements) and
+  3 where not sold to the general public; never an aerosol's own elements,
+  which Directive 75/324/EEC requires on every aerosol) and
   the precautionary statements of H362, H412 and H413. Such a statement is
   then no `hazard-statement-not-in-label`, and a label without hazard or
   precautionary statements whose hazards are all of that kind no
   `label-without-hazard-statement` or `label-without-precautionary-statement`
   (SDB-194). `clp_expected` then expects no signal word for H290 alone
   (1.5.2.1.3). On the same set 32 `hazard-statement-not-in-label` go, all
-  H411 where the label prints H410 instead, and 3 of the other two.
+  H411 where the label prints H410 instead, and 1 of the other two.
 - **No `euh-outside-label` for a treated article.** "Mit Konservierungsmittel
   … behandelte Ware. Kann allergische Reaktionen hervorrufen." is the
   sentence of the Biocidal Products Regulation, not EUH208, without
@@ -71,6 +72,16 @@ Versions follow the tags of this repository.
 
 ### Added
 
+- **The findings `signal-word-conflicts` and
+  `small-package-signal-word-conflicts`** (`printed`, `expected`): a label
+  prints "Achtung" where a code of the product calls for "Gefahr" whatever
+  its category, or "Gefahr" where no code can call for it (SDB-199). The
+  reading stays as printed; either side may be wrong. On a set of about
+  13,000 sheets: 2, the small-package labels of an oxygen product.
+- **An aerosol keeps its own elements on a small package** (SDB-198):
+  Directive 75/324/EEC, to which CLP Annex I 1.5.2.1.1 refers, requires the
+  signal word, GHS02, H222/H223 and H229 on every aerosol dispenser.
+  `clp_expected(..., small_package=True)` no longer leaves them out.
 - **`further_labels`** under `hazard_statements`, with `FurtherLabel` and
   `LabelKind`: each block of 2.2 beside the label, with its `kind`
   (`small-package`, `biocides`, `detergents`), its `heading` and `text` as
