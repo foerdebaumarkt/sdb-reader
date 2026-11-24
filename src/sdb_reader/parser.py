@@ -465,8 +465,9 @@ LABEL_SECTION_START_PATTERN = re.compile(
 # (the second is a back-reference and comes later). It is only used where a real
 # boundary follows; see find_label_section for why.
 LABEL_HEADING_PATTERN = re.compile(
-    r"\b(?:Kennzeichnungselemente|Label\s+elements)\b",
-    re.IGNORECASE,
+    # "GHS-Kennzeichnung" heads the label of sheets without a 2.2 (SDB-202).
+    r"\b(?:Kennzeichnungselemente|Label\s+elements)\b|^[ \t]*GHS-Kennzeichnung\b",
+    re.IGNORECASE | re.MULTILINE,
 )
 # Only a heading ends it. An unanchored "3.1" also matches inside a date such as
 # "13.10.2024", which truncates the block before the codes it should contain.
@@ -547,7 +548,10 @@ HAZARD_CODE_PATTERN = re.compile(r"\bH\d{3}(?!\d)")
 LABEL_HAZARD_CODE = re.compile(r"\bH(?:36[01][A-Za-z]{1,2}(?![^\W\d_])|\d{3})(?!\d)")
 PRECAUTION_CODE_PATTERN = re.compile(r"\bP\d{3}(?!\d)")
 SUPPLEMENTAL_CODE_PATTERN = re.compile(r"\bEUH\d{3}\b", re.IGNORECASE)
-PICTOGRAM_PATTERN = re.compile(r"\bGHS\d{1,2}\b", re.IGNORECASE)
+# A pictogram's code, also as text recognition misreads it with more zeros or
+# a space ("GHS007", "GHS 07"): there are only GHS01 to GHS09 (SDB-203). Not
+# the revision of the GHS in "GHS 8.0".
+PICTOGRAM_PATTERN = re.compile(r"\bGHS(?:[ \t]?0+)?([1-9])(?![\d.,]?\d)", re.IGNORECASE)
 # Two bugs kept this from ever matching German text: no IGNORECASE against a
 # lowercase "signal", and a capture that took whatever word came next. Every
 # signal word of the stored readings therefore came from the H-code derivation, not from
@@ -3345,7 +3349,7 @@ def _read_label(
     signal_word, signal_word_stated = read_signal_word(hazard_section_text)
 
     pictograms = sorted(
-        set(code.upper() for code in PICTOGRAM_PATTERN.findall(hazard_section_text))
+        {f"GHS0{digit}" for digit in PICTOGRAM_PATTERN.findall(hazard_section_text)}
     )
 
     # Two sentences of one effect each are the Annex's joined code (SDB-155).

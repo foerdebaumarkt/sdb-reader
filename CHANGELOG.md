@@ -5,6 +5,41 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Breaking
+
+- **`LABEL_IMAGES_VERSION` is 2 and `PARSER_VERSION` is 22** (0.12.0: 1 and
+  21). Label images kept from 0.12.0 have to be read from the PDFs again
+  (`read_label_images`, about a tenth of a second per sheet, a second per
+  scanned page); readings kept from before should be made again.
+  `EXTRACTION_VERSION` stays 2: stored texts stay valid.
+
+### Fixed
+
+- **Pictograms where the label was not found as a picture.** A label headed
+  "GHS-Kennzeichnung" instead of "Kennzeichnungselemente" is a label, in the
+  text and in the picture; where no label is found, the pictograms section 2
+  shows count. Where the label is found only its own count: a pictogram in
+  2.1 belongs to the classification, which the label may leave out under
+  Article 26 CLP (SDB-202).
+- **Scanned sheets** have their label found on the page pictures by the
+  positions of the words text recognition reads, and its pictograms read
+  (SDB-204). Without text recognition `label-images-not-read` says
+  `no-text-layer`, as before.
+- **A pictogram code misread by text recognition** with more zeros or a space
+  ("GHS007", "GHS 05") is read as the code it is (SDB-203).
+- **A page's head and foot are no part of the label.** Where the label runs
+  on to the next page its picture is read below that page's head and above
+  its foot, so a red logo in the head is no unrecognised pictogram (SDB-205).
+- **Small pictograms** that the first look names none of are looked at again
+  in finer detail (SDB-206). Checked against the codes 4,022 pictograms carry
+  below them on a set of about 14,500 sheets: none is named otherwise than
+  its code says.
+
+On that set 8 sheets gain pictograms, each one their H statements call for,
+none loses one; on 270 the label's picture is now read, and 29 lose a wrong
+`pictograms-not-recognised`. The orange symbols of Directive 67/548/EEC are
+still not taken for pictograms, on purpose (SDB-207).
+
 ## 0.12.0 – 2026-11-24
 
 This release reads the label strictly as printed, pictures included, and

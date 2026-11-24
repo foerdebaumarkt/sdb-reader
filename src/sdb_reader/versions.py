@@ -21,13 +21,13 @@ EXTRACTION_VERSION = 2
 # Raise when the same PDF can give other pictograms from the drawing of its
 # label: label_images.py, label_blocks.py and pictogram_references.json
 # (SDB-179, SDB-188).
-LABEL_IMAGES_VERSION = 1
+LABEL_IMAGES_VERSION = 2
 
 # Raise when the same text can give another reading: the verdict, the parser,
 # the statements and their tables, the findings, the message codes, the JSON
 # form, and the heading of a small package's label (label_blocks.py). The
 # sentences of the catalogs are no part of a reading.
-PARSER_VERSION = 21
+PARSER_VERSION = 22
 
 
 def extraction_stage() -> str:

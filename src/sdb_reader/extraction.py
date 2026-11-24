@@ -7,6 +7,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pymupdf
 
@@ -344,12 +345,14 @@ def _tesseract_version() -> str:
     return version
 
 
-def _run_tesseract(image: bytes) -> str:
-    """Hand one rendered page to the binary and return what it read."""
+def _run_tesseract(image: bytes, *, words: bool = False) -> str:
+    """Hand one rendered page to the binary and return what it read: the text,
+    or with *words* a table of the words with their positions (tsv)."""
     _tesseract_version()
+    output = ["tsv"] if words else []
     try:
         result = subprocess.run(  # noqa: S603 -- fixed arguments, no shell
-            ["tesseract", "stdin", "stdout", "-l", OCR_LANGUAGE, "--psm", "3"],  # noqa: S607 -- tesseract from PATH (SDB-116)
+            ["tesseract", "stdin", "stdout", "-l", OCR_LANGUAGE, "--psm", "3", *output],  # noqa: S607 -- tesseract from PATH (SDB-116)
             input=image,
             capture_output=True,
             timeout=OCR_PAGE_TIMEOUT_SECONDS,
@@ -510,3 +513,26 @@ def normalise_pdf_text(text: str) -> str:
     normalised_text = "\n".join(normalised_lines)
     normalised_text = re.sub(r"\n{3,}", "\n\n", normalised_text)
     return normalised_text.strip()
+
+
+def ocr_lines(page: pymupdf.Page) -> list[tuple[float, float, str]]:
+    """The lines text recognition reads on *page*, a picture without a text
+    layer: the top and bottom of each in points and its text, from the top
+    down (SDB-204).
+
+    Raises ExtractionError where tesseract is missing or fails, as for the text.
+    """
+    table = _run_tesseract(page.get_pixmap(dpi=OCR_DPI).tobytes("png"), words=True)
+    scale = 72 / OCR_DPI
+    rows: dict[tuple[str, str, str], list[Any]] = {}
+    for record in table.splitlines()[1:]:
+        fields = record.split("\t")
+        if len(fields) < 12 or not fields[11].strip():
+            continue
+        top, height = int(fields[7]), int(fields[9])
+        row = rows.setdefault(
+            (fields[2], fields[3], fields[4]), [top, top + height, []]
+        )
+        row[0], row[1] = min(row[0], top), max(row[1], top + height)
+        row[2].append(fields[11])
+    return sorted((t * scale, b * scale, " ".join(w)) for t, b, w in rows.values())
