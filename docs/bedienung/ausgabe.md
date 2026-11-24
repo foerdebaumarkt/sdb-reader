@@ -225,6 +225,8 @@ Sache seiner neuen Fassung.
 | `hazard-statement-not-classified` | die Kennzeichnung druckt einen Gefahrenhinweis, den die Einstufung in 2.1 nicht nennt (`statement`; `classified` nennt die Codes von 2.1); welche Seite abweicht, sagt der Befund nicht |
 | `small-package-hazard-statement-not-in-label` | der Kennzeichnung einer kleinen Packung fehlt ein Gefahrenhinweis aus 2.1, den Anhang I Nr. 1.5.2.1 CLP dort nicht weglassen lässt |
 | `small-package-signal-word-not-found` | die Kennzeichnung einer kleinen Packung hat eine Zeile „Signalwort“ und druckt keines, das die Codes des Produkts verlangen |
+| `signal-word-conflicts` | die Kennzeichnung druckt ein Signalwort, das den Codes des Produkts sicher widerspricht: „Achtung“, wo einer „Gefahr“ verlangt, oder „Gefahr“, wo keiner es verlangen kann; `printed` und `expected` |
+| `small-package-signal-word-conflicts` | dasselbe für die Kennzeichnung einer kleinen Packung |
 | `small-package-pictogram-not-found` | der Kennzeichnung einer kleinen Packung fehlt ein Piktogramm, das die H-Sätze des Produkts verlangen (2.1, die Kennzeichnung und ihre eigenen); nur wo sie als Bild angesehen ist und von Piktogrammen spricht |
 | `not-german` | das Blatt ist in einer anderen Sprache |
 

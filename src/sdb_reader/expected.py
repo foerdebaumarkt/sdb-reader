@@ -14,10 +14,6 @@ from .parser import with_effects_joined
 from .pictograms import get_signal_word, pictograms_for, suppress_pictograms
 from .schema import HazardStatements, LabelKind
 
-# The aerosol's statements: on a small package of an aerosol, CLP Annex I
-# 1.5.2.1.1 refers to Directive 75/324/EEC, whose exemptions it does not name.
-_AEROSOL_STATEMENTS = frozenset({"H222", "H223", "H229"})
-
 
 @dataclass(frozen=True, slots=True)
 class ClpExpected:
@@ -67,10 +63,10 @@ def clp_expected(
     Where the label may be that of a package of at most 125 ml -- the sheet
     prints no small package's label beside it (SDB-194), or *small_package*
     says it is one -- H290 calls for no signal word, which Annex I 1.5.2.1.3
-    lets such a package leave out. With *small_package*, on an aerosol (H222,
-    H223 or H229 among the codes) these codes call for neither a signal word
-    nor a pictogram (1.5.2.1.1; SDB-193). A signal word the full codes call
-    for does not differ.
+    lets such a package leave out. An aerosol's own elements stay: Directive
+    75/324/EEC, to which 1.5.2.1.1 refers, requires them on every aerosol
+    dispenser (SDB-198). A signal word the full codes call for does not
+    differ.
 
     >>> from sdb_reader import HazardStatements
     >>> expected = clp_expected(HazardStatements(
@@ -96,8 +92,6 @@ def clp_expected(
         further.kind is LabelKind.SMALL_PACKAGE for further in label.further_labels
     ):
         counted -= {"H290"}
-    if small_package and counted & _AEROSOL_STATEMENTS:
-        counted -= _AEROSOL_STATEMENTS
     called = counted | set(label.supplemental_codes)
     signal_word = get_signal_word(called) if called else None
     printed = set(label.pictograms)

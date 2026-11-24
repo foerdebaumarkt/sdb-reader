@@ -97,6 +97,8 @@ MESSAGE_CODES: Mapping[str, tuple[str, ...]] = {
     "signal-word-not-found": ("expected",),
     "small-package-hazard-statement-not-in-label": ("statement",),
     "small-package-signal-word-not-found": ("expected",),
+    "signal-word-conflicts": ("printed", "expected"),
+    "small-package-signal-word-conflicts": ("printed", "expected"),
     "small-package-pictogram-not-found": ("pictogram",),
     "different-products": ("products",),
     "country-editions-differ": ("fields",),

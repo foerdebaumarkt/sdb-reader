@@ -219,6 +219,8 @@ to put right.
 | `hazard-statement-not-classified` | the label prints a hazard statement the classification in 2.1 does not name (`statement`; `classified` lists what 2.1 names); either side may be the wrong one |
 | `small-package-hazard-statement-not-in-label` | a small package's label lacks a hazard statement of 2.1 that Annex I 1.5.2.1 CLP does not let it leave out |
 | `small-package-signal-word-not-found` | a small package's label names a signal word field, and prints none the product's codes call for |
+| `signal-word-conflicts` | the label prints a signal word that surely conflicts with the product's codes: "Achtung" where one calls for "Gefahr", or "Gefahr" where none can; `printed` and `expected` |
+| `small-package-signal-word-conflicts` | the same for a small package's label |
 | `small-package-pictogram-not-found` | a small package's label lacks a pictogram the product's H statements call for (2.1, the label and its own); only where it was looked at as drawn and speaks of pictograms |
 | `not-german` | the sheet is in another language |
 

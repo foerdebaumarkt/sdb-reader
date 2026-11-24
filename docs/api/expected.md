@@ -46,9 +46,10 @@ most 125 ml leave out every element of "corrosive to metals": where the
 label may be such a package's, because the sheet prints no small package's
 label beside it, H290 calls for no signal word. `clp_expected(label,
 small_package=True)` judges a small package's label (`FurtherLabel.label`):
-H290 then calls for nothing, and on an aerosol neither do H222, H223 and
-H229, for which 1.5.2.1.1 refers to the aerosol directive. A signal word the
-codes call for without these exceptions does not count as differing.
+H290 then calls for nothing. An aerosol's own elements stay: Directive
+75/324/EEC, to which 1.5.2.1.1 refers, requires them on every aerosol
+dispenser. A signal word the codes call for without these exceptions does
+not count as differing.
 
 ## Before you call something missing
 
