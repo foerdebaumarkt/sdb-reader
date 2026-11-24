@@ -5,6 +5,20 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.13.0 – 2026-11-25
+
+This release reads the label more fully and gives it out more carefully.
+It finds more pictograms as pictures: in black and white or grey, drawn in
+strips, on scanned pages and below a page's head, and it tells the flame
+from the flame over circle. Each pictogram says whether the label prints
+its code, its picture or both. The reading tells three kinds of sheet
+apart. A sheet of the rules before June 2017 is read without its label,
+and whether its product needs a sheet is "not checked". A sheet from then
+on is read in full with every finding. A label that surely lacks what it
+must show is withheld with an error unless the caller asks for it, so that
+no program shows a hazardous product without its warnings by mistake.
+Readings and label images kept from 0.12.0 have to be made again.
+
 ### Breaking
 
 - **`LABEL_IMAGES_VERSION` is 2 and `PARSER_VERSION` is 22** (0.12.0: 1 and
@@ -120,6 +134,11 @@ On that set 9 sheets gain pictograms, each one their H statements call for,
 none loses one; on 271 the label's picture is now read, and 29 lose a wrong
 `pictograms-not-recognised`. The orange symbols of Directive 67/548/EEC are
 still not taken for pictograms, on purpose (SDB-207).
+
+### Documentation
+
+- **What it handles** (German: Was es abdeckt): one page, without technical
+  terms, on what the reader does, for readers new to safety data sheets.
 
 ## 0.12.0 – 2026-11-24
 
