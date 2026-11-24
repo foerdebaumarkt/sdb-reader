@@ -454,10 +454,10 @@ SHORT_YEAR_DATE_PATTERN = re.compile(
 # hazards section conflates the two, so the block is located on its own.
 LABEL_SECTION_START_PATTERN = re.compile(
     r"2\s*\.\s*2\s*\.?\s*(?:Kennzeichnungselemente|Label\s+elements)"
-    # Any heading numbered 2.2 that begins with "Kennzeichnung": "2.2
-    # Kennzeichnung nach GHS:", "2.2 Kennzeichnung des Gemischs nach
-    # CLP-Verordnung" (SDB-209).
-    r"|^[ \t]*(?:[·•∙*][ \t]*)?(?<!\d)2[ \t]*\.[ \t]*2\.?[ \t]+Kennzeichnung\w*",
+    # A heading numbered 2.2 that begins with "Kennzeichnung" or "Etikett":
+    # "2.2 Kennzeichnung nach GHS:", "2.2. Etiketteninhalt" (SDB-209); not the
+    # "2.2. Verwendungsbedingungen …" of an exposure scenario in an annex.
+    r"|^[ \t]*(?:[·•∙*][ \t]*)?(?<!\d)2[ \t]*\.[ \t]*2\.?[ \t]+(?:Kennzeichnung|Etikett)\w*",
     re.IGNORECASE | re.MULTILINE,
 )
 # The same heading without its number, for sheets written before the REACH
@@ -738,10 +738,25 @@ def _names_a_hazard_class(part: str) -> bool:
 
 
 def _says_classified(part: str) -> bool:
-    """Whether a part says in a sentence that the product is classified as hazardous."""
-    return any(
-        match.group(1) is None for match in _CLASSIFIED_AS_HAZARDOUS.finditer(part)
-    )
+    """Whether a part says in a sentence that the product is classified as
+    hazardous; not in a clause of a condition ("… selbst wenn sie … als
+    gefährlich eingestuft wurden", SDB-214)."""
+    for match in _CLASSIFIED_AS_HAZARDOUS.finditer(part):
+        if match.group(1) is not None:
+            continue
+        sentence = part[
+            max(part.rfind(".", 0, match.start()), part.rfind(";", 0, match.start()))
+            + 1 : match.start()
+        ]
+        if not _CONDITION.search(sentence):
+            return True
+    return False
+
+
+# A clause of a condition: what follows it says what would be, not what is.
+_CONDITION = re.compile(
+    r"\b(?:selbst\s+wenn|auch\s+wenn|wenn|falls|sofern)\b", re.IGNORECASE
+)
 
 
 # How sheets say that the product is not classified.
@@ -752,6 +767,8 @@ _NOT_CLASSIFIED = re.compile(
     r"|kriterien\s+(?:sind\s+)?nicht\s+erfüllt"
     r"|keiner\s+Gefahren(?:kategorie|klasse)"
     r"|nicht\s+einstufungspflichtig|keine\s+(?:Gefahren)?einstufung"
+    # "… ist eine Einstufung gemäß der Verordnung … nicht nötig." (SDB-214).
+    r"|\bEinstufung\b(?:Nr\.|[^.]){0,120}?\bnicht\s+(?:nötig|notwendig|erforderlich)\b"
     # "Keine Klassifizierung für physikalische Gefahren." (SDB-81).
     r"|keine\s+Klassifizierung"
     # "… als Fertigprodukt unterliegen nicht der Einstufung gemäß …" (SDB-81).

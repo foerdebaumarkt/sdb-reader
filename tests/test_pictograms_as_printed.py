@@ -991,3 +991,28 @@ def test_the_ring_decides_between_two_flames_alike(
     monkeypatch.setattr(label_images, "_scores", alike)
 
     assert read_label_images(path).labels == [[code]]
+
+
+@pytest.mark.spec("SDB-209")
+def test_a_label_headed_otherwise_but_numbered_2_2_is_read_as_a_picture(
+    tmp_path: Path,
+) -> None:
+    path = _pages(
+        tmp_path / "sheet.pdf",
+        [*_CLASSIFIED, "2.2. Etiketteninhalt", "2.2.1. Piktogramm", ["GHS05"], *_TAIL],
+    )
+
+    assert read_label_images(path).labels == [["GHS05"]]
+
+
+@pytest.mark.spec("SDB-215")
+def test_a_pictogram_clearly_likest_one_reference_is_named_at_a_weak_likeness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        label_images,
+        "_scores",
+        lambda vector: [(0.36, "GHS09"), (0.23, "GHS02"), (0.2, "GHS06")],
+    )
+
+    assert label_images.name_pictogram([]) == "GHS09"

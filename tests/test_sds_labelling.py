@@ -118,6 +118,7 @@ def test_pictograms_above_the_label_heading_are_no_part_of_the_label(
     [
         "2.2 Kennzeichnung nach GHS:",
         "2.2 Kennzeichnung des Gemischs nach CLP-Verordnung",
+        "2.2. Etiketteninhalt",
     ],
 )
 def test_any_heading_2_2_on_labelling_begins_the_label(heading: str) -> None:
@@ -131,6 +132,21 @@ def test_any_heading_2_2_on_labelling_begins_the_label(heading: str) -> None:
     label = parsed.sheet.hazard_statements
     assert label.hazard_codes == ["H318"]
     assert "no-label-section" not in [m.code for m in parsed.warnings]
+
+
+@pytest.mark.spec("SDB-214")
+def test_a_classification_in_a_clause_of_a_condition_is_none() -> None:
+    parsed = _parse(
+        "2.1 Einstufung des Stoffs oder Gemischs\n"
+        "Legierungen in kompakter Form benötigen, selbst wenn sie nach den "
+        "CLP-Einstufungskriterien als gefährlich eingestuft wurden, kein Etikett. "
+        "Aufgrund der kompakten Form des Produkts ist eine Einstufung gemäß der "
+        "Verordnung (EG) Nr. 1272/2008 (CLP) nicht nötig.\n"
+        "2.2 Kennzeichnungselemente\nSignalwort: Entfällt\n"
+        "2.3 Sonstige Gefahren\nKeine.\n"
+    )
+
+    assert parsed.sheet.stated_classification is StatedClassification.NOT_CLASSIFIED
 
 
 @pytest.mark.spec("SDB-210")
