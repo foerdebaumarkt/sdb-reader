@@ -42,8 +42,9 @@ from .versions import label_images_stage
 # "GHS-Kennzeichnung" heads the label of a sheet without a 2.2 (SDB-202).
 _LABEL_START = re.compile(
     r"Kennzeichnungselemente|^\s*GHS-Kennzeichnung\b"
-    # "2.2 Kennzeichnung nach GHS:" (SDB-209).
-    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+Kennzeichnung",
+    # A heading numbered 2.2 on the label: "2.2 Kennzeichnung nach GHS:",
+    # "2.2. Etiketteninhalt" (SDB-209).
+    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+(?:Kennzeichnung|Etikett)",
     re.IGNORECASE,
 )
 # Inside a label only the heading with its number begins another, as the text
@@ -52,7 +53,7 @@ _LABEL_START = re.compile(
 # Kennzeichnungselemente" further down, is a line of the label.
 _LABEL_HEADING = re.compile(
     r"2\s*\.\s*2\s*\.?\s*Kennzeichnungselemente"
-    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+Kennzeichnung",
+    r"|^\s*(?:[·•∙*]\s*)?2\s*\.\s*2\.?\s+(?:Kennzeichnung|Etikett)",
     re.IGNORECASE,
 )
 _LABEL_END = re.compile(
@@ -113,8 +114,9 @@ _MASK = [
 # it counts as not recognised. The second pair takes a weaker likeness with a
 # wider margin: the environment pictogram (GHS09) is printed in a drawing
 # bolder than the public-domain one, and matches it at 0.4 to 0.5 with the
-# next pictogram 0.2 behind.
-ACCEPTED = ((0.5, 0.08), (0.4, 0.12))
+# next pictogram 0.2 behind; one drawn otherwise still at 0.35 with the next
+# 0.13 behind (SDB-215).
+ACCEPTED = ((0.5, 0.08), (0.4, 0.12), (0.35, 0.12))
 
 REFERENCES = "pictogram_references.json"
 

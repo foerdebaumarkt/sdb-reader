@@ -34,10 +34,21 @@ Versions follow the tags of this repository.
   no longer left unnamed (SDB-213). On a set of about 14,500 sheets the
   picture of 6 labels changes (3 grey, 3 flames); one reading gains a
   pictogram, GHS02, the others had it from its code already.
-- **A label headed otherwise than "Kennzeichnungselemente"** is found: any
-  heading numbered 2.2 that begins with "Kennzeichnung" ("2.2 Kennzeichnung
-  nach GHS:", "2.2 Kennzeichnung des Gemischs nach CLP-Verordnung"), in the
-  text and in the picture (SDB-209).
+- **A heading numbered 2.2 that begins with "Kennzeichnung" or "Etikett"
+  begins the label** ("2.2 Kennzeichnung nach GHS:", "2.2 Kennzeichnung des
+  Gemischs nach CLP-Verordnung", "2.2. Etiketteninhalt"), in the text and in
+  the picture;
+  where a sheet prints the label under two such headings, it runs from the
+  first (SDB-209).
+- **A classification named in a clause of a condition** ("… selbst wenn sie
+  … als gefährlich eingestuft wurden") is no classification, and "eine
+  Einstufung … ist nicht nötig" says the product is not classified (SDB-214).
+- **A pictogram drawn otherwise than the reference but clearly most like it**
+  is named, as an environment pictogram (GHS09) at a likeness of 0.35 with
+  the next 0.13 behind (SDB-215). On a set of about 14,850 sheets 3
+  readings change, all of sheets from manufacturers' websites: one gains
+  GHS05 and GHS07, one GHS09, one is read as not classified; three wrong
+  findings go.
 - **A sentence behind a printed code stays with that code.** "P502
   Inhalt/Behälter der Problemabfallentsorgung zuführen." is P502 as printed,
   no longer P502 and P501 (SDB-210). On a set of about 14,500 sheets 6
