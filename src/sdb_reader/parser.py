@@ -741,7 +741,7 @@ def _names_a_hazard_class(part: str) -> bool:
 def _says_classified(part: str) -> bool:
     """Whether a part says in a sentence that the product is classified as
     hazardous; not in a clause of a condition ("… selbst wenn sie … als
-    gefährlich eingestuft wurden", SDB-214)."""
+    gefährlich eingestuft wurden", SDB-75)."""
     for match in _CLASSIFIED_AS_HAZARDOUS.finditer(part):
         if match.group(1) is not None:
             continue
@@ -768,7 +768,7 @@ _NOT_CLASSIFIED = re.compile(
     r"|kriterien\s+(?:sind\s+)?nicht\s+erfüllt"
     r"|keiner\s+Gefahren(?:kategorie|klasse)"
     r"|nicht\s+einstufungspflichtig|keine\s+(?:Gefahren)?einstufung"
-    # "… ist eine Einstufung gemäß der Verordnung … nicht nötig." (SDB-214).
+    # "… ist eine Einstufung gemäß der Verordnung … nicht nötig." (SDB-75).
     r"|\bEinstufung\b(?:Nr\.|[^.]){0,120}?\bnicht\s+(?:nötig|notwendig|erforderlich)\b"
     # "Keine Klassifizierung für physikalische Gefahren." (SDB-81).
     r"|keine\s+Klassifizierung"
