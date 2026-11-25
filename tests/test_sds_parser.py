@@ -1170,7 +1170,7 @@ class TestSeveralSheetsInOneDocument:
         assert not any(w.code == "several-sheets" for w in result.warnings)
 
 
-@pytest.mark.spec("SDB-61")
+@pytest.mark.spec("SDB-21")
 class TestAReferenceThatWrapsBeforeItsSection:
     """ "… ist der volle Wortlaut in" / "Abschnitt 16 zu finden."."""
 
@@ -2065,7 +2065,7 @@ class TestTwoDigitYears:
         ).sheet.revision_date == date(2024, 10, 11)
 
 
-@pytest.mark.spec("SDB-89")
+@pytest.mark.spec("SDB-1")
 class TestTheSectionOrderBeforeReach:
     """One supplier's sheet of 2023: the composition before the hazards."""
 
@@ -2099,7 +2099,7 @@ class TestTheSectionOrderBeforeReach:
         assert read_numbered_section_heading("2. Mögliche Gefahren") == 2
 
 
-@pytest.mark.spec("SDB-58")
+@pytest.mark.spec("SDB-1")
 class TestASubsectionOpensASectionWhoseHeadingIsMissing:
     """One supplier's headings are white on a dark bar, and OCR does not read them."""
 
@@ -4942,7 +4942,7 @@ class TestTheEmergencyNumber:
         assert contact.supplier_phone == "+49 555 0142-0"
 
 
-@pytest.mark.spec("SDB-175")
+@pytest.mark.spec("SDB-1")
 def test_a_heading_may_number_its_section_with_a_colon() -> None:
     text = (
         "Sicherheitsdatenblatt\n"
@@ -4965,7 +4965,7 @@ def test_a_heading_may_number_its_section_with_a_colon() -> None:
     assert read_numbered_section_heading("1: Kategorie 2") is None
 
 
-@pytest.mark.spec("SDB-152")
+@pytest.mark.spec("SDB-1")
 @pytest.mark.parametrize("mark", ["!", "*"])
 def test_a_heading_may_carry_the_mark_of_a_changed_section(mark: str) -> None:
     text = (

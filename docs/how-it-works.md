@@ -151,7 +151,7 @@ Only a German safety data sheet goes on to the parser.
   title; several sheets in one file are told apart, and each is also read
   on its own beside the file's united reading; references to a section
   in running text and in change lists are not headings (SDB-1 to SDB-3,
-  SDB-21, SDB-58, SDB-61, SDB-89, SDB-118, SDB-152). A cover page in front of the
+  SDB-21, SDB-118). A cover page in front of the
   sheets is set aside and read for nothing but the word that names a
   display (SDB-138); whether the sheets are one product's is told from
   their product names (SDB-139).
