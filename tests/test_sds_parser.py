@@ -1560,7 +1560,7 @@ def test_the_numbered_heading_still_wins_when_both_are_present(
 class TestWhatSmallerLayoutsLeaveInTheLabel:
     """Three readings a larger set of sheets got wrong."""
 
-    @pytest.mark.spec("SDB-63")
+    @pytest.mark.spec("SDB-176")
     def test_no_pictogram_above_the_signal_word_is_no_missing_signal_word(
         self, parser: SDSParser
     ) -> None:
@@ -1572,7 +1572,7 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         hazards = parser.parse(_build_extraction(text)).sheet.hazard_statements
         assert hazards.signal_word == "Achtung"
 
-    @pytest.mark.spec("SDB-63")
+    @pytest.mark.spec("SDB-176")
     def test_kein_signalwort_on_one_line_still_means_none(
         self, parser: SDSParser
     ) -> None:
@@ -1582,7 +1582,7 @@ class TestWhatSmallerLayoutsLeaveInTheLabel:
         hazards = parser.parse(_build_extraction(text)).sheet.hazard_statements
         assert hazards.signal_word is None
 
-    @pytest.mark.spec("SDB-63", "SDB-176")
+    @pytest.mark.spec("SDB-176")
     def test_keine_under_the_signal_word_s_label_is_the_sheet_s_answer(
         self, parser: SDSParser
     ) -> None:
@@ -3093,7 +3093,7 @@ class TestSupplier:
         )
 
 
-@pytest.mark.spec("SDB-49")
+@pytest.mark.spec("SDB-49", "SDB-50")
 class TestSupplierBlocksOfOtherSuppliers:
     """Layouts of section 1.3 found on a larger set of sheets."""
 
@@ -3315,7 +3315,7 @@ class TestSupplierBlocksOfOtherSuppliers:
         assert supplier.supplier_name is None
 
 
-@pytest.mark.spec("SDB-62")
+@pytest.mark.spec("SDB-62", "SDB-53")
 class TestStatementsSetAsRunningText:
     """Several statements to a line, and codes in brackets behind their sentences."""
 

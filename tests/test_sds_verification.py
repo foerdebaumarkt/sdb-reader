@@ -228,7 +228,7 @@ class TestWhatAFileIs:
         assert result.prints_statement_codes is None
         assert [error.code for error in result.errors] == ["safety-information"]
 
-    @pytest.mark.spec("SDB-105")
+    @pytest.mark.spec("SDB-66")
     def test_the_title_over_no_section_is_a_cover(self) -> None:
         """One adhesive kit: one page, the title, "Set/Mehr-Komponenten
         Produkt", and nothing else."""
@@ -240,7 +240,7 @@ class TestWhatAFileIs:
         assert result.kind is DocumentKind.DOCUMENT
         assert [error.code for error in result.errors] == ["cover-only"]
 
-    @pytest.mark.spec("SDB-105")
+    @pytest.mark.spec("SDB-66")
     def test_the_title_over_one_section_is_a_sheet(self) -> None:
         result = _judge(
             "Sicherheitsdatenblatt\nABSCHNITT 2: Mögliche Gefahren\n"
@@ -320,7 +320,7 @@ def _leaflet_body() -> str:
 class TestALineThatIsNoTitle:
     """The word at a line's start is not always what the file calls itself."""
 
-    @pytest.mark.spec("SDB-140")
+    @pytest.mark.spec("SDB-59")
     @pytest.mark.parametrize(
         ("before", "line"),
         [
@@ -345,7 +345,7 @@ class TestALineThatIsNoTitle:
         assert result.kind is DocumentKind.SAFETY_INFORMATION
         assert [error.code for error in result.errors] == ["safety-information"]
 
-    @pytest.mark.spec("SDB-140")
+    @pytest.mark.spec("SDB-59")
     def test_without_the_layout_such_a_file_is_a_document(self) -> None:
         result = _judge(
             "Technisches Merkblatt\nBeachten Sie die in diesem\n"
@@ -354,7 +354,7 @@ class TestALineThatIsNoTitle:
         assert result.kind is DocumentKind.DOCUMENT
         assert [error.code for error in result.errors] == ["title-in-running-text"]
 
-    @pytest.mark.spec("SDB-140")
+    @pytest.mark.spec("SDB-59")
     @pytest.mark.parametrize(
         "title",
         [
@@ -370,7 +370,7 @@ class TestALineThatIsNoTitle:
         result = _judge(f"Fugenmasse weiß\n{title}\n" + _laid_out())
         assert result.kind is DocumentKind.SAFETY_DATA_SHEET
 
-    @pytest.mark.spec("SDB-140")
+    @pytest.mark.spec("SDB-59")
     def test_a_sentence_that_begins_with_the_word_stays_a_title(self) -> None:
         """Only a line the sentence before runs into is none."""
         result = _judge(
@@ -380,7 +380,7 @@ class TestALineThatIsNoTitle:
         )
         assert result.kind is DocumentKind.SAFETY_DATA_SHEET
 
-    @pytest.mark.spec("SDB-140")
+    @pytest.mark.spec("SDB-59")
     def test_one_real_title_is_enough(self) -> None:
         result = _judge(
             "Sicherheitsdatenblatt\n"
@@ -389,7 +389,7 @@ class TestALineThatIsNoTitle:
         )
         assert result.kind is DocumentKind.SAFETY_DATA_SHEET
 
-    @pytest.mark.spec("SDB-141")
+    @pytest.mark.spec("SDB-59")
     @pytest.mark.parametrize(
         "title",
         [
@@ -406,7 +406,7 @@ class TestALineThatIsNoTitle:
         assert result.prints_statement_codes is None
         assert [error.code for error in result.errors] == ["leaflet-title"]
 
-    @pytest.mark.spec("SDB-141")
+    @pytest.mark.spec("SDB-59")
     def test_a_leaflet_without_the_layout_is_a_document(self) -> None:
         result = _judge(
             "Sicherheitsdatenblatt\nzum sicheren Umgang mit Batterien\n"
@@ -415,7 +415,7 @@ class TestALineThatIsNoTitle:
         assert result.kind is DocumentKind.DOCUMENT
         assert [error.code for error in result.errors] == ["leaflet-title"]
 
-    @pytest.mark.spec("SDB-141")
+    @pytest.mark.spec("SDB-59")
     def test_a_sheet_that_names_the_regulation_stays_a_sheet(self) -> None:
         result = _judge(
             "Sicherheitsdatenblatt\nzum sicheren Umgang mit Batterien\n"
@@ -423,7 +423,7 @@ class TestALineThatIsNoTitle:
         )
         assert result.kind is DocumentKind.SAFETY_DATA_SHEET
 
-    @pytest.mark.spec("SDB-141")
+    @pytest.mark.spec("SDB-59")
     def test_the_words_further_down_make_no_leaflet(self) -> None:
         """A heading of section 7 under the page header is not the title's rest."""
         result = _judge(
@@ -432,7 +432,7 @@ class TestALineThatIsNoTitle:
         )
         assert result.kind is DocumentKind.SAFETY_DATA_SHEET
 
-    @pytest.mark.spec("SDB-141")
+    @pytest.mark.spec("SDB-59")
     def test_another_title_line_keeps_the_sheet(self) -> None:
         result = _judge(
             "Sicherheitsdatenblatt\nzum sicheren Umgang mit Batterien\n"

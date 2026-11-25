@@ -121,12 +121,12 @@ joined (SDB-42).
 - **Forms in two columns.** In section 1, a numbered subsection heading at
   the left with its content at the right is read as a pair even without a
   colon (SDB-114).
-- **Line breaks.** A word divided at the end of a line is joined (SDB-32,
-  SDB-32); an empty line is kept where the page leaves room for one (SDB-45).
+- **Line breaks.** A word divided at the end of a line is joined (SDB-32);
+  an empty line is kept where the page leaves room for one (SDB-45).
 - **Text recognition.** A file without a text layer, or with one split into
   single characters, is rendered and read by `tesseract` (SDB-46). A single
   page that is a picture among pages with text is read the same way and put
-  in its place (SDB-95).
+  in its place.
 
 A file no text can be read from ends here: it is a document, with the reason
 as a message.
@@ -138,7 +138,7 @@ kinds (SDB-66):
 
 | Kind | Decided by |
 | --- | --- |
-| German safety data sheet | the title "Sicherheitsdatenblatt" at the start of a line, not merely in a sentence, and at least one of the sixteen sections (SDB-59, SDB-66, SDB-105) |
+| German safety data sheet | the title "Sicherheitsdatenblatt" at the start of a line, not merely in a sentence, and at least one of the sixteen sections (SDB-59, SDB-66) |
 | Safety information | no title, but at least 12 of the 16 sections of a sheet (SDB-66) |
 | Safety data sheet in another language | no German title, but the numbered subsections that Annex II of REACH prescribes in every language, recognised without knowing the language (SDB-68) |
 | Document | anything else |
@@ -164,7 +164,7 @@ Only a German safety data sheet goes on to the parser.
   those of 2.1 count (SDB-119). A sentence that says a statement is not
   applied or not required is no label (SDB-78), and a code a narrow cell
   breaks or a space divides is read whole (SDB-121). The signal word is
-  the printed one only (SDB-176, SDB-63, SDB-77). Pictograms are the
+  the printed one only (SDB-176, SDB-77). Pictograms are the
   printed ones only: the codes the label names and the red-framed diamonds
   it shows, each named by its likeness to the public-domain drawings of the
   nine pictograms, looked for on the page and not in the text (SDB-179).
@@ -176,9 +176,9 @@ Only a German safety data sheet goes on to the parser.
 - **The statement texts.** The sentences of the H, P and EUH statements are
   cut from section 2: where a statement begins and ends, what belongs to a
   classification entry, what follows an EUH statement (SDB-10, SDB-27,
-  SDB-41, SDB-51 to SDB-53, SDB-56, SDB-62, SDB-65, SDB-108,
-  SDB-27); an EUH statement keeps the substances printed before its code
-  and counts only under a code the label carries (SDB-124, SDB-125).
+  SDB-41, SDB-51 to SDB-53, SDB-56, SDB-62, SDB-65, SDB-108);
+  an EUH statement keeps the substances printed before its code
+  and counts only under a code the label carries (SDB-10, SDB-125).
 - **The classification of section 2.** Whether section 2 classifies the
   product, classifies it under the directives before CLP, says it is not
   classified, or says neither (SDB-73, SDB-75, SDB-80, SDB-81, SDB-107).
@@ -186,7 +186,7 @@ Only a German safety data sheet goes on to the parser.
   on the label's line or the line below, or the line under the heading
   "Produktidentifikator" where the sheet prints no label; "Produktform:
   Gemisch" is not a name (SDB-131), nor is another label, a formula
-  identifier or a heading (SDB-131). A value printed above its label is
+  identifier or a heading (SDB-148). A value printed above its label is
   read (SDB-149), and where 1.1 gives no name, the sheet's header may
   (SDB-150).
 - **The supplier.** Name, address, phone, e-mail and website from the block
@@ -194,7 +194,7 @@ Only a German safety data sheet goes on to the parser.
   SDB-50, SDB-55). What only explains a label, a second company
   from the column beside it, the address on the name's line and a
   footnote's mark are not part of the name, and a poison centre's e-mail
-  address is not the supplier's (SDB-49, SDB-50). Beside the
+  address is not the supplier's (SDB-133, SDB-134). Beside the
   supplier's e-mail address, the first of the block, the reading keeps the
   address of whoever answers for the sheet: the competent person's, else an
   information office's (SDB-136).

@@ -63,7 +63,7 @@ _TITLE_CANDIDATE = re.compile(
     r"(?im)^[^\S\n]*[\W\d]{0,4}([^\W\d_]{17,21})\b"
     r"(?![^\S\n]*(?:\.|auf\s+Anfrage))"
 )
-# A sentence that wraps before the word is no title (SDB-140): the word goes on
+# A sentence that wraps before the word is no title (SDB-59): the word goes on
 # in lower case and the line before ends in a lower-case word ("… die in
 # diesem" / "Sicherheitsdatenblatt enthaltenen Daten"). What a title goes on
 # with says by what or for what the sheet is made; such a line stays a title
@@ -75,7 +75,7 @@ _TITLE_GOES_ON = re.compile(
 )
 _ENDS_IN_LOWER_CASE = re.compile(r"(?:^|\s)[a-zäöüß]+$")
 # A leaflet on handling an article that calls itself a safety data sheet
-# (SDB-141): "Sicherheitsdatenblatt" / "zum sicheren Umgang mit Bleibatterien".
+# (SDB-59): "Sicherheitsdatenblatt" / "zum sicheren Umgang mit Bleibatterien".
 _LEAFLET_GOES_ON = re.compile(
     r"zum[^\S\n]+sicheren[^\S\n]+Umgang[^\S\n]+mit\b", re.IGNORECASE
 )
@@ -235,8 +235,8 @@ class SDSVerifier:
 def has_german_title(text: str) -> bool:
     """Whether a line carries "Sicherheitsdatenblatt" as a title, misspelled or not.
 
-    A sentence that wraps before the word is none (SDB-140), nor is the title
-    of a leaflet on handling an article (SDB-141).
+    A sentence that wraps before the word is none (SDB-59), nor is the title
+    of a leaflet on handling an article (SDB-59).
     """
     names_reach = bool(_REACH_NUMBER.search(text))
     return any(
@@ -303,7 +303,7 @@ def _sections_found(text: str) -> int:
 
 
 def _kind(text: str, *, title_line: bool, sections: int) -> DocumentKind:
-    # The title over none of the sixteen sections is a cover (SDB-105).
+    # The title over none of the sixteen sections is a cover (SDB-66).
     if title_line and sections:
         return DocumentKind.SAFETY_DATA_SHEET
     laid_out = sections >= SECTIONS_OF_A_SHEET

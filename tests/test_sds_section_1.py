@@ -1,4 +1,4 @@
-"""What the parser reads from section 1: product name, supplier, e-mail (SDB-49, SDB-50, SDB-131, SDB-136).
+"""What the parser reads from section 1: product name, supplier, e-mail (SDB-131, SDB-133, SDB-134, SDB-136).
 
 The sheets are invented; each shows one form a comparison over a body of
 sheets turned up.
@@ -196,7 +196,7 @@ EMPTY_NAME_FIELD = (
 
 
 class TestWhatIsNoName:
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     @pytest.mark.parametrize(
         "identifier",
         [
@@ -215,7 +215,7 @@ class TestWhatIsNoName:
     ) -> None:
         assert name_of(identifier) is None
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     @pytest.mark.parametrize("reference", ["siehe oben", "Siehe oben."])
     def test_a_reference_is_none_and_is_not_followed(self, reference: str) -> None:
         identifier = (
@@ -227,7 +227,7 @@ class TestWhatIsNoName:
 
         assert name_of(identifier) is None
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     def test_a_reference_leaves_a_labelled_name_in_the_header(self) -> None:
         sheet = read(
             header="Handelsname: Musterkalk\n",
@@ -236,7 +236,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier == "Musterkalk"
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     def test_a_reference_takes_no_headline_for_the_name(self) -> None:
         sheet = read(
             header="Version: 1\nSeite 1/9\nMusterputz MP 7\n",
@@ -245,7 +245,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier is None
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     def test_a_registration_number_with_its_substance_is_passed_over(self) -> None:
         identifier = (
             "Handelsname:\n"
@@ -257,7 +257,7 @@ class TestWhatIsNoName:
 
         assert name_of(identifier) == "Musterdicht"
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     @pytest.mark.parametrize(
         "identifier",
         [
@@ -280,7 +280,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier == "Musterköder 25ppm"
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     @pytest.mark.parametrize(
         ("identifier", "name"),
         [
@@ -299,7 +299,7 @@ class TestWhatIsNoName:
     ) -> None:
         assert name_of(identifier) == name
 
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     def test_a_name_that_ends_in_its_article_number_stays_as_printed(self) -> None:
         identifier = "Handelsname\nMusterspray 400 ml Art.Nr.: 012342\n"
 
@@ -401,7 +401,7 @@ class TestNameInTheHeader:
 
 
 class TestSupplierName:
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_a_remark_in_brackets_behind_the_label_is_no_name(self) -> None:
         supplier = (
             HEADING_1_3
@@ -415,7 +415,7 @@ class TestSupplierName:
         assert contact.supplier_name == "Musterchemie GmbH"
         assert contact.supplier_address == "Hafenstraße 4, 20457 Hamburg"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_name_alone_heads_the_name(self) -> None:
         supplier = (
             HEADING_1_3
@@ -429,7 +429,7 @@ class TestSupplierName:
         assert contact.supplier_name == "Musterchemie GmbH"
         assert contact.supplier_address == "Hafenstraße 4, D-20457 Hamburg"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_a_second_label_s_colon_stands_before_the_name(self) -> None:
         supplier = (
             HEADING_1_3
@@ -441,7 +441,7 @@ class TestSupplierName:
         assert contact.supplier_name == "Musterchemie GmbH"
         assert contact.supplier_address == "Hafenstraße 4, 20457 Hamburg"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     @pytest.mark.parametrize(
         "line",
         [
@@ -456,7 +456,7 @@ class TestSupplierName:
 
         assert read(supplier=supplier).contact_info.supplier_name == "Birkenhof GmbH"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     @pytest.mark.parametrize(
         "name",
         [
@@ -470,7 +470,7 @@ class TestSupplierName:
 
         assert read(supplier=supplier).contact_info.supplier_name == name
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_the_address_behind_dashes_is_the_address(self) -> None:
         supplier = (
             HEADING_1_3
@@ -482,7 +482,7 @@ class TestSupplierName:
         assert contact.supplier_name == "Musterchemie GmbH"
         assert contact.supplier_address == "Hafenstraße 4, D-20457 Hamburg"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_half_a_legal_form_before_the_address_belongs_to_the_name(self) -> None:
         supplier = (
             "1.3 Inverkehrbringer: Musterwerk GmbH\n"
@@ -494,7 +494,7 @@ class TestSupplierName:
 
         assert contact.supplier_name == "Musterwerk GmbH KG"
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     @pytest.mark.parametrize(
         ("printed", "name"),
         [
@@ -514,7 +514,7 @@ class TestSupplierName:
 
         assert read(supplier=supplier).contact_info.supplier_name == name
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_a_label_alone_on_its_line_is_no_part_of_the_address(self) -> None:
         supplier = (
             HEADING_1_3
@@ -532,6 +532,7 @@ class TestSupplierName:
         assert contact.supplier_phone == "+49 40 5550123"
 
     @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_another_title_under_1_3_is_not_the_supplier_s_block(self) -> None:
         text_before = (
             "1.1 Bezeichnung des Unternehmens\n"
@@ -564,7 +565,7 @@ class TestSupplierName:
 
 
 class TestEmail:
-    @pytest.mark.spec("SDB-50")
+    @pytest.mark.spec("SDB-134")
     def test_the_poison_centre_s_address_is_not_the_supplier_s(self) -> None:
         supplier = (
             "Bezeichnung des Unternehmens\n"
@@ -593,7 +594,7 @@ class TestEmail:
         assert contact.supplier_email is None
         assert contact.supplier_website is None
 
-    @pytest.mark.spec("SDB-50")
+    @pytest.mark.spec("SDB-134")
     def test_labels_printed_before_the_values_do_not_end_the_search(self) -> None:
         supplier = (
             "Firma\nTelefon\nEmail-Adresse\nNotrufnummer\n"
@@ -605,7 +606,7 @@ class TestEmail:
             == "info@musterchemie.example"
         )
 
-    @pytest.mark.spec("SDB-50")
+    @pytest.mark.spec("SDB-134")
     def test_a_first_name_parted_by_a_blank_belongs_to_the_address(self) -> None:
         supplier = SUPPLIER.replace(
             "E-Mail: sdb@musterchemie.example",
@@ -616,7 +617,7 @@ class TestEmail:
             "Erika.Muster@musterchemie.example"
         )
 
-    @pytest.mark.spec("SDB-50")
+    @pytest.mark.spec("SDB-134")
     def test_a_sentence_s_end_before_the_address_is_not_part_of_it(self) -> None:
         supplier = SUPPLIER.replace(
             "E-Mail: sdb@musterchemie.example",
@@ -628,7 +629,7 @@ class TestEmail:
             == "sdb@musterchemie.example"
         )
 
-    @pytest.mark.spec("SDB-50")
+    @pytest.mark.spec("SDB-134")
     def test_a_website_glued_to_the_address_begins_at_www(self) -> None:
         supplier = SUPPLIER.replace(
             "E-Mail: sdb@musterchemie.example",
@@ -851,7 +852,7 @@ class TestFurtherSupplierLabels:
         assert contact.supplier_address is not None
         assert contact.supplier_address.startswith("Hafenstraße 4")
 
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-133")
     def test_a_dash_parts_the_name_from_its_address(self) -> None:
         supplier = (
             HEADING_1_3

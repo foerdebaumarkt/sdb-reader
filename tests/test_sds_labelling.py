@@ -1,4 +1,4 @@
-"""What the parser reads as a sheet's labelling (SDB-4, SDB-78, SDB-119 to SDB-27).
+"""What the parser reads as a sheet's labelling (SDB-4, SDB-10, SDB-27, SDB-78, SDB-119 to SDB-123, SDB-125, SDB-126).
 
 The sheets are invented; each shows one form a comparison over a body of
 sheets turned up.
@@ -149,7 +149,7 @@ def test_a_classification_in_a_clause_of_a_condition_is_none() -> None:
     assert parsed.sheet.stated_classification is StatedClassification.NOT_CLASSIFIED
 
 
-@pytest.mark.spec("SDB-210")
+@pytest.mark.spec("SDB-166")
 def test_a_sentence_behind_a_printed_code_stays_with_that_code() -> None:
     label = read(
         CLASSIFIED
@@ -527,7 +527,7 @@ class TestTheOldDirectivesRequestSentence:
 
 
 class TestSupplementalStatementsBehindTheLabel:
-    @pytest.mark.spec("SDB-124")
+    @pytest.mark.spec("SDB-10")
     def test_a_code_named_in_running_text_is_no_statement(self) -> None:
         label = read(
             CLASSIFIED
@@ -542,7 +542,7 @@ class TestSupplementalStatementsBehindTheLabel:
         assert label.supplemental_codes == []
         assert label.supplemental_text is None
 
-    @pytest.mark.spec("SDB-124")
+    @pytest.mark.spec("SDB-10")
     def test_a_statement_with_its_wording_under_2_3_is_the_labels(self) -> None:
         label = read(
             UNCLASSIFIED

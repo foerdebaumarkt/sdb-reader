@@ -56,7 +56,7 @@ You can still work with them:
   | --- | --- |
   | Zweck | purpose: what the area is about |
   | Begriffe | terms: what the words mean the rules build on |
-  | Regeln | rules: numbered, each a list item that begins with its ID in bold |
+  | Regeln | rules: each a list item that begins with its ID in bold, grouped under headings by subject, not in the order of their numbers |
   | Vorgeschlagene Regeln (noch nicht umgesetzt) | proposed rules: decided, not built yet |
   | Entscheidungsprotokoll | decision log: date, decision, reason |
   | Offene Fragen | open questions and known limits |
@@ -71,7 +71,8 @@ You can still work with them:
   | `*Zurückgezogen …, aufgenommen in SDB-57:*` | withdrawn; its content now stands in the rule named, which sums up several |
   | `*Hintergrund:*` | background: a note under a rule, mostly its legal basis; not a rule itself |
 
-- **Words that link rules:**
+- **Words that link rules.** A rule begins with what holds and names another
+  rule in brackets; older rules also use these words:
 
   | German | Meaning |
   | --- | --- |
