@@ -186,7 +186,7 @@ Only a German safety data sheet goes on to the parser.
   on the label's line or the line below, or the line under the heading
   "Produktidentifikator" where the sheet prints no label; "Produktform:
   Gemisch" is not a name (SDB-131), nor is another label, a formula
-  identifier or a heading (SDB-148). A value printed above its label is
+  identifier or a heading (SDB-131). A value printed above its label is
   read (SDB-149), and where 1.1 gives no name, the sheet's header may
   (SDB-150).
 - **The supplier.** Name, address, phone, e-mail and website from the block
