@@ -264,7 +264,7 @@ def test_a_reference_to_a_subsection_is_no_heading() -> None:
 
 
 class TestDates:
-    @pytest.mark.spec("SDB-161")
+    @pytest.mark.spec("SDB-57")
     @pytest.mark.parametrize(
         ("line", "revised", "issued"),
         [
