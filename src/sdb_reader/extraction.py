@@ -155,7 +155,7 @@ def extract_pdf_text(
         )
 
     elif ocr and (read := _read_image_pages(path, stored, pages)):
-        # A page that is a picture among pages with text (SDB-95): the first
+        # A page that is a picture among pages with text (SDB-46): the first
         # page of a sheet, scanned, holds its date, its supplier and its
         # classification.
         text = "\n".join(pages)

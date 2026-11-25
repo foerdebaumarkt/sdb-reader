@@ -1104,7 +1104,7 @@ _EDITION_FIELDS = (
 
 
 def several_sheets_findings(parts: Sequence[SheetPart]) -> list[Message]:
-    """What the sheets of one file say about each other (SDB-139, SDB-140).
+    """What the sheets of one file say about each other (SDB-139, SDB-59).
 
     *parts* are the sheets of a file that holds several, each read on its
     own (``ParsedSheet.parts``). That they are for different products

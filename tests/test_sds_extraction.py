@@ -422,7 +422,7 @@ def _write_scan_then_text(path: Path, *, picture: bool) -> Path:
     return path
 
 
-@pytest.mark.spec("SDB-95")
+@pytest.mark.spec("SDB-46")
 class TestAPageThatIsAPictureAmongPagesWithText:
     """Page 1 is a scan, pages 2 to 5 are text."""
 

@@ -133,7 +133,7 @@ class TestLetteredReproductionCodes:
         assert lettered_code("H315") == "H315"
 
 
-@pytest.mark.spec("SDB-156")
+@pytest.mark.spec("SDB-4")
 def test_a_label_numbering_its_own_parts_goes_on_past_2_3() -> None:
     label = (
         "2.2 Kennzeichnungselemente\nGHS02 GHS07\nSignalwort: Gefahr\n"
@@ -147,7 +147,7 @@ def test_a_label_numbering_its_own_parts_goes_on_past_2_3() -> None:
     assert hazards.precautionary_codes == ["P210"]
 
 
-@pytest.mark.spec("SDB-157")
+@pytest.mark.spec("SDB-176")
 def test_a_named_signal_word_before_a_negation_for_the_diluted_product() -> None:
     label = (
         "Produkt wie verkauft\nSignalwort: Achtung\nH319 Verursacht schwere Augenreizung.\n"
@@ -159,7 +159,7 @@ def test_a_named_signal_word_before_a_negation_for_the_diluted_product() -> None
 
 
 class TestNoProductName:
-    @pytest.mark.spec("SDB-131")
+    @pytest.mark.spec("SDB-148")
     @pytest.mark.parametrize(
         ("identifier", "name"),
         [
@@ -189,7 +189,7 @@ class TestNoProductName:
 
 
 class TestSupplierLabels:
-    @pytest.mark.spec("SDB-49")
+    @pytest.mark.spec("SDB-49", "SDB-133")
     @pytest.mark.parametrize(
         ("block", "name"),
         [

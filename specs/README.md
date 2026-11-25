@@ -37,11 +37,17 @@ belegt. Sie nennt, was an ihre Stelle tritt:
 ## Eine Regel schreiben
 
 - **Eine Regel, ein Gegenstand:** was gilt, unter welcher Bedingung, mit
-  welchem Ergebnis. Eine Regel sagt, was gilt, nicht, was sie zusätzlich zu
-  einer anderen tut; „Ergänzend zu …“ nur, wo sie wirklich einen eigenen Fall
-  hinzufügt.
-- **Kurz:** Ziel unter 600 Zeichen. Wortformen stehen als Liste, nicht als
-  Kette von Sätzen.
+  welchem Ergebnis. Sie steht unter der Überschrift ihres Gegenstands
+  („Lieferant“, „Hinweistexte“), nicht in der Reihenfolge der Nummern.
+- **Zuerst, was gilt:** Eine Regel beginnt mit einem Satz, der für sich zu
+  verstehen ist; die Einzelheiten folgen, in einer längeren Regel als Punkte
+  mit einem Stichwort. Sie beginnt nicht mit dem Verweis auf eine andere Regel
+  („Ergänzend zu …“, „Abweichend von …“): Trägt sie einer anderen nur eine
+  Wortform oder einen Fall nach, gehört sie in diese; hat sie einen eigenen
+  Gegenstand, nennt sie ihn und verweist in Klammern auf die andere.
+- **Verständlich vor kurz:** Wortformen stehen als Liste, nicht als Kette von
+  Sätzen. Wird eine Regel lang, weil sie zwei Fragen beantwortet, sind es zwei
+  Regeln.
 - **Beispiele** in „…“, mindestens eines je Fall; sie bleiben, wenn Regeln
   zusammengefasst werden.
 - **Hintergrund** nur, wo die Regel ohne ihn nicht zu verstehen ist, etwa ihre

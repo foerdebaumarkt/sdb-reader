@@ -576,7 +576,7 @@ PICTOGRAM_PATTERN = re.compile(r"\bGHS(?:[ \t]?0+)?([1-9])(?![\d.,]?\d)", re.IGN
 # the signal word without punctuation, which makes the "!" diagnostic: it never
 # belongs to the label element, only to the sentence that quotes it.
 SIGNAL_WORD_PATTERN = re.compile(r"\b(Gefahr|Achtung)\b(?!\s*!)", re.IGNORECASE)
-# The word behind its own label: "Signalwort: Achtung" (SDB-157). Behind its
+# The word behind its own label: "Signalwort: Achtung" (SDB-176). Behind its
 # label the word may carry an exclamation mark that ends its line ("Signalwort:
 # Achtung!", SDB-176): EUH211 and EUH212 go on after theirs on the same line.
 _SIGNAL_WORD_NAMED = re.compile(
@@ -1741,7 +1741,7 @@ def _label_section_end(rest: str) -> re.Match[str] | None:
     return None
 
 
-# "2.3" as the number of a label element, not of "Sonstige Gefahren" (SDB-156):
+# "2.3" as the number of a label element, not of "Sonstige Gefahren" (SDB-4):
 # a sheet numbers its label's parts on, "2.2 Kennzeichnungselemente", "2.3
 # Gefahrbestimmende Komponenten …", "2.4 Gefahrenhinweise", "2.5
 # Sicherheitshinweise", and the label ended before its statements.
@@ -2019,7 +2019,7 @@ def read_signal_word(label_text: str) -> tuple[str | None, bool]:
         if (found := pattern.search(label_text))
     ]
     # A word set behind its own label before any negation is the label's
-    # (SDB-157): "Signalwort: Achtung" for the product as sold, and further
+    # (SDB-176): "Signalwort: Achtung" for the product as sold, and further
     # down "kein Signalwort … erforderlich" for it diluted for use.
     named = _SIGNAL_WORD_NAMED.search(label_text)
     if named and (not negations or named.start() < min(negations)):
@@ -2759,7 +2759,7 @@ def _read_labels(
     )
     # The text is cut from all of section 2, the codes from the label: a
     # statement the text holds under a code the label does not carry is the
-    # label's if it is that code's wording, and else no statement (SDB-124).
+    # label's if it is that code's wording, and else no statement (SDB-10).
     if supplemental_text:
         kept: list[str] = []
         for line in supplemental_text.split("\n"):
@@ -2774,7 +2774,7 @@ def _read_labels(
                 supplemental.add(code.group(0).upper())
         supplemental_text = "\n".join(kept) or None
         hazard_statements.supplemental_codes = sorted(supplemental)
-        # A code kept by its wording here is printed in the text (SDB-124).
+        # A code kept by its wording here is printed in the text (SDB-10).
         from_wording -= {
             code.group(0).upper()
             for line in kept
@@ -3297,7 +3297,7 @@ def _disposal_sentence(label_text: str) -> str | None:
 
     Not one behind a code the sheet prints on its line: that sentence is the
     code's, also where the regulation knows no such code ("P502 Inhalt/
-    Behälter der Problemabfallentsorgung zuführen.", SDB-210).
+    Behälter der Problemabfallentsorgung zuführen.", SDB-166).
     """
     text = join_broken_words(_before_next_subsection(label_text))
     for found in _DISPOSAL.finditer(text):
@@ -5004,7 +5004,7 @@ def _read_supplier(block: list[str]) -> ContactInfo:
 
 
 def _without_label_remarks(block: list[str]) -> list[str]:
-    """*block* without what only explains a label (SDB-49).
+    """*block* without what only explains a label (SDB-133).
 
     "Name" alone over the name, and the rest of a remark in brackets that a
     supplier's label opens and a later line closes: "Lieferant
@@ -5071,7 +5071,7 @@ def _contact_addresses(
     block: list[str], named_at: int
 ) -> tuple[str | None, str | None, str | None]:
     """The block's first e-mail address, its first website, and the address
-    of whoever answers for the sheet (SDB-50, SDB-136).
+    of whoever answers for the sheet (SDB-50, SDB-134, SDB-136).
 
     None of them from an emergency part below the name, at line *named_at*:
     what stands under "Notruf" or "Giftnotruf" there is the poison centre's.
@@ -5183,7 +5183,7 @@ def _continues_name(name: str, line: str) -> bool:
     )
 
 
-# A street with its number right behind a legal form (SDB-49).
+# A street with its number right behind a legal form (SDB-133).
 _STREET_BEHIND_NAME = re.compile(
     r"\b(?:GmbH|AG|KG|KGaA|mbH|SE|OHG)(\s+)(?=[A-ZÄÖÜ][\wäöüß.-]*[\s-]?"
     r"(?i:str\.|straße|strasse|weg|platz|allee|ring|damm)\s*\d)",
@@ -5203,7 +5203,7 @@ def _name_and_address(line: str) -> tuple[str, list[str]]:
     glued = _STREET_BEHIND_NAME.search(line)
     if glued:
         # "Mustermann GmbH Hafenstr. 40 12345 Musterstadt": the street behind
-        # the legal form, no separator between (SDB-49).
+        # the legal form, no separator between (SDB-133).
         return line[: glued.start(1)].strip(), [line[glued.end(1) :].strip()]
     for separator in (" – ", ", ", " . ", " - "):
         head, found, tail = line.partition(separator)
@@ -5229,7 +5229,7 @@ _ENDS_IN_ABBREVIATION = re.compile(
 
 
 def _without_column_beside(name: str) -> str:
-    """*name* up to its legal form where the next column runs on behind it (SDB-49).
+    """*name* up to its legal form where the next column runs on behind it (SDB-133).
 
     Two columns set side by side reach the text as one line: "Musterlack
     GmbH Notrufnummer (mit Bedienungszeiten)", "Musterlack GmbH Germany: +49
@@ -5246,7 +5246,7 @@ def _without_column_beside(name: str) -> str:
 
 
 def _first_company(name: str) -> str:
-    """*name* up to its first company where the line carries two (SDB-49).
+    """*name* up to its first company where the line carries two (SDB-133).
 
     A table with a column per country prints them side by side: "Birkenhof
     GmbH Birkenhof AG". The first ends with its legal form; what follows
@@ -5351,13 +5351,13 @@ _OTHER_LABEL = re.compile(
     r"|Weitere Handelsnamen.*|Geltungsbereich|Synonyme?"
     r"|Seite\s*:?\s*\d+.*"
     # A formula identifier, also with a character too many in a group, as
-    # text recognition reads it (SDB-131).
+    # text recognition reads it (SDB-148).
     r"|[A-Z0-9]{4,5}(?:-[A-Z0-9]{4,}){3}"
-    # Labels sheets print without a colon, the value elsewhere (SDB-131).
+    # Labels sheets print without a colon, the value elsewhere (SDB-148).
     r"|(?:REACH[-\s]?)?Registrier(?:ungs)?[-\s]?(?:nummer|nr\.?)\b.*"
     r"|Eindeutiger\s+Rezepturidentifikator.*"
     r"|Tele(?:fon|fax)|Fax|E-?Mail(?:-Adresse)?"
-    # An article number's label, with its value or without (SDB-131):
+    # An article number's label, with its value or without (SDB-148):
     # "Artikelnr. (Hersteller/Lieferant): 12-345".
     r"|Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b.*"
     # The title of section 1 in another language, where its heading left it.
@@ -5366,19 +5366,19 @@ _OTHER_LABEL = re.compile(
 )
 # "Produktform: Gemisch", "UFI: …": a label of something else with its value;
 # a registration number's label may be longer, with the substance it belongs
-# to ("REACH-Registrierungs-Nr. von n-Butylacetat: 01-…", SDB-131).
+# to ("REACH-Registrierungs-Nr. von n-Butylacetat: 01-…", SDB-148).
 _LABELLED_VALUE = re.compile(
     r"^(?:[^:\d()]{2,40}|(?:REACH[-\s]?)?Registrier[^:]{2,80}):\s*\S", re.IGNORECASE
 )
 # An article number with its label in front of the name on the name's line
-# (SDB-131): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
+# (SDB-148): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
 # its characters, with a digit in it: asked for ahead, so that a long run
 # is not tried once for every digit in it.
 _ARTICLE_NUMBER_FIRST = re.compile(
     r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*(?=[\w./-]*\d)[\w./-]*\s+(?=\S)",
     re.IGNORECASE,
 )
-# Or its label behind the name, the number on the next line (SDB-131):
+# Or its label behind the name, the number on the next line (SDB-148):
 # "Musterspray 200 ml Art.Nr." Two words at least stand before it.
 _ARTICLE_LABEL_LAST = re.compile(
     r"^((?=\S*?[^\W\d_])\S+\s+\S+(?:\s+\S+)*?)"
@@ -5445,7 +5445,7 @@ def _name_value(value: str) -> str:
     """The name without the bullet or dash a sheet sets in front of it.
 
     Nor the article number a sheet prints in front of it with its label
-    (SDB-131): "Art.-Nr. 12.345 Musterdünger".
+    (SDB-148): "Art.-Nr. 12.345 Musterdünger".
     """
     name = _BULLET.sub("", _clean_value(value))
     name = _ARTICLE_NUMBER_FIRST.sub("", name)
@@ -5453,18 +5453,18 @@ def _name_value(value: str) -> str:
 
 
 # A reference to another place of the sheet where the name should stand
-# (SDB-131): "Handelsname: siehe oben".
+# (SDB-148): "Handelsname: siehe oben".
 _REFERENCE = re.compile(r"^siehe\s+oben\.?$", re.IGNORECASE)
 
 
-# What a product is, not what it is called (SDB-131): "Produktform" above
+# What a product is, not what it is called (SDB-148): "Produktform" above
 # "Gemisch".
 _KIND_OF_PRODUCT = re.compile(
     r"^(?:Gemisch|Stoff|Mischung|Zubereitung|Erzeugnis|Mixture|Substance)\.?$",
     re.IGNORECASE,
 )
 # A label block's first value where an article number's label stands above
-# the name's label (SDB-131): "Artikelnr." / "Handelsname" / "12345" /
+# the name's label (SDB-148): "Artikelnr." / "Handelsname" / "12345" /
 # "Musterlack". One word with a digit is the number.
 _ARTICLE_NUMBER_LABEL = re.compile(
     r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b[^:]*$", re.IGNORECASE
@@ -5508,7 +5508,7 @@ def _extract_product_identifier(section_text: str) -> str | None:
             name = _name_value(value)
             if is_label(key) and _REFERENCE.match(name):
                 # "Handelsname: siehe oben": the sheet names no product here,
-                # and which line it means it does not say (SDB-131).
+                # and which line it means it does not say (SDB-148).
                 return None
             if is_label(key) and name and not _is_name_label(name):
                 return name
