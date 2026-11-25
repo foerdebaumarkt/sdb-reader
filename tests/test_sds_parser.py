@@ -3638,7 +3638,7 @@ class TestAStatementEndsWithItsWording:
             "EUH208 Enthält Linalool. Kann allergische Reaktionen hervorrufen."
         )
 
-    @pytest.mark.spec("SDB-54")
+    @pytest.mark.spec("SDB-32")
     def test_a_names_own_hyphen_survives_the_page_break(self) -> None:
         _, _, supplemental = self._texts(
             "EUH208 Enthält 5-Chlor-2-methyl-2H-isothiazol-3-on und 2-Methyl-\n"
@@ -3649,7 +3649,7 @@ class TestAStatementEndsWithItsWording:
         assert supplemental is not None
         assert "2-Methyl-2H-isothiazol-3-on" in supplemental
 
-    @pytest.mark.spec("SDB-54")
+    @pytest.mark.spec("SDB-32")
     @pytest.mark.parametrize(
         ("printed", "joined"),
         [
@@ -4197,7 +4197,7 @@ class TestWhatATableLeavesUnderACode:
             "Exposition durch Verschlucken."
         )
 
-    @pytest.mark.spec("SDB-109")
+    @pytest.mark.spec("SDB-27")
     def test_a_statement_ends_before_listed_codes_of_another_kind(self) -> None:
         hazard, _, supplemental = _statement_texts(
             "Gefahrenhinweise: H373 (Blut), EUH210, EUH401"
@@ -4206,7 +4206,7 @@ class TestWhatATableLeavesUnderACode:
         assert hazard == "H373 (Blut)"
         assert supplemental == "EUH210, EUH401"
 
-    @pytest.mark.spec("SDB-110")
+    @pytest.mark.spec("SDB-27")
     def test_the_rest_of_a_broken_label_is_no_word_of_the_statement(self) -> None:
         """ "Ergänzende Gefahrenhin-" before the page break, "weise" after."""
         _, _, supplemental = _statement_texts(
@@ -4988,7 +4988,7 @@ def test_a_heading_may_carry_the_mark_of_a_changed_section(mark: str) -> None:
     assert old_classification(sections[Section.HAZARDS]) == "R-Sätze 10"
 
 
-@pytest.mark.spec("SDB-184")
+@pytest.mark.spec("SDB-27")
 class TestAHeadingSetIntoAStatement:
     """The label's column heading between a statement's lines."""
 
@@ -5033,7 +5033,7 @@ class TestAHeadingSetIntoAStatement:
         assert hazard == "H290 Kann gegenüber Metallen"
 
 
-@pytest.mark.spec("SDB-200")
+@pytest.mark.spec("SDB-27")
 class TestAHeadingWithAColonInsideAStatement:
     """The label's column heading with the statement's last words behind it."""
 

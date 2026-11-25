@@ -1065,7 +1065,7 @@ def euh_statements_by_wording(
             ):
                 continue
             # A name broken at a line's end is joined as the reader joins
-            # it (SDB-54), also across the empty line the reader leaves where
+            # it (SDB-32), also across the empty line the reader leaves where
             # a column ends (SDB-45).
             lines = join_broken_words(re.sub(r"\n\s*\n", "\n", match.group(0)))
             sentence = re.sub(r"\s+", " ", lines).strip()

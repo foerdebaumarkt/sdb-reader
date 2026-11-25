@@ -468,7 +468,7 @@ def _read_pieces(lead: Placed, pieces: tuple[str, ...]) -> list[str]:
     return _read(lead, *reversed(placed))
 
 
-@pytest.mark.spec("SDB-99")
+@pytest.mark.spec("SDB-42")
 class TestAWordDrawnInPieces:
     """ "24", ".0", "9", ".2025" for a date."""
 
