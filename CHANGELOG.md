@@ -9,8 +9,8 @@ Versions follow the tags of this repository.
 
 This release gives the label of a small package its sentences: where a sheet
 prints that label as bare codes, each code now carries the sentence the
-sheet's own label prints for it. Readings kept from 0.14.0 have to be made
-again.
+sheet's own label prints for it. The rules of the reading are set out anew,
+by subject. Readings kept from 0.14.0 have to be made again.
 
 ### Breaking
 
@@ -19,13 +19,21 @@ again.
 
 ### Fixed
 
-- **A small package's label gives each statement its sentence** (SDB-221).
+- **A small package's label gives each statement its sentence** (SDB-188).
   Where that label prints its codes bare or in a row, such as "H314-H335",
   each code now stands on its own line with the sentence the sheet's label
   prints for it; a combination stays one code, and a sentence the small
   package's label prints itself comes first. Its codes are unchanged. On
   about 14,850 sheets the small package's label of 20 changes, and nothing
   else does.
+
+### Documentation
+
+- **The rules stand under headings by subject** (`specs/sicherheitsdatenblatt.md`),
+  in the order a sheet is read, and each begins with what holds. A rule that
+  only added a case to another is taken into the rule of its subject, so 35
+  rule numbers now point to another rule; `specs/historie.md` says which,
+  with the old text. What the library does is unchanged.
 
 ## 0.14.0 – 2026-11-25
 
