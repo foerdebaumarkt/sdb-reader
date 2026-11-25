@@ -1,5 +1,5 @@
 """The blocks of 2.2 beside the label, and conditions the label prints
-(SDB-188 to SDB-196, SDW-51, BIB-24, BIB-25).
+(SDB-188 to SDB-196, SDB-221, SDW-51, BIB-24, BIB-25).
 
 Every sheet here is invented; the pictograms are the public-domain drawings
 the references are made from.
@@ -170,6 +170,65 @@ def test_a_small_package_s_label_states_none_as_a_label_does() -> None:
     assert small.label.states_no_pictograms
     assert small.label.states_no_signal_word
     assert not main.states_no_signal_word
+
+
+@pytest.mark.spec("SDB-221")
+def test_a_row_of_codes_takes_the_sentences_the_label_prints() -> None:
+    main = _parsed(
+        "Signalwort: Gefahr\n"
+        "H314 Verursacht schwere Verätzungen der Haut und schwere Augenschäden.\n"
+        "H335 Kann die Atemwege reizen.\n"
+        "P102 Darf nicht in die Hände von Kindern gelangen.\n"
+        "P305+P351+P338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam "
+        "mit Wasser ausspülen.\n"
+        f"{_SMALL}\n"
+        "Gefahrenhinweise\n"
+        "H314-H335\n"
+        "Sicherheitshinweise\n"
+        "P102-P305+P351+P338-P305+P351+P338",
+        "Skin Corr. 1B, H314\nSTOT SE 3, H335",
+    ).sheet.hazard_statements
+
+    [small] = main.further_labels
+    assert small.label.hazard_text == (
+        "H314 Verursacht schwere Verätzungen der Haut und schwere Augenschäden.\n"
+        "H335 Kann die Atemwege reizen."
+    )
+    assert small.label.precautionary_text == (
+        "P102 Darf nicht in die Hände von Kindern gelangen.\n"
+        "P305+P351+P338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam "
+        "mit Wasser ausspülen."
+    )
+    assert small.label.precautionary_codes == ["P102", "P305", "P338", "P351"]
+
+
+@pytest.mark.spec("SDB-221")
+def test_a_code_without_a_sentence_on_the_label_stands_alone() -> None:
+    main = _parsed(_TWO_LABELS, "Flam. Liq. 3, H226\nSkin Sens. 1, H317").sheet
+    [small] = main.hazard_statements.further_labels
+
+    assert small.label.hazard_text == (
+        "H317 Kann allergische Hautreaktionen verursachen.\nH331"
+    )
+    assert small.label.precautionary_text == "P261\nP501"
+
+
+@pytest.mark.spec("SDB-221")
+def test_the_small_package_s_own_sentence_comes_first() -> None:
+    main = _parsed(
+        "Signalwort: Achtung\n"
+        "H317 Kann allergische Hautreaktionen verursachen.\n"
+        "P280 Schutzhandschuhe tragen.\n"
+        f"{_SMALL}\n"
+        "H317, P280\n"
+        "P280 Handschuhe tragen."
+    ).sheet.hazard_statements
+
+    [small] = main.further_labels
+    assert small.label.hazard_text == (
+        "H317 Kann allergische Hautreaktionen verursachen."
+    )
+    assert small.label.precautionary_text == "P280 Handschuhe tragen."
 
 
 @pytest.mark.spec("SDB-189")
