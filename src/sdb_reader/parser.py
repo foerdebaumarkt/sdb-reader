@@ -267,7 +267,7 @@ _DATE_FRAGMENT = (
 )
 # "Überarbeitet am: 2024-08-26": the same date, year first. Only behind a label,
 # and only with its dashes: a CAS number or an article number is built alike.
-# A weekday may stand in front: "Mittwoch, 13. Mai 2015" (SDB-161).
+# A weekday may stand in front: "Mittwoch, 13. Mai 2015" (SDB-57).
 _WEEKDAY = r"(?:(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag),?\s+)?"
 _DATED = rf"(?:{_WEEKDAY}{_DATE_FRAGMENT}|(?<!\d)(\d{{4}})-(\d{{2}})-(\d{{2}})(?!\d))"
 # A page marker may sit between a date's label and its value. Suppliers put both
@@ -314,7 +314,7 @@ _PAGE_MARKER = r"(?:\s*Seite\s*:?\s*\d{1,3}\s*(?:/|von)\s*\d{1,3})?"
 # Optional parts carry their own blanks behind them ("(?::\s*)?"), so that a
 # run of blanks can be read only one way (no slow search on long blank runs).
 REVISION_DATE_PATTERN = re.compile(
-    # "Überarbei tung": the word broken at the line's end (SDB-161).
+    # "Überarbei tung": the word broken at the line's end (SDB-57).
     r"(?:überarbei[^\S\n]?t[a-zäöüß]*(?:\s+(?-i:[a-zäöüß]{2,})(?=\s*:))?(?:\s+am)?"
     r"|revisions?datum|änderungsdatum|bearbeitungsdatum|überprüfung"
     r"|(?<!ersetzt )fassung\s+vom|stand\s*:|sicherheitsdatenblatt\s+vom"
@@ -351,7 +351,7 @@ _OTHER_VERSION_BEFORE = re.compile(
     re.IGNORECASE,
 )
 _VERSION_LABEL_START = re.compile(r"version|fassung|revision|rev\b", re.IGNORECASE)
-# The day the version in hand was made is the day of its revision (SDB-128):
+# The day the version in hand was made is the day of its revision (SDB-57):
 # "Aktuelle Version: 2.0.1, erstellt am: 20.03.2020", or the version on one
 # line and "Erstellt am 30.03.2023" on the next. The line begins with the
 # version, so "Ersetzte Version: 2.0.0, erstellt am: 04.06.2019" below it is
@@ -373,7 +373,7 @@ VERSION_CREATED_ABOVE_PATTERN = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 # "überarbeitet am: 30.04.2012 + 10.06.2016": revised twice, both days behind
-# the one label (SDB-129).
+# the one label (SDB-57).
 _FURTHER_DATE = re.compile(rf"[^\S\n]*(?:\+|und)[^\S\n]*{_DATED}", re.IGNORECASE)
 # SAP prints an older header as a grid of labels over a row of values, and the
 # reader gives the labels on one line: "Überarbeitet am: Druckdatum Datum der
@@ -398,7 +398,7 @@ ISSUE_DATE_PATTERN = re.compile(
     r"|datum\s+der\s+erstellung|datum\s+ausgestellt|(?<![a-zäöüß])erstellung"
     # "Datum der Ausstellung: 5/05/2022", "Ausgestellt am" (SDB-57).
     r"|datum\s+der\s+ausstellung|ausgestellt\s+am"
-    # "Datum der Ausgabe: 06.01.2021" (SDB-161); not "Datum der letzten Ausgabe".
+    # "Datum der Ausgabe: 06.01.2021" (SDB-57); not "Datum der letzten Ausgabe".
     r"|datum\s+der\s+ausgabe"
     r"|^[^\S\n]*ausgabe)"
     rf"\s*:?{_PAGE_MARKER}\s*{_DATED}",

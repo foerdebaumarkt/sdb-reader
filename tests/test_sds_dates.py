@@ -1,4 +1,4 @@
-"""What the parser reads as a sheet's dates and version (SDB-20, SDB-57, SDB-128, SDB-129).
+"""What the parser reads as a sheet's dates and version (SDB-20, SDB-57).
 
 The sheets are invented; each shows one form a comparison over a body of
 sheets turned up.
@@ -87,7 +87,7 @@ def test_a_two_digit_year_counts_where_only_the_replaced_version_has_four() -> N
     assert sheet.revision_date == date(2021, 6, 17)
 
 
-@pytest.mark.spec("SDB-128")
+@pytest.mark.spec("SDB-57")
 @pytest.mark.parametrize(
     "header",
     [
@@ -110,14 +110,14 @@ def test_the_day_the_version_in_hand_was_made_is_its_revision_date(
     assert sheet.issue_date == date(2020, 3, 20)
 
 
-@pytest.mark.spec("SDB-128")
+@pytest.mark.spec("SDB-57")
 def test_the_day_the_replaced_version_was_made_is_not() -> None:
     sheet = read("Ersetzte Version: 2.0.0, erstellt am: 04.06.2019\n")
 
     assert sheet.revision_date is None
 
 
-@pytest.mark.spec("SDB-128")
+@pytest.mark.spec("SDB-57")
 def test_a_day_of_issue_away_from_the_version_stays_one() -> None:
     sheet = read("Version: 3\nSeite 1 von 9\nErstellt am: 20.03.2020\n")
 
@@ -125,7 +125,7 @@ def test_a_day_of_issue_away_from_the_version_stays_one() -> None:
     assert sheet.issue_date == date(2020, 3, 20)
 
 
-@pytest.mark.spec("SDB-128")
+@pytest.mark.spec("SDB-57")
 def test_the_version_s_day_goes_before_an_older_revision_named_elsewhere() -> None:
     sheet = read(
         "Version 1.6 ungültig wird Version 1.5\nErstellt am 30.03.2023\n",
@@ -135,7 +135,7 @@ def test_the_version_s_day_goes_before_an_older_revision_named_elsewhere() -> No
     assert sheet.revision_date == date(2023, 3, 30)
 
 
-@pytest.mark.spec("SDB-129")
+@pytest.mark.spec("SDB-57")
 @pytest.mark.parametrize("joined", ["+", "und"])
 def test_several_days_behind_one_label_all_count(joined: str) -> None:
     sheet = read(
