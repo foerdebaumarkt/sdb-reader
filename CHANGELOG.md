@@ -5,6 +5,13 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.14.0 – 2026-11-25
+
+This release narrows which EUH statements say that a product needs a safety
+data sheet, after a check against the consolidated texts of REACH and CLP:
+only EUH210 and the statements of a sensitising substance still do. Readings
+kept from 0.13.0 have to be made again.
+
 ### Breaking
 
 - **`PARSER_VERSION` is 23** (0.13.0: 22). Readings kept from 0.13.0
