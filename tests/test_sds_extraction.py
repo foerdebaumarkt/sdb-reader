@@ -117,7 +117,7 @@ def test_a_names_own_hyphen_stays_at_the_line_end(raw: str, expected: str) -> No
     assert normalise_pdf_text(raw) == expected
 
 
-@pytest.mark.spec("SDB-54")
+@pytest.mark.spec("SDB-32")
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [

@@ -116,7 +116,7 @@ _CONTACT_LABEL = re.compile(
 # closer than an empty line's worth.
 _FORM_PITCH = 1.5
 
-# A line the line join (SDB-54) would join to the next: a hyphen after a word
+# A line the line join (SDB-32) would join to the next: a hyphen after a word
 # character, a bracket or a slash, as join_broken_words reads it.
 _BROKEN = re.compile(r"[\w)\]/]-$")
 
@@ -430,7 +430,7 @@ def page_text(page: pymupdf.Page, textpage: pymupdf.TextPage | None = None) -> s
 def _with_breaks_kept(lines: list[_Line]) -> list[str]:
     """The lines' text, an empty line after a hyphen that does not run on.
 
-    The line join (SDB-54) joins a line ending in a hyphen to whatever line
+    The line join (SDB-32) joins a line ending in a hyphen to whatever line
     follows. That is the next line of the word only where it stands right
     below in the same column; elsewhere -- the next cell of a table in the
     file's order, a pair below a table, the page's end -- an empty line keeps
@@ -530,7 +530,7 @@ _TOUCHING = 0.01
 
 
 def _joined_touching(words: list[_Word]) -> list[_Word]:
-    """Join the pieces of a word the file draws apart (SDB-99).
+    """Join the pieces of a word the file draws apart (SDB-42).
 
     A file that sets single characters in another font draws a word in pieces:
     "24", ".0", "9", ".2025" for "24.09.2025", each piece a word of its own to
@@ -890,5 +890,5 @@ def _read_pairs(
 
 
 def _join_broken(parts: list[str]) -> str:
-    """Join the lines of a label, a word broken at a line end joined back (SDB-54)."""
+    """Join the lines of a label, a word broken at a line end joined back (SDB-32)."""
     return join_broken_words("\n".join(parts)).replace("\n", " ")

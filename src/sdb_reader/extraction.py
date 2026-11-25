@@ -491,7 +491,7 @@ def normalise_pdf_text(text: str) -> str:
     # no longer saw H319. The line is joined, the hyphen kept.
     text = _CODE_BEFORE_LINE_BREAK.sub(r"\1-", text)
     # A word broken at the line end loses its hyphen only between two
-    # lower-case letters (SDB-32, SDB-54): "5-Chlor-2-methyl-2H-" /
+    # lower-case letters (SDB-32): "5-Chlor-2-methyl-2H-" /
     # "isothiazol-3-on" became "2Hisothiazol" and "2-" / "Methyl" "2Methyl"
     # , "tert-butyl-" / "4-hydroxyphenyl" "butyl4-hydroxyphenyl".
     text = join_broken_words(text)

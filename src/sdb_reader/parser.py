@@ -1307,12 +1307,12 @@ _CLASSIFICATION_LINE = re.compile(
     r"|Ozone|Desen\.\s*Expl|ED\s*(?:HH|ENV)|PBT|vPvB|PMT|vPvM)\b\.?\s*\d?[A-F]?$"
     r"|\bKategorie\s+\d"
 )
-# A pictogram's code at a statement's end (SDB-162).
+# A pictogram's code at a statement's end (SDB-27).
 _TRAILING_PICTOGRAM = re.compile(
     r"(?m)(?<=[.!])[^\S\n]+GHS\d{2}(?:[\s,]+GHS\d{2})*[^\S\n]*$"
 )
 _PAGE_NUMBER = re.compile(
-    # "Page n. 1 von 9" (SDB-162).
+    # "Page n. 1 von 9" (SDB-27).
     r"^(?:Page\s+(?:n\.|no\.|nr\.)?\s*)?\d{1,3}\s*(?:/|von|of)\s*\d{1,3}$"
     r"|^(?:Seite\s*:?\s*)?\d{1,3}\s*(?:/|von)\s*\d{1,3}$"
     r"|^Seite\s*:?\s*\d{1,3}(?:\s*(?:/|von)\s*\d{1,3}|\s*\(\d{1,3}\))?$",
@@ -3064,7 +3064,7 @@ _PASSAGE_LIMIT = 800
 
 
 def _without_trailing_pictograms(hazards: HazardStatements) -> None:
-    """A pictogram's code behind a statement is the label's next element (SDB-162).
+    """A pictogram's code behind a statement is the label's next element (SDB-27).
 
     Not the statement's wording: "H335: Kann die Atemwege reizen. GHS07".
     """
@@ -3561,7 +3561,7 @@ class _StatementReader:
         if self._at_the_limit():
             return
         # "Reakti-" before the page header, "onen hervorrufen." after it: one
-        # word, joined as the reader joins it within a page (SDB-54).
+        # word, joined as the reader joins it within a page (SDB-32).
         joined = (
             join_broken_words(f"{self.current[-1]}\n{value}") if self.current else ""
         )
@@ -3593,7 +3593,7 @@ class _StatementReader:
 
     def resumes_below(self, line: str, below: Sequence[str]) -> bool:
         """Whether *line* is a heading of the label set into the statement,
-        which the next line finishes (SDB-184).
+        which the next line finishes (SDB-27).
 
         The statement has its code and some words, has not reached its
         wording's end, and its last line ends without a sentence's end;
@@ -3616,9 +3616,9 @@ class _StatementReader:
 
     def finishes_after_heading(self, line: str) -> str | None:
         """The rest of *line* behind a heading of the label, where it finishes
-        the statement (SDB-200).
+        the statement (SDB-27).
 
-        As SDB-184, but the heading stands at the line's start with a colon
+        As SDB-27, but the heading stands at the line's start with a colon
         and the statement's last words behind it: "… Verpackung oder" /
         "Sicherheitshinweise: Kennzeichnungsetikett bereithalten.".
         """
@@ -3704,10 +3704,10 @@ def _without_shorter_readings(statements: list[str]) -> list[str]:
 
 
 # The line that names what the label must name ("Enthält: Zement, Portland,
-# Klinker"): no part of an H or a P statement above it (SDB-127). An EUH
+# Klinker"): no part of an H or a P statement above it (SDB-27). An EUH
 # statement can begin so.
 _CONTENTS_LINE = re.compile(r"^Enthält[^\S\n]*:")
-# A footnote's number set against a statement's last full stop (SDB-127):
+# A footnote's number set against a statement's last full stop (SDB-27):
 # "… Kann allergische Reaktionen hervorrufen.6".
 _FOOTNOTE_MARK = re.compile(r"(?<=[a-zäöüß][.!?])\d$")
 
@@ -3774,7 +3774,7 @@ def _extract_statement_text(
         if label_broken and _LABEL_TAIL.fullmatch(normalized):
             # "Ergänzende Gefahrenhin-: EUH401 …" and, after the page break,
             # "weise": the rest of the label, not a word of the statement
-            # (SDB-110).
+            # (SDB-27).
             label_broken = False
             continue
         if reader.following:
@@ -3805,7 +3805,7 @@ def _extract_statement_text(
             continue
         if reader.resumes_below(normalized, lines[index + 1 :]):
             # "… die Gebrauchsanleitung" / "EUH Sätze" / "einhalten.": the
-            # label's column heading set into the sentence (SDB-184).
+            # label's column heading set into the sentence (SDB-27).
             continue
         if (rest := reader.finishes_after_heading(normalized)) is not None:
             reader.add(_clean_value(rest))
@@ -3904,12 +3904,12 @@ def _whole_sentences(lines: Sequence[str]) -> list[str]:
 
 
 def _joined(lines: Sequence[str]) -> str:
-    """*lines* as one, a word broken at a line's end joined (SDB-54)."""
+    """*lines* as one, a word broken at a line's end joined (SDB-32)."""
     return join_broken_words("\n".join(lines)).replace("\n", " ")
 
 
 # A label broken at its line's end before the statement's code, and the rest
-# of it on a later line (SDB-110).
+# of it on a later line (SDB-27).
 _BROKEN_LABEL = re.compile(r"[a-zäöüß]-\s*:?\s*$")
 _LABEL_TAIL = re.compile(r"[a-zäöüß]{2,15}:?")
 # A code in a list behind a comma or a semicolon.
@@ -3917,7 +3917,7 @@ _LISTED_CODE = re.compile(rf"\s*[,;]\s*({_ONE_CODE})(?!\d)")
 
 
 def _before_other_codes(text: str, pattern: re.Pattern[str]) -> str:
-    """*text* up to the first listed code of another kind (SDB-109).
+    """*text* up to the first listed code of another kind (SDB-27).
 
     "H373 (Blut), EUH210, EUH401" under "Gefahrenhinweise:" lists the label's
     codes of every kind; the hazard statement ends before the first EUH code.
@@ -3929,7 +3929,7 @@ def _before_other_codes(text: str, pattern: re.Pattern[str]) -> str:
 
 
 # What a pictogram of the protective equipment leaves in the text behind its
-# statement's code (SDB-127): "P280 gloves" over "Schutzhandschuhe tragen."
+# statement's code (SDB-27): "P280 gloves" over "Schutzhandschuhe tragen."
 _PICTOGRAM_WORD = r"(?:hands|eyes|gloves|face|clothing|mask)"
 _PICTOGRAM_WORDS = re.compile(
     rf"^((?:{_ONE_CODE})(?:\s*\+\s*{_ONE_CODE})*)"

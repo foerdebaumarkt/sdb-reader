@@ -285,7 +285,7 @@ class TestDates:
         assert sheet.issue_date == issued
 
 
-@pytest.mark.spec("SDB-162")
+@pytest.mark.spec("SDB-27")
 def test_a_pictogram_code_behind_a_statement_is_not_its_wording() -> None:
     label = (
         "2.2 Kennzeichnungselemente\nSignalwort: Achtung\n"

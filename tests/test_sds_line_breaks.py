@@ -7,7 +7,7 @@ import pytest
 from sdb_reader.line_breaks import join_broken_words
 
 
-@pytest.mark.spec("SDB-54")
+@pytest.mark.spec("SDB-32")
 @pytest.mark.parametrize(
     ("text", "joined"),
     [

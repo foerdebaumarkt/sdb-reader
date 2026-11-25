@@ -1,4 +1,4 @@
-"""What the parser reads as a sheet's labelling (SDB-4, SDB-78, SDB-119 to SDB-127).
+"""What the parser reads as a sheet's labelling (SDB-4, SDB-78, SDB-119 to SDB-27).
 
 The sheets are invented; each shows one form a comparison over a body of
 sheets turned up.
@@ -673,7 +673,7 @@ class TestWhereAStatementEnds:
         + "2.3 Sonstige Gefahren\nKeine.\n"
     )
 
-    @pytest.mark.spec("SDB-127")
+    @pytest.mark.spec("SDB-27")
     @pytest.mark.parametrize(
         "behind",
         [
@@ -697,7 +697,7 @@ class TestWhereAStatementEnds:
             "P501 Entsorgung gemäß den behördlichen Vorschriften."
         )
 
-    @pytest.mark.spec("SDB-127")
+    @pytest.mark.spec("SDB-27")
     def test_a_hazard_statement_that_begins_with_the_word_stays_whole(self) -> None:
         label = read(
             "2.1 Einstufung des Stoffs oder Gemischs\nGase unter Druck, Kategorie 1\n"
@@ -711,7 +711,7 @@ class TestWhereAStatementEnds:
             "H280 Enthält Gas unter Druck; kann bei Erwärmung explodieren."
         )
 
-    @pytest.mark.spec("SDB-127")
+    @pytest.mark.spec("SDB-27")
     @pytest.mark.parametrize(
         "printed",
         [
@@ -727,7 +727,7 @@ class TestWhereAStatementEnds:
 
         assert label.precautionary_text == "P280 Schutzhandschuhe tragen."
 
-    @pytest.mark.spec("SDB-127")
+    @pytest.mark.spec("SDB-27")
     def test_a_page_marker_with_the_count_in_brackets_is_read_past(self) -> None:
         label = read(
             self.LABEL.format(
@@ -741,7 +741,7 @@ class TestWhereAStatementEnds:
             "Kennzeichnungsetikett bereithalten."
         )
 
-    @pytest.mark.spec("SDB-127")
+    @pytest.mark.spec("SDB-27")
     def test_a_footnotes_number_behind_the_full_stop_goes(self) -> None:
         label = read(
             UNCLASSIFIED

@@ -1,4 +1,4 @@
-"""A word or a name that a line's end breaks in two (SDB-32, SDB-54)."""
+"""A word or a name that a line's end breaks in two (SDB-32)."""
 
 from __future__ import annotations
 

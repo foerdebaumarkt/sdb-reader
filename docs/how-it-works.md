@@ -111,7 +111,7 @@ The PDF library gives the words of a page with their positions. The reader
 puts them into the order of the print, not the order of the file: words on
 one height form a line, from left to right, lines follow from top to bottom,
 and a wide gap divides a line into cells. A word the file draws in pieces is
-joined (SDB-42, SDB-99).
+joined (SDB-42).
 
 - **Pairs.** A label and its value on one line, divided by a colon, stay
   together as "label: value" (SDB-43).
@@ -122,7 +122,7 @@ joined (SDB-42, SDB-99).
   the left with its content at the right is read as a pair even without a
   colon (SDB-114).
 - **Line breaks.** A word divided at the end of a line is joined (SDB-32,
-  SDB-54); an empty line is kept where the page leaves room for one (SDB-45).
+  SDB-32); an empty line is kept where the page leaves room for one (SDB-45).
 - **Text recognition.** A file without a text layer, or with one split into
   single characters, is rendered and read by `tesseract` (SDB-46). A single
   page that is a picture among pages with text is read the same way and put
@@ -176,8 +176,8 @@ Only a German safety data sheet goes on to the parser.
 - **The statement texts.** The sentences of the H, P and EUH statements are
   cut from section 2: where a statement begins and ends, what belongs to a
   classification entry, what follows an EUH statement (SDB-10, SDB-27,
-  SDB-41, SDB-51 to SDB-53, SDB-56, SDB-62, SDB-65, SDB-108 to SDB-110,
-  SDB-127); an EUH statement keeps the substances printed before its code
+  SDB-41, SDB-51 to SDB-53, SDB-56, SDB-62, SDB-65, SDB-108,
+  SDB-27); an EUH statement keeps the substances printed before its code
   and counts only under a code the label carries (SDB-124, SDB-125).
 - **The classification of section 2.** Whether section 2 classifies the
   product, classifies it under the directives before CLP, says it is not
