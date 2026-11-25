@@ -76,8 +76,10 @@ mitbringt. Prüfen Sie ein solches Blatt genauer.
 ### Ob das Produkt ein Blatt braucht
 
 `sheet_duty` ist `required`, wo Abschnitt 2 das Produkt einstuft oder die
-Kennzeichnung einen Gefahrenhinweis (H oder EUH), ein Signalwort oder ein
-Piktogramm trägt. Jedes andere Blatt ist freiwillig ausgestellt:
+Kennzeichnung einen Gefahrenhinweis (H), ein Signalwort, ein Piktogramm,
+EUH210 oder einen EUH-Satz trägt, der einen sensibilisierenden Stoff nennt
+(EUH208, EUH204, EUH205); andere EUH-Sätze wie EUH066 oder EUH401 zählen
+nicht. Jedes andere Blatt ist freiwillig ausgestellt:
 `not-required`.
 Sicherheitshinweise (P) allein zählen nicht: Ein Lieferant darf sie auf jedes
 Produkt drucken.

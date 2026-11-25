@@ -213,8 +213,10 @@ Only a German safety data sheet goes on to the parser.
 ## 4. Judge the sheet
 
 - **Whether the product needs a sheet.** It does where section 2 classifies
-  it or the label carries an H or EUH statement, a signal word or a
-  pictogram; any other sheet is issued voluntarily (SDB-72, SDB-76). A
+  it or the label carries an H statement, a signal word, a pictogram, or an
+  EUH statement that owes a sheet (EUH210, or one of a sensitising
+  substance); any other sheet is issued voluntarily (SDB-72, SDB-76,
+  SDB-220). A
   sheet that says of itself that it is voluntary or that none is prescribed
   is taken at its word where its product is an article, as the sheet says,
   or a mixture that is not classified; a classified mixture still needs
