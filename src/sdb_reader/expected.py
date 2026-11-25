@@ -65,7 +65,7 @@ def clp_expected(
     says it is one -- H290 calls for no signal word, which Annex I 1.5.2.1.3
     lets such a package leave out. An aerosol's own elements stay: Directive
     75/324/EEC, to which 1.5.2.1.1 refers, requires them on every aerosol
-    dispenser (SDB-198). A signal word the full codes call for does not
+    dispenser (SDB-193). A signal word the full codes call for does not
     differ.
 
     >>> from sdb_reader import HazardStatements
