@@ -427,7 +427,7 @@ def small_package_may_omit(code: str) -> bool:
     """Whether a package of at most 125 ml may go without the hazard statement
     *code* (CLP Annex I 1.5.2.1.1 and 1.5.2.1.3; SDB-194). Not an aerosol's
     own statements: Directive 75/324/EEC, to which 1.5.2.1.1 refers, requires
-    them on every aerosol dispenser (Art. 8(1), Annex 2.2; SDB-198)."""
+    them on every aerosol dispenser (Art. 8(1), Annex 2.2; SDB-193)."""
     return code in _SMALL_PACKAGE_OMITS or code in _SMALL_PACKAGE_OMITS_NOT_PUBLIC
 
 
@@ -615,7 +615,7 @@ def hazard_statements_not_in_label(
     Where the sheet prints no small package's label beside it, the label may be
     one, and a statement such a package may leave out gives no finding (CLP
     Annex I 1.5.2.1; SDB-194); an aerosol's own statements are none of them
-    (SDB-198).
+    (SDB-193).
 
     >>> from sdb_reader import HazardStatements
     >>> section = (

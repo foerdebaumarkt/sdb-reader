@@ -1,5 +1,5 @@
 """The blocks of 2.2 beside the label, and conditions the label prints
-(SDB-188 to SDB-196, SDB-221, SDW-51, BIB-24, BIB-25).
+(SDB-188 to SDB-196, SDW-51, BIB-24, BIB-25).
 
 Every sheet here is invented; the pictograms are the public-domain drawings
 the references are made from.
@@ -172,7 +172,7 @@ def test_a_small_package_s_label_states_none_as_a_label_does() -> None:
     assert not main.states_no_signal_word
 
 
-@pytest.mark.spec("SDB-221")
+@pytest.mark.spec("SDB-188")
 def test_a_row_of_codes_takes_the_sentences_the_label_prints() -> None:
     main = _parsed(
         "Signalwort: Gefahr\n"
@@ -202,7 +202,7 @@ def test_a_row_of_codes_takes_the_sentences_the_label_prints() -> None:
     assert small.label.precautionary_codes == ["P102", "P305", "P338", "P351"]
 
 
-@pytest.mark.spec("SDB-221")
+@pytest.mark.spec("SDB-188")
 def test_a_code_without_a_sentence_on_the_label_stands_alone() -> None:
     main = _parsed(_TWO_LABELS, "Flam. Liq. 3, H226\nSkin Sens. 1, H317").sheet
     [small] = main.hazard_statements.further_labels
@@ -213,7 +213,7 @@ def test_a_code_without_a_sentence_on_the_label_stands_alone() -> None:
     assert small.label.precautionary_text == "P261\nP501"
 
 
-@pytest.mark.spec("SDB-221")
+@pytest.mark.spec("SDB-188")
 def test_the_small_package_s_own_sentence_comes_first() -> None:
     main = _parsed(
         "Signalwort: Achtung\n"
@@ -448,7 +448,7 @@ def test_h290_calls_for_nothing_on_a_small_package() -> None:
     assert findings == []
 
 
-@pytest.mark.spec("SDB-198")
+@pytest.mark.spec("SDB-193")
 def test_a_small_aerosol_keeps_its_own_elements() -> None:
     expected = clp_expected(
         HazardStatements(hazard_codes=["H222", "H229", "H336"]), small_package=True
@@ -458,7 +458,7 @@ def test_a_small_aerosol_keeps_its_own_elements() -> None:
     assert expected.pictograms == ["GHS02", "GHS07"]
 
 
-@pytest.mark.spec("SDB-198", "SDB-194")
+@pytest.mark.spec("SDB-193", "SDB-194")
 def test_an_aerosol_s_own_statements_are_reported_missing() -> None:
     assert _findings(
         "Signalwort: Achtung\nP210 Von Hitze fernhalten.", "Aerosol 3, H229"

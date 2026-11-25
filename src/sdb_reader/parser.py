@@ -2572,7 +2572,7 @@ def _sentences_from_the_label(
     further: HazardStatements, label: HazardStatements
 ) -> None:
     """*further*'s codes printed without a sentence, each with the line the
-    label of the same sheet prints for it (SDB-221).
+    label of the same sheet prints for it (SDB-188).
 
     A row of codes is split at its dashes, commas and semicolons, a
     combination staying one, and each code given once. A code *further*
