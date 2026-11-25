@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdb-reader"
-version = "0.13.0"
+version = "0.14.0"
 description = "Reads German safety data sheets (Sicherheitsdatenblätter) under REACH and CLP, without a language model"
 readme = "README.md"
 authors = [{ name = "Förde-Baumarkt Holger Claussen GmbH & Co. KG", email = "service@foerde-baumarkt.de" }]
