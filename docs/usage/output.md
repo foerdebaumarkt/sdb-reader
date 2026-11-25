@@ -76,8 +76,10 @@ Check such a sheet more carefully.
 ### Whether the product needs a sheet
 
 `sheet_duty` is `required` where section 2 classifies the product, or where
-the label carries a hazard statement (H or EUH), a signal word or a
-pictogram. Every other sheet was issued voluntarily: `not-required`. Precautionary statements
+the label carries a hazard statement (H), a signal word, a pictogram, EUH210
+or an EUH statement that names a sensitising substance (EUH208, EUH204,
+EUH205); other EUH statements, such as EUH066 or EUH401, do not count.
+Every other sheet was issued voluntarily: `not-required`. Precautionary statements
 (P) alone do not count: a supplier may print them on any product.
 
 `stated_voluntary` is `true` where the sheet says of itself that it was

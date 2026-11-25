@@ -138,15 +138,17 @@ class SheetDuty(StrEnum):
 def sheet_duty(sheet: SafetyDataSheet) -> SheetDuty:
     """Whether a sheet is issued for a product that needs one.
 
-    SDB-76, SDB-142, SDB-154, SDB-218.
+    SDB-76, SDB-142, SDB-154, SDB-218, SDB-220.
 
     REACH Article 31(1) requires a safety data sheet for a classified product
     and Article 31(3) one on request where the label carries EUH210. So a
     sheet is required where section 2 classifies the product
     (``stated_classification``, as SDB-75 reads it), or where the label carries what only a classified
     product's label does -- an H statement, a signal word, a pictogram -- or
-    an EUH statement, or the sentence that a safety data sheet is to be had
-    on request, under whichever law the label stands. P statements alone are
+    an EUH statement that owes a sheet (EUH210, and EUH208, EUH204 and
+    EUH205 for a sensitising substance, SDB-220), or the sentence that a
+    safety data sheet is to be had on request, under whichever law the label
+    stands. P statements alone are
     advice a supplier may print on anything. A sheet without any of it is
     issued voluntarily.
 
@@ -163,7 +165,8 @@ def sheet_duty(sheet: SafetyDataSheet) -> SheetDuty:
     hazardous mixture only towards the general public and leaves it due to a
     downstream user or distributor who asks. In either case a label that
     carries EUH210 or the sentence that a sheet is to be had on request goes
-    first: there the supplier says at the label that one is due.
+    first: there the supplier says at the label that one is due. For a
+    mixture the statements of a sensitising substance go first as well.
 
     A sheet kept as a record is read back with ``sheet_from_dict``.
 
@@ -216,6 +219,8 @@ def sheet_duty(sheet: SafetyDataSheet) -> SheetDuty:
     >>> sheet_duty(
     ...     sheet(HazardStatements(supplemental_codes=["EUH208"]), stated_voluntary=True)
     ... )
+    <SheetDuty.REQUIRED: 'required'>
+    >>> sheet_duty(sheet(HazardStatements(supplemental_codes=["EUH066", "EUH401"])))
     <SheetDuty.NOT_REQUIRED: 'not-required'>
     >>> sheet_duty(
     ...     sheet(HazardStatements(supplemental_codes=["EUH210"]), stated_voluntary=True)
@@ -284,18 +289,23 @@ def _label_requires_sheet(
         StatedClassification.OLD_SYSTEM,
     )
     hazardous = classified or bool(hazards.hazard_codes)
-    if article or (voluntary and not hazardous):
+    owed = not DUTY_STATEMENTS.isdisjoint(hazards.supplemental_codes)
+    if article:
         return on_request or "EUH210" in hazards.supplemental_codes
+    if voluntary and not hazardous:
+        return on_request or owed
     if classified:
         return True
-    if (
-        hazards.hazard_codes
-        or hazards.supplemental_codes
-        or hazards.signal_word
-        or hazards.pictograms
-    ):
+    if hazards.hazard_codes or hazards.signal_word or hazards.pictograms or owed:
         return True
     return on_request
+
+
+# The EUH statements by which a label says that a sheet is owed (SDB-220):
+# EUH210 itself, and those that name a sensitising substance, which REACH
+# Article 31(3)(b) owes a sheet for on request. The others (EUH066, EUH401,
+# EUH211, EUH212, EUH202 …) rest on something else and owe none.
+DUTY_STATEMENTS = frozenset({"EUH210", "EUH208", "EUH204", "EUH205"})
 
 
 def contradicts_label(sheet: SafetyDataSheet) -> bool:

@@ -5,6 +5,18 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Breaking
+
+- **`PARSER_VERSION` is 23** (0.13.0: 22). Readings kept from 0.13.0
+  should be made again; stored texts and label images stay valid.
+- **Fewer EUH statements say that a product needs a sheet** (`sheet_duty`,
+  SDB-220). Only EUH210 and the statements of a sensitising substance,
+  EUH208, EUH204 and EUH205, still do, as REACH Article 31(3) owes a sheet
+  on request for such a mixture; these three now also go before a sheet that
+  calls itself voluntary. EUH066, EUH401, EUH211, EUH212 and EUH202 alone no
+  longer do. On a set of about 12,800 sheets 364 no longer need a sheet and
+  6 do; `old-format` goes where the product no longer needs one.
+
 ## 0.13.0 – 2026-11-25
 
 This release reads the label more fully and gives it out more carefully.

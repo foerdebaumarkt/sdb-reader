@@ -214,7 +214,7 @@ def test_the_sentence_counts_wherever_it_stands(where: str) -> None:
         "Für dieses Produkt ist gemäß Artikel 31 der REACH-Verordnung kein "
         "Sicherheitsdatenblatt erforderlich.\n"
     )
-    label = "EUH208 Enthält Musterstoff. Kann allergische Reaktionen hervorrufen.\n"
+    label = "Gefahrenpiktogramme: GHS07\n"
     plain = _sheet(section_2=UNLABELLED, label_end=label)
     text = (
         _sheet(
@@ -331,17 +331,43 @@ def test_a_label_that_offers_the_sheet_on_request_goes_first(label: str) -> None
     assert _required(result) is True
 
 
-@pytest.mark.spec("SDB-142")
-def test_any_other_supplemental_statement_does_not_ask_for_the_sheet() -> None:
-    label = "EUH208 Enthält Musterstoff. Kann allergische Reaktionen hervorrufen.\n"
+@pytest.mark.spec("SDB-220")
+@pytest.mark.parametrize(
+    ("code", "sentence"),
+    [
+        ("EUH208", "Enthält Musterstoff."),
+        ("EUH204", "Enthält Isocyanate."),
+        ("EUH205", "Enthält epoxidhaltige Verbindungen."),
+    ],
+)
+def test_a_sensitising_substance_owes_the_sheet_even_on_a_voluntary_one(
+    code: str, sentence: str
+) -> None:
+    label = f"{code} {sentence} Kann allergische Reaktionen hervorrufen.\n"
     voluntary = "Dieses Sicherheitsdatenblatt wurde freiwillig erstellt.\n"
 
     with_word = _parse(_sheet(note=voluntary, section_2=UNLABELLED, label_end=label))
     without = _parse(_sheet(section_2=UNLABELLED, label_end=label))
 
-    assert with_word.sheet.hazard_statements.supplemental_codes == ["EUH208"]
-    assert _required(with_word) is False
+    assert with_word.sheet.hazard_statements.supplemental_codes == [code]
+    assert _required(with_word) is True
     assert _required(without) is True
+
+
+@pytest.mark.spec("SDB-220")
+@pytest.mark.parametrize(
+    "label",
+    [
+        "EUH066 Wiederholter Kontakt kann zu spröder oder rissiger Haut führen.\n",
+        "EUH401 Zur Vermeidung von Risiken für Mensch und Umwelt die "
+        "Gebrauchsanleitung einhalten.\n",
+    ],
+)
+def test_another_supplemental_statement_owes_no_sheet(label: str) -> None:
+    result = _parse(_sheet(section_2=UNLABELLED, label_end=label))
+
+    assert result.sheet.hazard_statements.supplemental_codes
+    assert _required(result) is False
 
 
 @pytest.mark.spec("SDB-142")

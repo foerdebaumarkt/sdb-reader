@@ -140,7 +140,8 @@ classification is `sheet.stated_classification`
 `sheet_duty(sheet)` says whether a
 sheet is one its product needs by law (`SheetDuty.REQUIRED`) or not
 (`SheetDuty.NOT_REQUIRED`): section 2 classifies the product, or
-the label carries an H or EUH statement, a signal word or a pictogram, or
+the label carries an H statement, a signal word, a pictogram, EUH210 or an
+EUH statement of a sensitising substance (EUH208, EUH204, EUH205), or
 says that a safety data sheet is to be had on request (also in the old
 directive's words, which a label by the old directives prints without a
 code). P statements alone do not count.
