@@ -191,10 +191,10 @@ Only a German safety data sheet goes on to the parser.
   (SDB-150).
 - **The supplier.** Name, address, phone, e-mail and website from the block
   of section 1.3; the German company where the block names several (SDB-49,
-  SDB-50, SDB-55, SDB-60). What only explains a label, a second company
+  SDB-50, SDB-55). What only explains a label, a second company
   from the column beside it, the address on the name's line and a
   footnote's mark are not part of the name, and a poison centre's e-mail
-  address is not the supplier's (SDB-132 to SDB-134, SDB-151). Beside the
+  address is not the supplier's (SDB-49, SDB-50). Beside the
   supplier's e-mail address, the first of the block, the reading keeps the
   address of whoever answers for the sheet: the competent person's, else an
   information office's (SDB-136).

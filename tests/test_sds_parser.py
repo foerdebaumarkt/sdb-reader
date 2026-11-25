@@ -3093,7 +3093,7 @@ class TestSupplier:
         )
 
 
-@pytest.mark.spec("SDB-60")
+@pytest.mark.spec("SDB-49")
 class TestSupplierBlocksOfOtherSuppliers:
     """Layouts of section 1.3 found on a larger set of sheets."""
 

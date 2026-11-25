@@ -189,7 +189,7 @@ class TestNoProductName:
 
 
 class TestSupplierLabels:
-    @pytest.mark.spec("SDB-159")
+    @pytest.mark.spec("SDB-49")
     @pytest.mark.parametrize(
         ("block", "name"),
         [
@@ -232,7 +232,7 @@ class TestSupplierLabels:
         )
         assert _sheet(supplier=supplier).contact_info.supplier_name == name
 
-    @pytest.mark.spec("SDB-159")
+    @pytest.mark.spec("SDB-49")
     def test_the_company_behind_the_headings_colon(self) -> None:
         supplier = (
             "1.3 Einzelheiten zum: Musterwerk GmbH\nLieferanten, der das\n"
@@ -242,7 +242,7 @@ class TestSupplierLabels:
         assert contact.supplier_name == "Musterwerk GmbH"
         assert contact.supplier_address == "Musterweg 25, 12345 Musterstadt"
 
-    @pytest.mark.spec("SDB-159")
+    @pytest.mark.spec("SDB-49")
     def test_name_or_trade_name_over_the_company(self) -> None:
         supplier = (
             "1.3 Einzelheiten zum Lieferanten, der das Sicherheitsdatenblatt "
@@ -251,7 +251,7 @@ class TestSupplierLabels:
         )
         assert _sheet(supplier=supplier).contact_info.supplier_name == "Musterwerk B.V."
 
-    @pytest.mark.spec("SDB-159")
+    @pytest.mark.spec("SDB-49")
     def test_a_pointer_elsewhere_is_nobodys_name(self) -> None:
         supplier = "1.3\nHersteller/Lieferant: siehe Kapitel 16 (Ansprechpartner)\n"
         assert _sheet(supplier=supplier).contact_info.supplier_name is None

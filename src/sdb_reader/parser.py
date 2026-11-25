@@ -4502,20 +4502,20 @@ _SUPPLIER_LABEL = re.compile(
 # A label that heads the name's line and says nothing more: "Name" over the
 # company in a table of the block.
 _BARE_NAME_LABEL = re.compile(
-    # "Name oder Handelsname" over the company (SDB-159).
+    # "Name oder Handelsname" over the company (SDB-49).
     r"^Name(?:\s+oder\s+Handelsname)?\s*:?$",
     re.IGNORECASE,
 )
-# The same label with the company behind it (SDB-151): "Name: Musterchemie GmbH".
+# The same label with the company behind it (SDB-49): "Name: Musterchemie GmbH".
 _NAME_LABEL_WITH_VALUE = re.compile(
     r"^Name(?:\s+(?:der\s+Firma|des\s+(?:Hersteller)?[Uu]nternehmens))?\s*:\s*(?=\S)",
     re.IGNORECASE,
 )
-# A label's value that points elsewhere (SDB-159): "Hersteller/Lieferant:
+# A label's value that points elsewhere (SDB-49): "Hersteller/Lieferant:
 # siehe Kapitel 16 (Ansprechpartner)". Nobody's name.
 _POINTS_ELSEWHERE = re.compile(r"^siehe\b", re.IGNORECASE)
 # "1.3 Verwendung des Produkts": a sheet that numbers section 1 its own way
-# has something else under 1.3 (SDB-132).
+# has something else under 1.3 (SDB-49).
 _OTHER_TITLE_UNDER_1_3 = re.compile(
     r"^1\s*[.,]\s*3\.?\s*[:\-–]?\s*(?:Verwendung|Relevante|Notruf|Produkt)",
     re.IGNORECASE,
@@ -4683,7 +4683,7 @@ def _read_supplier_of(section_text: str, furniture: frozenset[str]) -> ContactIn
         starts = [*([heading + 1] if heading is not None else []), *labels]
     if heading is not None:
         # The company behind the heading's colon, the title running on below
-        # (SDB-159): "1.3 Einzelheiten zum: Musterwerk GmbH" / "Lieferanten,
+        # (SDB-49): "1.3 Einzelheiten zum: Musterwerk GmbH" / "Lieferanten,
         # der das" / "Sicherheitsdatenblatt bereitstellt".
         _, colon, behind = lines[heading].partition(":")
         if colon and _LEGAL_FORM.search(behind):
@@ -4781,7 +4781,7 @@ def _supplier_lines(line: str) -> list[str]:
     "GERMANY | Tel. +49 2054 4048-70, Fax. +49 2054 4048-790".
     """
     parts: list[str] = []
-    # Or with stars: "Musterchemie KGaA * 12345 Musterstadt * Tel: …" (SDB-159).
+    # Or with stars: "Musterchemie KGaA * 12345 Musterstadt * Tel: …" (SDB-49).
     separator = " * " if line.count(" * ") >= 2 else " | "
     for part in line.split(separator):
         stripped = part.strip().lstrip("·•*-–. ").strip()
@@ -4913,7 +4913,7 @@ def _read_supplier(block: list[str]) -> ContactInfo:
             if labelled:
                 if not value or value.endswith(":") or _POINTS_ELSEWHERE.match(value):
                     # No value, another label where one would stand, or a
-                    # pointer to another part of the sheet (SDB-159).
+                    # pointer to another part of the sheet (SDB-49).
                     continue
                 stage = "after name"
                 line = value
@@ -5004,7 +5004,7 @@ def _read_supplier(block: list[str]) -> ContactInfo:
 
 
 def _without_label_remarks(block: list[str]) -> list[str]:
-    """*block* without what only explains a label (SDB-133).
+    """*block* without what only explains a label (SDB-49).
 
     "Name" alone over the name, and the rest of a remark in brackets that a
     supplier's label opens and a later line closes: "Lieferant
@@ -5071,7 +5071,7 @@ def _contact_addresses(
     block: list[str], named_at: int
 ) -> tuple[str | None, str | None, str | None]:
     """The block's first e-mail address, its first website, and the address
-    of whoever answers for the sheet (SDB-50, SDB-134, SDB-136).
+    of whoever answers for the sheet (SDB-50, SDB-136).
 
     None of them from an emergency part below the name, at line *named_at*:
     what stands under "Notruf" or "Giftnotruf" there is the poison centre's.
@@ -5183,7 +5183,7 @@ def _continues_name(name: str, line: str) -> bool:
     )
 
 
-# A street with its number right behind a legal form (SDB-159).
+# A street with its number right behind a legal form (SDB-49).
 _STREET_BEHIND_NAME = re.compile(
     r"\b(?:GmbH|AG|KG|KGaA|mbH|SE|OHG)(\s+)(?=[A-ZÄÖÜ][\wäöüß.-]*[\s-]?"
     r"(?i:str\.|straße|strasse|weg|platz|allee|ring|damm)\s*\d)",
@@ -5203,7 +5203,7 @@ def _name_and_address(line: str) -> tuple[str, list[str]]:
     glued = _STREET_BEHIND_NAME.search(line)
     if glued:
         # "Mustermann GmbH Hafenstr. 40 12345 Musterstadt": the street behind
-        # the legal form, no separator between (SDB-159).
+        # the legal form, no separator between (SDB-49).
         return line[: glued.start(1)].strip(), [line[glued.end(1) :].strip()]
     for separator in (" – ", ", ", " . ", " - "):
         head, found, tail = line.partition(separator)
@@ -5229,7 +5229,7 @@ _ENDS_IN_ABBREVIATION = re.compile(
 
 
 def _without_column_beside(name: str) -> str:
-    """*name* up to its legal form where the next column runs on behind it (SDB-159).
+    """*name* up to its legal form where the next column runs on behind it (SDB-49).
 
     Two columns set side by side reach the text as one line: "Musterlack
     GmbH Notrufnummer (mit Bedienungszeiten)", "Musterlack GmbH Germany: +49
@@ -5246,7 +5246,7 @@ def _without_column_beside(name: str) -> str:
 
 
 def _first_company(name: str) -> str:
-    """*name* up to its first company where the line carries two (SDB-133).
+    """*name* up to its first company where the line carries two (SDB-49).
 
     A table with a column per country prints them side by side: "Birkenhof
     GmbH Birkenhof AG". The first ends with its legal form; what follows
