@@ -257,7 +257,7 @@ class TestSupplierLabels:
         assert _sheet(supplier=supplier).contact_info.supplier_name is None
 
 
-@pytest.mark.spec("SDB-160")
+@pytest.mark.spec("SDB-21")
 def test_a_reference_to_a_subsection_is_no_heading() -> None:
     assert _read_section_heading("Abschnitt 7.3 angegeben") is None
     assert _read_section_heading("ABSCHNITT 7: Handhabung und Lagerung") is not None

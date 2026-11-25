@@ -188,8 +188,8 @@ SUBSECTION_TITLES: dict[int, re.Pattern[str]] = {
 }
 # The dot after the number is optional: "3 Zusammensetzung" is as common as
 # "3. Zusammensetzung", and both are headings. Section numbers stop at 16.
-# A mark for a changed section may stand in front (SDB-152): "* 1 Bezeichnung
-# des …", "! 2. Mögliche Gefahren". A colon may stand for the dot (SDB-175):
+# A mark for a changed section may stand in front (SDB-1): "* 1 Bezeichnung
+# des …", "! 2. Mögliche Gefahren". A colon may stand for the dot (SDB-1):
 # "3: Zusammensetzung / Angaben zu den Bestandteilen".
 NUMBERED_SECTION_PATTERN = re.compile(
     r"^(?:[*!]\s*)?0?(1[0-6]|[1-9])\s*[.:]?\s+(\S.{3,79}?)\s*$"
@@ -1521,7 +1521,7 @@ def read_numbered_section_heading(line: str) -> int | None:
     title_pattern = SECTION_TITLE_PATTERNS.get(number)
     if title_pattern is not None and title_pattern.search(match.group(2)):
         return number
-    # The order before REACH (SDB-89): the composition was section 2 and the
+    # The order before REACH (SDB-1): the composition was section 2 and the
     # hazards section 3. The title says which section it is.
     swapped = _ORDER_BEFORE_REACH.get(number)
     if swapped is not None and SECTION_TITLE_PATTERNS[swapped].search(match.group(2)):
@@ -1582,7 +1582,7 @@ def _read_section_heading(line: str) -> tuple[int, str | None, bool] | None:
         return None
     if not titled and re.match(r"[.,]\s?\d", remainder):
         # A subsection's number with no title: "Abschnitt 7.3 angegeben",
-        # the end of a sentence that refers to it (SDB-160).
+        # the end of a sentence that refers to it (SDB-21).
         return None
     return number, remainder, titled
 
