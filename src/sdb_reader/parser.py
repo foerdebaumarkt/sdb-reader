@@ -27,6 +27,7 @@ from .schema import (
 )
 from .statements import (
     OLD_REQUEST_SENTENCE,
+    STATEMENT_LINE,
     base_code,
     codes_from_wording,
     euh_statements_by_wording,
@@ -2501,6 +2502,7 @@ def _parse_hazard_statements(
     )
     for block in blocks:
         further, block_warnings = _further_label(block, furniture)
+        _sentences_from_the_label(further.label, hazard_statements)
         hazard_statements.further_labels.append(further)
         warnings.extend(block_warnings)
     return hazard_statements, warnings
@@ -2544,6 +2546,56 @@ def _further_label(
         if found.code in _FURTHER_LABEL_WARNINGS
         and (found.code != LABEL_LINE_UNASSIGNED or found.params["line"] in own)
     ]
+
+
+_STATEMENT_TEXTS = ("hazard_text", "precautionary_text", "supplemental_text")
+
+
+def _worded(texts: Iterable[str | None]) -> dict[str, str]:
+    """Each code of *texts* printed with a sentence, and its first such line;
+    a combination is one code."""
+    worded: dict[str, str] = {}
+    for text in texts:
+        for line in (text or "").split("\n"):
+            statement = STATEMENT_LINE.match(line)
+            if (
+                statement is not None
+                and statement.group(4).strip()
+                and not _ONLY_CODES.match(line.strip())
+            ):
+                code = re.sub(r"\s*\+\s*", "+", statement.group(2)).upper()
+                worded.setdefault(code, line.strip())
+    return worded
+
+
+def _sentences_from_the_label(
+    further: HazardStatements, label: HazardStatements
+) -> None:
+    """*further*'s codes printed without a sentence, each with the line the
+    label of the same sheet prints for it (SDB-221).
+
+    A row of codes is split at its dashes, commas and semicolons, a
+    combination staying one, and each code given once. A code *further*
+    prints a sentence for elsewhere keeps that one; a code the label prints no
+    sentence for stands alone.
+    """
+    printed = _worded(getattr(label, name) for name in _STATEMENT_TEXTS)
+    own = _worded(getattr(further, name) for name in _STATEMENT_TEXTS)
+    for name in _STATEMENT_TEXTS:
+        text = getattr(further, name)
+        if not text:
+            continue
+        lines: list[str] = []
+        listed: set[str] = set()
+        for line in text.split("\n"):
+            if not _ONLY_CODES.match(line.strip()):
+                lines.append(line)
+                continue
+            for code in _codes_of(line):
+                if code.upper() not in own and code.upper() not in listed:
+                    listed.add(code.upper())
+                    lines.append(printed.get(code.upper(), code))
+        setattr(further, name, "\n".join(lines) or None)
 
 
 def _read_labels(

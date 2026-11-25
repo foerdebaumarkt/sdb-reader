@@ -5,6 +5,21 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Breaking
+
+- **`PARSER_VERSION` is 24** (0.14.0: 23). Readings kept from 0.14.0
+  should be made again; stored texts and label images stay valid.
+
+### Fixed
+
+- **A small package's label gives each statement its sentence** (SDB-221).
+  Where that label prints its codes bare or in a row, such as "H314-H335",
+  each code now stands on its own line with the sentence the sheet's label
+  prints for it; a combination stays one code, and a sentence the small
+  package's label prints itself comes first. Its codes are unchanged. On
+  about 14,850 sheets the small package's label of 20 changes, and nothing
+  else does.
+
 ## 0.14.0 – 2026-11-25
 
 This release narrows which EUH statements say that a product needs a safety
