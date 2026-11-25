@@ -134,7 +134,7 @@ def test_any_heading_2_2_on_labelling_begins_the_label(heading: str) -> None:
     assert "no-label-section" not in [m.code for m in parsed.warnings]
 
 
-@pytest.mark.spec("SDB-214")
+@pytest.mark.spec("SDB-75")
 def test_a_classification_in_a_clause_of_a_condition_is_none() -> None:
     parsed = _parse(
         "2.1 Einstufung des Stoffs oder Gemischs\n"
