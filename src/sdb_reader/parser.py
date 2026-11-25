@@ -5325,7 +5325,7 @@ _TRADE_NAME_PART = re.compile(
 _OTHER_NAME_PART = re.compile(
     r"^(?:(?:die )?(?:name|bezeichnung)"
     r"(?: de[sr] (?:produkte?s|gemisch(?:e?s)?|stoff(?:e?s)?|artikels|zubereitung))?"
-    # The half behind "oder" (SDB-158): "Bezeichnung des Stoffes oder des
+    # The half behind "oder" (SDB-131): "Bezeichnung des Stoffes oder des
     # Gemisches".
     r"|de[sr] (?:gemisch(?:e?s)?|stoff(?:e?s)?|zubereitung)"
     r"|der zubereitung|produkt|stoffname|substanzname)$"
@@ -5335,7 +5335,7 @@ _BEFORE_LABEL = re.compile(r"^[^\w(]*ꞏ?\s*(?:\d+\s*[.,]\s*)*\d*\s*\.?[^\w(]*")
 # A bullet or dash in front of a value; a quote or bracket belongs to it.
 _BULLET = re.compile(r"^(?:[^\w\"„“”»«‚‘'(\[<]|ꞏ)+")
 # A trade name's label and the name on one line, with no colon between; one
-# letter too many on the label is the sheet's slip (SDB-148).
+# letter too many on the label is the sheet's slip (SDB-131).
 _LABEL_THEN_NAME = re.compile(
     r"^(?:Handelsname[a-z]?(?:\s*/\s*Bezeichnung)?|Handelsbezeichnung"
     r"|Produktnamen?|Produktbezeichnung)\s+(?=\S)",
@@ -5351,13 +5351,13 @@ _OTHER_LABEL = re.compile(
     r"|Weitere Handelsnamen.*|Geltungsbereich|Synonyme?"
     r"|Seite\s*:?\s*\d+.*"
     # A formula identifier, also with a character too many in a group, as
-    # text recognition reads it (SDB-148).
+    # text recognition reads it (SDB-131).
     r"|[A-Z0-9]{4,5}(?:-[A-Z0-9]{4,}){3}"
-    # Labels sheets print without a colon, the value elsewhere (SDB-148).
+    # Labels sheets print without a colon, the value elsewhere (SDB-131).
     r"|(?:REACH[-\s]?)?Registrier(?:ungs)?[-\s]?(?:nummer|nr\.?)\b.*"
     r"|Eindeutiger\s+Rezepturidentifikator.*"
     r"|Tele(?:fon|fax)|Fax|E-?Mail(?:-Adresse)?"
-    # An article number's label, with its value or without (SDB-158):
+    # An article number's label, with its value or without (SDB-131):
     # "Artikelnr. (Hersteller/Lieferant): 12-345".
     r"|Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b.*"
     # The title of section 1 in another language, where its heading left it.
@@ -5366,19 +5366,19 @@ _OTHER_LABEL = re.compile(
 )
 # "Produktform: Gemisch", "UFI: …": a label of something else with its value;
 # a registration number's label may be longer, with the substance it belongs
-# to ("REACH-Registrierungs-Nr. von n-Butylacetat: 01-…", SDB-148).
+# to ("REACH-Registrierungs-Nr. von n-Butylacetat: 01-…", SDB-131).
 _LABELLED_VALUE = re.compile(
     r"^(?:[^:\d()]{2,40}|(?:REACH[-\s]?)?Registrier[^:]{2,80}):\s*\S", re.IGNORECASE
 )
 # An article number with its label in front of the name on the name's line
-# (SDB-148): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
+# (SDB-131): "Art.-Nr. 12.345 Musterdünger". The number is the whole run of
 # its characters, with a digit in it: asked for ahead, so that a long run
 # is not tried once for every digit in it.
 _ARTICLE_NUMBER_FIRST = re.compile(
     r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b\.?:?\s*(?=[\w./-]*\d)[\w./-]*\s+(?=\S)",
     re.IGNORECASE,
 )
-# Or its label behind the name, the number on the next line (SDB-148):
+# Or its label behind the name, the number on the next line (SDB-131):
 # "Musterspray 200 ml Art.Nr." Two words at least stand before it.
 _ARTICLE_LABEL_LAST = re.compile(
     r"^((?=\S*?[^\W\d_])\S+\s+\S+(?:\s+\S+)*?)"
@@ -5386,7 +5386,7 @@ _ARTICLE_LABEL_LAST = re.compile(
     re.IGNORECASE,
 )
 # A supplier's label, alone or with its value: where 1.1 ends on a sheet
-# that prints no heading for 1.2 or 1.3 (SDB-148).
+# that prints no heading for 1.2 or 1.3 (SDB-131).
 _SUPPLIER_LABEL_LINE = re.compile(
     r"^(?:Hersteller|Lieferant|Firma|Firmenname|Firmenbezeichnung|Inverkehrbringer)"
     r"(?:\s*/\s*(?:Hersteller|Lieferant|Firma|Importeur|Vertrieb|Händler))*"
@@ -5445,7 +5445,7 @@ def _name_value(value: str) -> str:
     """The name without the bullet or dash a sheet sets in front of it.
 
     Nor the article number a sheet prints in front of it with its label
-    (SDB-148): "Art.-Nr. 12.345 Musterdünger".
+    (SDB-131): "Art.-Nr. 12.345 Musterdünger".
     """
     name = _BULLET.sub("", _clean_value(value))
     name = _ARTICLE_NUMBER_FIRST.sub("", name)
@@ -5453,18 +5453,18 @@ def _name_value(value: str) -> str:
 
 
 # A reference to another place of the sheet where the name should stand
-# (SDB-153): "Handelsname: siehe oben".
+# (SDB-131): "Handelsname: siehe oben".
 _REFERENCE = re.compile(r"^siehe\s+oben\.?$", re.IGNORECASE)
 
 
-# What a product is, not what it is called (SDB-158): "Produktform" above
+# What a product is, not what it is called (SDB-131): "Produktform" above
 # "Gemisch".
 _KIND_OF_PRODUCT = re.compile(
     r"^(?:Gemisch|Stoff|Mischung|Zubereitung|Erzeugnis|Mixture|Substance)\.?$",
     re.IGNORECASE,
 )
 # A label block's first value where an article number's label stands above
-# the name's label (SDB-158): "Artikelnr." / "Handelsname" / "12345" /
+# the name's label (SDB-131): "Artikelnr." / "Handelsname" / "12345" /
 # "Musterlack". One word with a digit is the number.
 _ARTICLE_NUMBER_LABEL = re.compile(
     r"^Art(?:ikel)?\.?\s?-?\s?(?:Nr|Nummer)\b[^:]*$", re.IGNORECASE
@@ -5508,7 +5508,7 @@ def _extract_product_identifier(section_text: str) -> str | None:
             name = _name_value(value)
             if is_label(key) and _REFERENCE.match(name):
                 # "Handelsname: siehe oben": the sheet names no product here,
-                # and which line it means it does not say (SDB-153).
+                # and which line it means it does not say (SDB-131).
                 return None
             if is_label(key) and name and not _is_name_label(name):
                 return name
@@ -5545,7 +5545,7 @@ def _extract_product_identifier(section_text: str) -> str | None:
 
 
 def _end_of_1_1(lines: list[str]) -> int:
-    """Where subsection 1.1 ends among the lines of section 1 (SDB-131, SDB-148).
+    """Where subsection 1.1 ends among the lines of section 1 (SDB-131).
 
     At the heading of a later subsection, or at a supplier's label on a sheet
     that prints none. "1.2" alone under "1.1" alone is no heading: the sheet

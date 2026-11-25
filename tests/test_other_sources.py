@@ -159,7 +159,7 @@ def test_a_named_signal_word_before_a_negation_for_the_diluted_product() -> None
 
 
 class TestNoProductName:
-    @pytest.mark.spec("SDB-158")
+    @pytest.mark.spec("SDB-131")
     @pytest.mark.parametrize(
         ("identifier", "name"),
         [

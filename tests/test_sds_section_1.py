@@ -196,7 +196,7 @@ EMPTY_NAME_FIELD = (
 
 
 class TestWhatIsNoName:
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     @pytest.mark.parametrize(
         "identifier",
         [
@@ -215,7 +215,7 @@ class TestWhatIsNoName:
     ) -> None:
         assert name_of(identifier) is None
 
-    @pytest.mark.spec("SDB-153")
+    @pytest.mark.spec("SDB-131")
     @pytest.mark.parametrize("reference", ["siehe oben", "Siehe oben."])
     def test_a_reference_is_none_and_is_not_followed(self, reference: str) -> None:
         identifier = (
@@ -227,7 +227,7 @@ class TestWhatIsNoName:
 
         assert name_of(identifier) is None
 
-    @pytest.mark.spec("SDB-153")
+    @pytest.mark.spec("SDB-131")
     def test_a_reference_leaves_a_labelled_name_in_the_header(self) -> None:
         sheet = read(
             header="Handelsname: Musterkalk\n",
@@ -236,7 +236,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier == "Musterkalk"
 
-    @pytest.mark.spec("SDB-153")
+    @pytest.mark.spec("SDB-131")
     def test_a_reference_takes_no_headline_for_the_name(self) -> None:
         sheet = read(
             header="Version: 1\nSeite 1/9\nMusterputz MP 7\n",
@@ -245,7 +245,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier is None
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     def test_a_registration_number_with_its_substance_is_passed_over(self) -> None:
         identifier = (
             "Handelsname:\n"
@@ -257,7 +257,7 @@ class TestWhatIsNoName:
 
         assert name_of(identifier) == "Musterdicht"
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     @pytest.mark.parametrize(
         "identifier",
         [
@@ -269,7 +269,7 @@ class TestWhatIsNoName:
     def test_a_supplier_s_label_ends_the_subsection(self, identifier: str) -> None:
         assert name_of(identifier) is None
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     def test_both_numbers_set_before_the_subsection_do_not_end_it(self) -> None:
         sheet = read(
             identifier=(
@@ -280,7 +280,7 @@ class TestWhatIsNoName:
 
         assert sheet.product_identifier == "Musterköder 25ppm"
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     @pytest.mark.parametrize(
         ("identifier", "name"),
         [
@@ -299,13 +299,13 @@ class TestWhatIsNoName:
     ) -> None:
         assert name_of(identifier) == name
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     def test_a_name_that_ends_in_its_article_number_stays_as_printed(self) -> None:
         identifier = "Handelsname\nMusterspray 400 ml Art.Nr.: 012342\n"
 
         assert name_of(identifier) == "Musterspray 400 ml Art.Nr.: 012342"
 
-    @pytest.mark.spec("SDB-148")
+    @pytest.mark.spec("SDB-131")
     def test_the_label_may_carry_a_letter_too_many(self) -> None:
         assert name_of("Handelsnamel/Bezeichnung Musteröl\n") == "Musteröl"
 
