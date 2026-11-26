@@ -5,6 +5,16 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+### Changed
+
+- **One dependency fewer: `defusedxml` is gone.** The embedded eSDScom
+  file is read with Python's own XML parser, which stops at a document
+  type declaration. Nothing changes in what is read or refused: a document
+  type, an entity or an external reference still makes the file unreadable
+  (`embedded-doctype`), in any encoding (SDW-11). The last finished
+  release of `defusedxml` is from March 2021. The package now installs
+  two others, `pymupdf-lite` and `structlog`.
+
 ## 0.15.0 – 2026-11-25
 
 This release gives the label of a small package its sentences: where a sheet
