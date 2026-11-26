@@ -13,11 +13,20 @@ uploads a package by hand.
 
 ## Cutting a release
 
-1. **Choose the version** by what changed since the last release
+1. **Look at what the package installs.** For each package under
+   `dependencies` in `pyproject.toml`, see when it was last released (its
+   page on the Python Package Index) and whether its repository is still
+   worked on. One without a release for more than a year needs a decision
+   before this release: replace it, or keep it and say why in the pull
+   request. No check does this. Dependabot proposes new versions and
+   reports known vulnerabilities, and a package nobody maintains any more
+   gets neither, so it looks like one that needs nothing. `defusedxml`
+   went unnoticed that way until 0.15.1.
+2. **Choose the version** by what changed since the last release
    ([What is promised](../api/stability.md)): a rise of `EXTRACTION_VERSION`
    or `PARSER_VERSION` is at least a minor version. Before 1.0 a minor
    version may break.
-2. **Open a pull request** that sets `version` in `pyproject.toml`, refreshes
+3. **Open a pull request** that sets `version` in `pyproject.toml`, refreshes
    `uv.lock` (`uv lock`) and turns the changelog's "Unreleased" section into
    the release's: a new heading `## <version> – <date>` under an empty
    "Unreleased". Directly under the heading, one short paragraph says what
@@ -26,22 +35,22 @@ uploads a package by hand.
    change under "Breaking" and every rise of a stage version, with what a
    caller has to do about texts and readings it kept. Where a page names a
    version as an example, move it along.
-3. **Merge it**, and wait for the checks on `main`.
-4. **Tag the merge commit** and push the tag:
+4. **Merge it**, and wait for the checks on `main`.
+5. **Tag the merge commit** and push the tag:
 
    ```bash
-   git tag -a v0.15.0 -m "sdb-reader 0.15.0" <commit on main>
-   git push origin v0.15.0
+   git tag -a v0.15.1 -m "sdb-reader 0.15.1" <commit on main>
+   git push origin v0.15.1
    ```
 
-5. **Watch the run** of `release` under Actions. The jobs that publish wait
+6. **Watch the run** of `release` under Actions. The jobs that publish wait
    for an approval if their environments ask for one (see below).
 
 A tag cannot be released twice, and a version once on the index cannot be
 replaced. If a release is wrong, fix it and release the next patch version.
 
 **A change to the documentation alone** goes out as a patch version too
-(0.15.0 to 0.15.1): the documentation site holds one edition per release,
+(0.15.1 to 0.15.2): the documentation site holds one edition per release,
 built from its tag, so a page changes on the site only with a release. The
 changelog's section for such a version says so in its paragraph and lists the
 pages under "Documentation"; code, `PARSER_VERSION` and `EXTRACTION_VERSION`

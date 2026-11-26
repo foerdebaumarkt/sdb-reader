@@ -5,6 +5,13 @@ Versions follow the tags of this repository.
 
 ## Unreleased
 
+## 0.15.1 – 2026-11-26
+
+This release takes a dependency out: the eSDScom file a PDF may carry is
+read without `defusedxml`, a package that has had no finished release since
+2021. What the reader reads and refuses stays the same, and so do the stage
+versions: texts and readings kept from 0.15.0 remain valid.
+
 ### Changed
 
 - **One dependency fewer: `defusedxml` is gone.** The embedded eSDScom
@@ -14,6 +21,12 @@ Versions follow the tags of this repository.
   (`embedded-doctype`), in any encoding (SDW-11). The last finished
   release of `defusedxml` is from March 2021. The package now installs
   two others, `pymupdf-lite` and `structlog`.
+
+### Documentation
+
+- **Releasing** begins with a look at what the package installs: when
+  each dependency was last released. No check notices a package that
+  nobody maintains any more.
 
 ## 0.15.0 – 2026-11-25
 
