@@ -31,10 +31,16 @@ uploads a package by hand.
    the release's: a new heading `## <version> – <date>` under an empty
    "Unreleased". Directly under the heading, one short paragraph says what
    the release is about as a whole, so that a reader of the release text
-   understands the changes below it in their context. Name every breaking
-   change under "Breaking" and every rise of a stage version, with what a
-   caller has to do about texts and readings it kept. Where a page names a
-   version as an example, move it along.
+   understands the changes below it in their context. Where a page names a
+   version as an example, move it along. The headings tell three things
+   apart:
+   - "Breaking" holds only what breaks a caller's code: a change to an
+     exported name, a message code or its values, the JSON schema, or the
+     command line's options and exit codes (BIB-13).
+   - "Read again" holds every rise of a stage version, with what a caller
+     has to do about texts and readings it kept. No code has to change for
+     it, so it is not breaking.
+   - What the same file now reads as stands under "Changed" or "Fixed".
 4. **Merge it**, and wait for the checks on `main`.
 5. **Tag the merge commit** and push the tag:
 
