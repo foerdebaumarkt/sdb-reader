@@ -11,12 +11,12 @@ the exports seen so far leave out the classification as often as not.
 from __future__ import annotations
 
 import re
+import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
 import pymupdf
-from defusedxml import DefusedXmlException, ElementTree as SafeET
 
 from .messages import Message
 from .schema import SafetyDataSheet
@@ -32,6 +32,45 @@ _MAX_BYTES = 20 * 1024 * 1024
 _SIGNAL_WORDS = {"DGR": "Gefahr", "WNG": "Achtung"}
 
 _EUH_IN_TEXT = re.compile(r"\bEUH\d{3}[A-Z]?\b")
+
+
+class _DocumentTypeError(Exception):
+    """The file declares a document type."""
+
+
+def _refuse_document_type(*_declaration: object) -> None:
+    raise _DocumentTypeError
+
+
+class _NoDocumentType(ET.TreeBuilder):
+    """Builds the tree and refuses a document type declaration."""
+
+    def doctype(self, name: str, pubid: str | None, system: str | None) -> None:
+        _refuse_document_type(name, pubid, system)
+
+
+def _parser_without_document_type() -> ET.XMLParser:
+    """A parser that stops at a document type declaration (SDW-11).
+
+    An entity, internal or external, and a reference to another file can only
+    be declared inside a document type. The parser reports the declaration
+    where it begins, after it has decoded the file, so stopping there refuses
+    all of them in any encoding, before a single entity is declared.
+    """
+    parser = ET.XMLParser(  # noqa: S314 -- stops at a document type, see above
+        target=_NoDocumentType()
+    )
+    if sys.version_info < (3, 13):
+        # Where the compiled parser is missing, Python reads XML with one
+        # written in Python. Up to Python 3.12 that one tells its target only
+        # of a document type with an external identifier: one that only
+        # declares entities would pass, and its entities would be expanded.
+        # It holds the Expat parser it drives, and Expat reports every
+        # declaration.
+        expat = getattr(parser, "parser", None)
+        if expat is not None:
+            expat.StartDoctypeDeclHandler = _refuse_document_type
+    return parser
 
 
 @dataclass(frozen=True)
@@ -107,13 +146,10 @@ def parse_embedded(name: str, content: bytes) -> EmbeddedData:
             name, unreadable=Message("embedded-too-large", {"limit_bytes": _MAX_BYTES})
         )
     try:
-        # No document type, no entity, no external reference, whatever the
-        # file's encoding (SDW-11): the standard library's parser expands
-        # internal entities, and a check of the bytes misses them in UTF-16.
-        root = SafeET.fromstring(
-            content, forbid_dtd=True, forbid_entities=True, forbid_external=True
+        root = ET.fromstring(  # noqa: S314 -- the parser stops at a document type
+            content, parser=_parser_without_document_type()
         )
-    except DefusedXmlException:
+    except _DocumentTypeError:
         return EmbeddedData(name, unreadable=Message("embedded-doctype"))
     except ET.ParseError as exc:
         return EmbeddedData(

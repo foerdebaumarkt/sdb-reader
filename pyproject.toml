@@ -43,10 +43,6 @@ classifiers = [
   "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
-  # Parses the eSDScom file a PDF may carry without expanding entities or
-  # fetching external references, in any encoding (SDW-11). Upper bound: the
-  # next minor is a decision.
-  "defusedxml>=0.7.1,<0.8",
   # Reads the PDF's text layer by position and renders pages for text
   # recognition. The lean distribution of PyMuPDF: the same `pymupdf` module
   # without the layout and Markdown packages (and their numpy and onnxruntime)
@@ -99,8 +95,6 @@ dev = [
   # Checks before a release that the package index can render the built
   # package's description (make dist; docs/contributing/releasing.md).
   "twine==7.0.0",
-  # Type information for defusedxml, for mypy.
-  "types-defusedxml==0.7.0.20260504",
   # Property tests: random and degenerate text through the reading, each
   # reading held to a time limit (tests/test_reading_time.py).
   "hypothesis==6.170.17",

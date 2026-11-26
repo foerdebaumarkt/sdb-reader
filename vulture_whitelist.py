@@ -20,3 +20,9 @@ signal_word_differs  # expected.py: ClpExpected
 # Called by docs/conf.py for every page Sphinx reads (make docs); docs/ is
 # not among the scanned paths, its settings are names Sphinx reads.
 for_site  # tools/docs/site_links.py
+
+# Called by the XML parser when a file declares a document type (SDW-11):
+# `doctype` as a method of the parser's target, `StartDoctypeDeclHandler` as
+# a handler of the Expat parser underneath.
+doctype  # embedded.py: _NoDocumentType
+StartDoctypeDeclHandler  # embedded.py: _parser_without_document_type
