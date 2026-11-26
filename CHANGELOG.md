@@ -3,7 +3,28 @@
 What changes for someone who uses the command or the library, newest first.
 Versions follow the tags of this repository.
 
+The headings of a release say what it asks of a caller:
+
+- **Breaking**: code that uses the library or the command has to change,
+  because an exported name, a message code or its values, the JSON schema,
+  or an option or exit code of the command line changed.
+- **Read again**: a stage version rose. No code has to change, but texts or
+  readings kept from before are outdated and have to be made again.
+- **Added**, **Changed**, **Fixed**: what else a caller may notice, such as
+  what the same file now reads as.
+
+Up to 0.15.0 the rise of a stage version and a changed reading stand under
+"Breaking" too.
+
 ## Unreleased
+
+### Documentation
+
+- **The changelog tells a new reading from a breaking change.** The rise
+  of a stage version now stands under "Read again": no code has to
+  change, kept texts or readings have to be made again. "Breaking" is
+  left for what breaks a caller's code (What is promised, Releasing,
+  Stage versions).
 
 ## 0.15.1 – 2026-11-26
 

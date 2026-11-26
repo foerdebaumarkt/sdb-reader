@@ -31,7 +31,8 @@ fingerprint. Then decide:
   not show): keep the version and set the new fingerprint.
 
 Say in the pull request which it was and why, and in
-[CHANGELOG.md](../../CHANGELOG.md) when a version rose. The catalogs of
+[CHANGELOG.md](../../CHANGELOG.md), under "Read again", when a version
+rose. The catalogs of
 sentences are in neither stage: a reworded sentence changes no reading.
 
 The exact list of files per stage is in the test; the table above is its

@@ -57,6 +57,12 @@ versioning:
 Before 1.0 a minor version may break. The changelog says so under
 "Breaking".
 
+The rise of a stage version is not a breaking change: no code has to
+change, only texts or readings kept from before have to be made again. The
+changelog names it under "Read again". Nor is a reading that changes: what
+a sheet reads as is not promised (see above), and the changelog names it
+under "Changed" or "Fixed".
+
 **Notice (BIB-14).** An exported name that is to go stays for one minor
 version and warns with `DeprecationWarning` when it is used, before the next
 major version removes it.
@@ -74,8 +80,8 @@ maintained; a program that needs it stays on the tag it builds on.
 **The changelog (BIB-18).** Releases are tags of the repository.
 [CHANGELOG.md](../../CHANGELOG.md) says for each one what changes for someone
 who uses the command or the library. It names every breaking change under
-"Breaking" and every rise of a stage version, with what to do about readings
-and texts kept from before. What came since the last release stands under
+"Breaking" and every rise of a stage version under "Read again", with what
+to do about readings and texts kept from before. What came since the last release stands under
 "Unreleased"; before the first release that section says what the first
 version offers and which stage versions it reads with.
 
