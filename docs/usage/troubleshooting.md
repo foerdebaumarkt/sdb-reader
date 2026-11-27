@@ -41,6 +41,7 @@
 | `pictograms` is empty although the label shows pictograms | the label could not be looked at as drawn (scanned, no heading "Kennzeichnungselemente"), or a diamond stayed unnamed | `parser.warnings` says which (`label-images-not-read`, `pictograms-not-recognised`); `drawing_read` is false |
 | `signal_word` is empty although the sheet carries H statements | the sheet prints no signal word, or it was not found | `findings` reports `signal-word-not-found` with the word the codes call for, unless the label states it has none (`states_no_signal_word`) |
 | a value is missing on a sheet set as a form in two columns without colons | outside section 1 such rows are read as a table, and a label and its value can stand apart | a known limit; check `section_text` |
+| the statement texts are empty or hold lines of another section, although the label prints its sentences | the page is set in two columns, and its text layer interleaves section 2 with another section line by line | not supported: the codes are read, the sentences may not be; check `section_text` |
 | the message `short-text` or `short-sample` | the file has little text for a sheet | it may be cut off or partly scanned; look at the file |
 | the finding `wording-deviates` on a statement that looks right | the sheet's wording differs in a word from every form the regulation gives or gave the statement; an earlier wording of the regulation, a combination worded as its parts and a bracketed part left out are not findings | compare the two wordings in the finding's values |
 
