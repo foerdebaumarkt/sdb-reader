@@ -1210,6 +1210,49 @@ class TestAReferenceThatWrapsBeforeItsSection:
 
 
 @pytest.mark.spec("SDB-21")
+class TestAReferenceThatEndsOnTheSectionsNumber:
+    """ "… finden sich unter" / "Abschnitt 16." / "2.2 Kennzeichnungselemente"."""
+
+    SHEET = (
+        "ABSCHNITT 2: Mögliche Gefahren\n"
+        "2.1 Einstufung des Stoffs oder Gemischs\n"
+        "Flam. Liq. 1 H224\n"
+        "Der vollständige Wortlaut der erwähnten H-Sätze findet sich unter\n"
+        "Abschnitt 16.\n"
+        "\n"
+        "2.2 Kennzeichnungselemente\n"
+        "Signalwort: Gefahr\n"
+        "Gefahrenhinweise: H224 Flüssigkeit und Dampf extrem entzündbar.\n"
+        "2.3 Sonstige Gefahren\n"
+        "ABSCHNITT 3: Zusammensetzung\n"
+    )
+
+    def test_it_opens_no_section(self) -> None:
+        sections = split_sections(self.SHEET)
+        assert Section.OTHER not in sections
+        assert "Abschnitt 16." in sections[Section.HAZARDS]
+        assert "Gefahrenhinweise" in sections[Section.HAZARDS]
+
+    def test_the_label_is_read(self, parser: SDSParser) -> None:
+        hazards = parser.parse(_build_extraction(self.SHEET)).sheet.hazard_statements
+        assert hazards.hazard_text == "H224 Flüssigkeit und Dampf extrem entzündbar."
+
+    @pytest.mark.parametrize(
+        "below",
+        ["Sonstige Angaben", "16.1 Angaben zu Änderungen"],
+    )
+    def test_with_its_title_or_subsection_below_it_is_a_heading(
+        self, below: str
+    ) -> None:
+        sections = split_sections(
+            "ABSCHNITT 2: Mögliche Gefahren\nH318\n"
+            "ABSCHNITT 15: Rechtsvorschriften\nWassergefährdungsklasse: schwach\n"
+            f"Abschnitt 16.\n{below}\nÄnderungen\n"
+        )
+        assert sections[Section.OTHER].endswith("Änderungen")
+
+
+@pytest.mark.spec("SDB-21")
 class TestSectionsOnlyMoveForward:
     """A heading numbered below the section it stands in begins nothing.
 
