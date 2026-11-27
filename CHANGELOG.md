@@ -18,12 +18,22 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ## Unreleased
 
+## 0.16.0 – 2026-11-27
+
+This release is about a label that names codes without their sentences.
+Where section 16 writes those sentences out, the reading now carries them,
+as the sheet prints them, and `with_section_16` puts them beside their
+codes. Rows of codes left from 2.1 no longer stand beside the label's own
+sentences, and a label behind a reference to section 16 is read again.
+Readings kept from 0.15 should be made again; the stored texts stay valid.
+
 ### Read again
 
 - **`PARSER_VERSION` is 25** (0.15.1: 24): a reading now carries the
   sentences of section 16 for codes the label prints without one, and a
   row of codes left from 2.1's table goes where each of its codes has its
-  sentence. `EXTRACTION_VERSION` stays 2; readings kept from before should
+  sentence, and a reference ending on a section's number opens no section.
+  `EXTRACTION_VERSION` stays 2; readings kept from before should
   be made again from the stored texts.
 
 ### Added
@@ -51,8 +61,9 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
   the label's sentences.** Where 2.1 prints its codes in a column and the
   label prints each of them with its sentence, a code in a combination
   ("H302+H332 - Gesundheitsschädlich …") and a code with text behind it
-  ("H373 (Blut)") included, the row goes, down to a single code left of it; before, it stayed whenever 2.1 also named a code
-  the label does not carry (SDB-52). Only lines of codes alone go; no code
+  ("H373 (Blut)") included, the row goes, down to a single code left of
+  it; before, it stayed whenever 2.1 also named a code the label does not
+  carry (SDB-52). Only lines of codes alone go; no code
   list changes.
 
 ### Documentation
