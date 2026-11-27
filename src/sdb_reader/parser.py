@@ -1617,8 +1617,9 @@ def split_sections(text: str) -> dict[Section, str]:
     lines = text.split("\n")
     merged_lines = _merge_split_headings(_merge_broken_pairs(lines))
     seen: set[int] = set()
+    before = ""
 
-    for line in merged_lines:
+    for index, line in enumerate(merged_lines):
         stripped = line.strip()
         if not stripped:
             if current_section is not None:
@@ -1626,6 +1627,11 @@ def split_sections(text: str) -> dict[Section, str]:
             continue
 
         heading = _read_section_heading(stripped)
+        if heading is not None and _ends_a_reference(
+            heading, before, merged_lines[index + 1 :]
+        ):
+            heading = None
+        before = stripped
         if heading is not None:
             section_number, remainder, titled = heading
             if section_number == 1 and highest >= 2:
@@ -1663,6 +1669,32 @@ def split_sections(text: str) -> dict[Section, str]:
         for section, lines in sections.items()
         if lines
     }
+
+
+def _ends_a_reference(
+    heading: tuple[int, str | None, bool], before: str, after: list[str]
+) -> bool:
+    """Whether a heading line without its title ends the sentence above it
+    (SDB-21): "… finden sich unter" / "Abschnitt 16." / "2.2 Kennzeichnungs-
+    elemente".
+
+    Only "Abschnitt n" with a full stop or nothing behind it, under a line that
+    breaks off after a lower-case word, and not over its section's title or one
+    of its subsections: "Abschnitt 16." / "Sonstige Angaben" is a heading.
+    """
+    number, remainder, titled = heading
+    if titled or remainder not in ("", ".") or not _OPEN_SENTENCE.search(before):
+        return False
+    below = next((line.strip() for line in after if line.strip()), "")
+    title = SECTION_TITLE_PATTERNS.get(number)
+    return not (
+        (title is not None and title.search(below))
+        or re.match(rf"0?{number}\.\d", below)
+    )
+
+
+# A line that breaks off in the middle of a sentence: after a lower-case word.
+_OPEN_SENTENCE = re.compile(r"\b[a-zäöüß]+$")
 
 
 def find_label_section(text: str) -> str | None:

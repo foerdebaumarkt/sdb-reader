@@ -40,6 +40,13 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ### Fixed
 
+- **A reference that ends on a section's number opens no section.** A
+  line "Abschnitt 16." (or "Abschnitt 13") under a sentence that breaks
+  off after a lower-case word ("… finden sich unter", "Entsorgung: siehe")
+  ends that sentence; it began the section it names, and the text after it
+  went there. With the title or a subsection of its section below it, it
+  is still a heading (SDB-21). On one sheet the label was read as section
+  16 and no statement text was found.
 - **A row of codes from 2.1 no longer stands in the hazard text beside
   the label's sentences.** Where 2.1 prints its codes in a column and the
   label prints each of them with its sentence, a code in a combination
