@@ -45,8 +45,8 @@ uploads a package by hand.
 5. **Tag the merge commit** and push the tag:
 
    ```bash
-   git tag -a v0.15.1 -m "sdb-reader 0.15.1" <commit on main>
-   git push origin v0.15.1
+   git tag -a v0.16.0 -m "sdb-reader 0.16.0" <commit on main>
+   git push origin v0.16.0
    ```
 
 6. **Watch the run** of `release` under Actions. The jobs that publish wait
@@ -56,7 +56,7 @@ A tag cannot be released twice, and a version once on the index cannot be
 replaced. If a release is wrong, fix it and release the next patch version.
 
 **A change to the documentation alone** goes out as a patch version too
-(0.15.1 to 0.15.2): the documentation site holds one edition per release,
+(0.16.0 to 0.16.1): the documentation site holds one edition per release,
 built from its tag, so a page changes on the site only with a release. The
 changelog's section for such a version says so in its paragraph and lists the
 pages under "Documentation"; code, `PARSER_VERSION` and `EXTRACTION_VERSION`
