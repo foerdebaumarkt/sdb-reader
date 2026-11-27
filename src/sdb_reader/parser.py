@@ -2776,8 +2776,15 @@ def _read_labels(
         too_long=too_long,
     )
     # A label that prints its statements without their codes (SDB-6) leaves
-    # no text to cut; the codes take the sentences they were read from.
+    # no text to cut; the codes take the sentences they were read from. A
+    # line under a code the label only words is 2.1's, not the label's: "H411
+    # Aqu. chron. Kat. 2 – …" above "Giftig für Wasserorganismen …".
     codeless = _passages(sections.get(Section.HAZARDS, "").split("\n"), furniture)
+    hazard_statements.hazard_text = _with_the_labels_sentences(
+        hazard_statements.hazard_text,
+        {code for code in hazard_codes if code in from_wording},
+        codeless,
+    )
     if hazard_statements.hazard_text is None and hazard_codes:
         hazard_statements.hazard_text = _in_print_order(hazard_codes, codeless)
     hazard_statements.precautionary_text = _precautionary_text(
@@ -3131,6 +3138,35 @@ def _precautionary_text(
     if disposal is not None and not re.search(r"\bP501\b", text or ""):
         text = "\n".join(filter(None, [text, f"P501 {disposal}"]))
     return text
+
+
+def _with_the_labels_sentences(
+    text: str | None, worded: set[str], passages: list[str]
+) -> str | None:
+    """*text* without the lines under codes the label prints only as sentences
+    (SDB-6), and with the label's sentences for them instead.
+
+    Such a line is not the label's: the code stands in 2.1 ("H411 Aqu. chron.
+    Kat. 2 – …"), and the text cut from section 2 took it with whatever
+    followed. Where nothing else is left, the caller takes the sentences in
+    print order for every code.
+    """
+    if not text or not worded:
+        return text
+    bases = {base_code(code) for code in worded}
+    kept = [
+        line
+        for line in text.split("\n")
+        if not (codes := set(HAZARD_CODE_PATTERN.findall(line))) or not codes <= bases
+    ]
+    if not kept:
+        return None
+    left = {
+        base_code(code) for line in kept for code in HAZARD_CODE_PATTERN.findall(line)
+    }
+    missing = sorted(code for code in worded if base_code(code) not in left)
+    sentences = _in_print_order(missing, passages) if missing else None
+    return "\n".join([*kept, *filter(None, [sentences])])
 
 
 def _in_print_order(

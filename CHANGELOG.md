@@ -18,6 +18,20 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ## Unreleased
 
+### Read again
+
+- **`PARSER_VERSION` is 26** (0.16.0: 25): the hazard text of a label that
+  prints its H sentences without codes is those sentences. Readings kept
+  from before should be made again from the stored texts;
+  `EXTRACTION_VERSION` stays 2.
+
+### Fixed
+
+- **A label that prints its H sentences without codes gets them as its
+  hazard text.** Where 2.1 prints the codes ("H411 Aqu. chron. Kat. 2 –
+  …"), the hazard text was 2.1's line and what followed it, or only the
+  codes, and codes of the label could be missing from it (SDB-6).
+
 ## 0.16.0 – 2026-11-27
 
 This release is about a label that names codes without their sentences.

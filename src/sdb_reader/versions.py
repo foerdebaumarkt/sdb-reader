@@ -27,7 +27,7 @@ LABEL_IMAGES_VERSION = 2
 # the statements and their tables, the findings, the message codes, the JSON
 # form, and the heading of a small package's label (label_blocks.py). The
 # sentences of the catalogs are no part of a reading.
-PARSER_VERSION = 25
+PARSER_VERSION = 26
 
 
 def extraction_stage() -> str:

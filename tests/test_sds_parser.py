@@ -1741,6 +1741,55 @@ class TestCodesFromTheWordingOfTheLabel:
         assert hazards.hazard_codes == ["H411"]
 
 
+@pytest.mark.spec("SDB-6")
+class TestTheLabelsSentencesOverTheClassification:
+    """The label prints its H sentence without the code; 2.1 prints the code
+    before its class: "H411 Aqu. chron. Kat. 2 – …"."""
+
+    TWO_ONE = (
+        "ABSCHNITT 2: Mögliche Gefahren\n"
+        "2.1 Einstufung des Stoffs oder Gemischs\n"
+        "Einstufung gemäß der Verordnung (EG) Nr. 1272/2008 [CLP/GHS]\n"
+        "H411 Aqu. chron. Kat. 2 – CHRONISCH GEWÄSSERGEFÄHRDEND – Kategorie 2\n"
+        "Inhaltsstoffe mit nicht bekannter Toxizität: Nicht anwendbar\n"
+        "Umweltgefahren: Schädlich für Wasserorganismen, kann in Gewässern\n"
+        "längerfristig schädliche Wirkungen haben.\n"
+    )
+
+    def test_the_h_text_is_the_labels_sentence(self, parser: SDSParser) -> None:
+        text = (
+            f"{self.TWO_ONE}"
+            "2.2 Kennzeichnungselemente\n"
+            "Signalwort: Achtung\n"
+            "Gefahrenhinweise: Giftig für Wasserorganismen mit langfristiger Wirkung.\n"
+            "Sicherheitshinweise: P273 - Freisetzung in die Umwelt vermeiden.\n"
+            "2.3 Sonstige Gefahren\n"
+        )
+
+        hazards = parser.parse(_build_extraction(text)).sheet.hazard_statements
+
+        assert hazards.hazard_codes == ["H411"]
+        assert hazards.codes_from_wording == ["H411"]
+        assert hazards.hazard_text == (
+            "H411 Giftig für Wasserorganismen mit langfristiger Wirkung."
+        )
+
+    def test_a_code_the_label_prints_keeps_its_line(self, parser: SDSParser) -> None:
+        text = (
+            f"{self.TWO_ONE}"
+            "2.2 Kennzeichnungselemente\n"
+            "Signalwort: Achtung\n"
+            "Gefahrenhinweise: H411 Giftig für Wasserorganismen mit langfristiger "
+            "Wirkung.\n"
+            "2.3 Sonstige Gefahren\n"
+        )
+
+        hazards = parser.parse(_build_extraction(text)).sheet.hazard_statements
+
+        assert hazards.codes_from_wording == []
+        assert "Giftig für Wasserorganismen" in (hazards.hazard_text or "")
+
+
 class TestSectionBoundaryLeadingZero:
     """248 sheets here number their sections "ABSCHNITT 01" upwards."""
 
