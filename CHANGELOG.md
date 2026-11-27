@@ -57,6 +57,9 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ### Documentation
 
+- **A page whose text layer interleaves two columns is not supported.**
+  Troubleshooting says so: the codes are read, the sentences may not be.
+  The two open questions on it in the spec are closed.
 - **The changelog tells a new reading from a breaking change.** The rise
   of a stage version now stands under "Read again": no code has to
   change, kept texts or readings have to be made again. "Breaking" is
