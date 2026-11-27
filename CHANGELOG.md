@@ -18,6 +18,14 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ## Unreleased
 
+## 0.17.0 – 2026-11-27
+
+This release fixes one reading: a label that prints its H sentences
+without their codes now has those sentences as its hazard text, instead
+of the lines 2.1 prints under the same codes. It matters to a caller that
+shows the sentences as printed. Readings kept from 0.16 should be made
+again; the stored texts stay valid.
+
 ### Read again
 
 - **`PARSER_VERSION` is 26** (0.16.0: 25): the hazard text of a label that
