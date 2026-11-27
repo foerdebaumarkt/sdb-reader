@@ -39,6 +39,24 @@ assert as_printed(text, ["P501"]) == (
 )
 ```
 
+Some labels print a code without its sentence ("P102, P501") and write the
+sentences out in section 16. `HazardStatements.section_16_wordings` holds,
+for each such code, the sentence section 16 prints for it, and
+`with_section_16(text, wordings)` gives each code without a sentence a line of
+its own, with that sentence where there is one:
+
+```python
+from sdb_reader import with_section_16
+
+text = "P102, P501\nP280: Schutzhandschuhe tragen."
+wordings = {"P102": "Darf nicht in die Hände von Kindern gelangen."}
+assert with_section_16(text, wordings) == (
+    "P102: Darf nicht in die Hände von Kindern gelangen.\n"
+    "P501\n"
+    "P280: Schutzhandschuhe tragen."
+)
+```
+
 `canonical_text(code)` gives the regulation's German wording for one code:
 
 ```python

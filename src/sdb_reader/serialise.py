@@ -123,6 +123,7 @@ def _label_fields(label: HazardStatements, *, further: bool = True) -> dict[str,
         "precautionary_text": label.precautionary_text,
         "supplemental_text": label.supplemental_text,
         "codes_from_wording": label.codes_from_wording,
+        "section_16_wordings": label.section_16_wordings,
         "drawing_read": label.drawing_read,
         "states_no_signal_word": label.states_no_signal_word,
         "states_no_pictograms": label.states_no_pictograms,
@@ -150,7 +151,8 @@ def _label_fields(label: HazardStatements, *, further: bool = True) -> dict[str,
 
 def _label_from_dict(label: Mapping[str, Any]) -> HazardStatements:
     """The label ``_label_fields`` stored. The keys of SDB-174, SDB-179,
-    SDB-180 and SDB-188 to SDB-192 are not in a reading stored before them."""
+    SDB-180, SDB-188 to SDB-192 and SDB-222 are not in a reading stored before
+    them."""
     condition = label.get("condition")
     return HazardStatements(
         hazard_codes=_texts(label["hazard_codes"]),
@@ -166,6 +168,10 @@ def _label_from_dict(label: Mapping[str, Any]) -> HazardStatements:
         precautionary_text=_optional_text(label["precautionary_text"]),
         supplemental_text=_optional_text(label["supplemental_text"]),
         codes_from_wording=_texts(label.get("codes_from_wording", [])),
+        section_16_wordings={
+            _text(code): _text(wording)
+            for code, wording in label.get("section_16_wordings", {}).items()
+        },
         drawing_read=label.get("drawing_read", False) is True,
         states_no_signal_word=label.get("states_no_signal_word", False) is True,
         states_no_pictograms=label.get("states_no_pictograms", False) is True,

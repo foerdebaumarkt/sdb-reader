@@ -125,6 +125,7 @@ withholds it.
 | `states_no_signal_word`, `states_no_pictograms` | whether the label states it has none ("Signalwort entfällt", "Gefahrenpiktogramme: keine") |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | the statements as the sheet prints them; a code the sheet does not print stands in front of its sentence |
 | `codes_from_wording` | the codes the label does not print: the sheet prints only the sentence, and the parser assigned the code; each also stands in its list above |
+| `section_16_wordings` | for each code the statement texts name without a sentence, the sentence section 16 of the same sheet prints for it, as printed (`{"P102": "Darf nicht in die Hände von Kindern gelangen."}`); the texts above stay as the label prints them |
 | `condition`, `condition_text` | whom the label says it applies to, and the sentence that says it: `consumers` for "Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher."; otherwise `null` |
 | `statement_conditions` | single statements printed with a condition, by code: `consumers` ("Nur für private Endverbraucher: P101 …"), `not-general-public` (EUH210 for packages not meant for the general public); the codes stand in the lists above as well |
 | `further_labels` | the blocks of 2.2 beside the label, see below |

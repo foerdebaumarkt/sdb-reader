@@ -37,7 +37,7 @@ from __future__ import annotations
 import itertools
 import json
 import re
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -1653,3 +1653,111 @@ def precautionary_by_variants(text: str) -> tuple[set[str], list[list[str]]]:
     if codes <= _conditions():
         codes = set()
     return codes, unclear
+
+
+# A row of codes without a sentence (SDB-222): codes, combinations and H360
+# or H361 with the letters of their effect, joined by commas, semicolons,
+# slashes, dashes, "und" or spaces, with a colon or a full stop behind.
+_ROW_ITEM = (
+    r"(?:EUH\d{3}|[HP]\d{3}(?:[A-Za-z]{1,2}(?![^\W\d_]))?)"
+    r"(?:\s*\+\s*(?:EUH\d{3}|[HP]\d{3}))*"
+)
+_ROW = re.compile(
+    rf"^\s*{_ROW_ITEM}(?:(?:\s*(?:[,;/–-]|\bund\b)\s*|\s+){_ROW_ITEM})*\s*[.,;:]?\s*$"
+)
+
+
+def statement_code(statement: re.Match[str]) -> str:
+    """The code of a ``STATEMENT_LINE`` match, a combination joined by "+",
+    H360 and H361 with the letters of their effect ("H361d")."""
+    code = re.sub(r"\s*\+\s*", "+", statement.group(2))
+    letters = re.match(r"[A-Za-z]{1,2}(?![^\W\d_])", statement.group(3))
+    return code + letters.group(0) if letters and code.startswith("H") else code
+
+
+def _codes_alone(line: str) -> list[str] | None:
+    """The codes *line* names without a sentence, or None where it has one.
+
+    A code on its own line or a row of codes ("P102, P101, P501:",
+    "H314-H335", "H361d, H373."), a combination counting as one.
+    """
+    if _ROW.match(line) is None:
+        return None
+    return [re.sub(r"\s*\+\s*", "+", code) for code in re.findall(_ROW_ITEM, line)]
+
+
+def _worded_codes(text: str) -> set[str]:
+    """The codes *text* gives a text of their own, and every part of a
+    combination that has one; codes joined in front of one wording ("H335-H336
+    Kann …") share it."""
+    worded: set[str] = set()
+    for line in text.split("\n"):
+        if _codes_alone(line) is not None:
+            continue
+        statement = STATEMENT_LINE.match(line)
+        if statement is None:
+            continue
+        codes = [statement_code(statement)]
+        wording = statement.group(4).strip()
+        while leading := _LEADING_CODES.match(wording):
+            codes.append(re.sub(r"\s*\+\s*", "+", leading.group(1)))
+            wording = wording[leading.end() :].strip()
+        for code in codes:
+            worded.add(code)
+            worded.update(code.split("+"))
+    return worded
+
+
+def codes_without_wording(text: str | None) -> list[str]:
+    r"""The codes *text* names without a sentence and nowhere with one (SDB-222).
+
+    A combination counts as one code; a code that stands with a sentence in a
+    combination has one.
+
+    >>> codes_without_wording("H302\nH302+H332: Gesundheitsschädlich …\nP102, P501")
+    ['P102', 'P501']
+    """
+    if not text:
+        return []
+    worded = _worded_codes(text)
+    alone = [code for line in text.split("\n") for code in (_codes_alone(line) or [])]
+    return [code for code in dict.fromkeys(alone) if code not in worded]
+
+
+def with_section_16(text: str | None, wordings: Mapping[str, str]) -> str | None:
+    r"""*text* with the sentences section 16 prints for its codes without one (SDB-222).
+
+    Each code that stands without a sentence, alone or in a row, gets a line
+    of its own: with its sentence from *wordings* (``section_16_wordings`` of
+    the label) where there is one, else alone; a code of the row that has its
+    text elsewhere in *text* is left out. A row none of whose codes has a
+    sentence in *wordings* stays as it is, and so does every other line.
+
+    >>> print(with_section_16(
+    ...     "P102, P501\nP280: Schutzhandschuhe tragen.",
+    ...     {"P102": "Darf nicht in die Hände von Kindern gelangen."},
+    ... ))
+    P102: Darf nicht in die Hände von Kindern gelangen.
+    P501
+    P280: Schutzhandschuhe tragen.
+    """
+    if not text or not wordings:
+        return text
+    worded = _worded_codes(text)
+    lines: list[str] = []
+    for line in text.split("\n"):
+        codes = _codes_alone(line)
+        if codes is None or not any(
+            code in wordings and code not in worded for code in codes
+        ):
+            lines.append(line)
+            continue
+        indent = line[: len(line) - len(line.lstrip())]
+        lines.extend(
+            f"{indent}{code}: {wordings[code]}"
+            if code in wordings
+            else f"{indent}{code}"
+            for code in codes
+            if code not in worded
+        )
+    return "\n".join(lines)

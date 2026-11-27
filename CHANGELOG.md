@@ -18,6 +18,36 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 
 ## Unreleased
 
+### Read again
+
+- **`PARSER_VERSION` is 25** (0.15.1: 24): a reading now carries the
+  sentences of section 16 for codes the label prints without one, and a
+  row of codes left from 2.1's table goes where each of its codes has its
+  sentence. `EXTRACTION_VERSION` stays 2; readings kept from before should
+  be made again from the stored texts.
+
+### Added
+
+- **The sentence section 16 prints for a code the label prints without
+  one.** Some labels print only codes ("P102, P314, P405, P501") and write
+  the sentences out in section 16. `hazard_statements.section_16_wordings`
+  gives, for each code the statement texts name without a sentence, the
+  first sentence section 16 prints under exactly that code, as printed;
+  the statement texts stay as the label prints them.
+  `with_section_16(text, wordings)` gives each such code a line of its own,
+  with its sentence where section 16 has one (SDB-222). The key is optional
+  in the schema, so records written before stay valid.
+
+### Fixed
+
+- **A row of codes from 2.1 no longer stands in the hazard text beside
+  the label's sentences.** Where 2.1 prints its codes in a column and the
+  label prints each of them with its sentence, a code in a combination
+  ("H302+H332 - Gesundheitsschädlich …") included, the row goes, down to a
+  single code left of it; before, it stayed whenever 2.1 also named a code
+  the label does not carry (SDB-52). Only lines of codes alone go; no code
+  list changes.
+
 ### Documentation
 
 - **The changelog tells a new reading from a breaking change.** The rise

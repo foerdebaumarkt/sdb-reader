@@ -41,8 +41,9 @@ with any release, the parts that ask a language model included.
 - Statements and pictograms: ``label_statements`` with the regulation's
   wording (``canonical_text``) and whether the label prints each code, the
   statement texts tidied and rendered, ``as_printed`` for the texts without
-  the codes the label does not print, the pictograms that follow from H
-  statements.
+  the codes the label does not print, ``with_section_16`` for the texts with
+  the sentences section 16 prints for codes the label names without one,
+  the pictograms that follow from H statements.
 - Embedded data: ``read_embedded``, ``parse_embedded`` and
   ``embedded_differences``.
 - Messages: what the library notes about a file is a ``Message`` with a
@@ -121,6 +122,7 @@ from .statements import (
     normalize_statements,
     render_statements,
     tidy_statements,
+    with_section_16,
 )
 from .verification import DocumentKind, Verification
 from .versions import (
@@ -200,4 +202,5 @@ __all__ = [
     "shipped_catalog",
     "tidy_statements",
     "verification_to_dict",
+    "with_section_16",
 ]

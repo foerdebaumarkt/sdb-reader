@@ -128,6 +128,7 @@ Lesung hält sie zurück.
 | `states_no_signal_word`, `states_no_pictograms` | ob die Kennzeichnung angibt, keines zu tragen („Signalwort entfällt“, „Gefahrenpiktogramme: keine“) |
 | `hazard_text`, `precautionary_text`, `supplemental_text` | die Sätze, wie das Blatt sie druckt; ein Code, den das Blatt nicht druckt, steht vor seinem Satz |
 | `codes_from_wording` | die Codes, die die Kennzeichnung nicht druckt: Das Blatt druckt nur den Satz, und der Parser hat ihm den Code zugeordnet; jeder steht auch in seiner Liste oben |
+| `section_16_wordings` | je Code, den die Hinweistexte ohne Satz nennen, der Satz, den Abschnitt 16 desselben Blatts für ihn druckt, wie gedruckt (`{"P102": "Darf nicht in die Hände von Kindern gelangen."}`); die Texte oben bleiben, wie die Kennzeichnung sie druckt |
 | `condition`, `condition_text` | für wen die Kennzeichnung nach ihren Worten gilt, und der Satz, der es sagt: `consumers` für „Obige Kennzeichnung gilt bei Abgabe an privaten Endverbraucher.“; sonst `null` |
 | `statement_conditions` | einzelne Sätze mit einer Bedingung, je Code: `consumers` („Nur für private Endverbraucher: P101 …“), `not-general-public` (EUH210 für Verpackungen, die nicht für die breite Öffentlichkeit bestimmt sind); die Codes stehen auch in den Listen oben |
 | `further_labels` | die Blöcke in 2.2 neben der Kennzeichnung, siehe unten |
