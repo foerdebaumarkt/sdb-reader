@@ -1686,7 +1686,7 @@ def _codes_alone(line: str) -> list[str] | None:
     return [re.sub(r"\s*\+\s*", "+", code) for code in re.findall(_ROW_ITEM, line)]
 
 
-def _worded_codes(text: str) -> set[str]:
+def worded_codes(text: str) -> set[str]:
     """The codes *text* gives a text of their own, and every part of a
     combination that has one; codes joined in front of one wording ("H335-H336
     Kann …") share it."""
@@ -1719,7 +1719,7 @@ def codes_without_wording(text: str | None) -> list[str]:
     """
     if not text:
         return []
-    worded = _worded_codes(text)
+    worded = worded_codes(text)
     alone = [code for line in text.split("\n") for code in (_codes_alone(line) or [])]
     return [code for code in dict.fromkeys(alone) if code not in worded]
 
@@ -1743,7 +1743,7 @@ def with_section_16(text: str | None, wordings: Mapping[str, str]) -> str | None
     """
     if not text or not wordings:
         return text
-    worded = _worded_codes(text)
+    worded = worded_codes(text)
     lines: list[str] = []
     for line in text.split("\n"):
         codes = _codes_alone(line)

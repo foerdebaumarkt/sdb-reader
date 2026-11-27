@@ -43,8 +43,8 @@ Up to 0.15.0 the rise of a stage version and a changed reading stand under
 - **A row of codes from 2.1 no longer stands in the hazard text beside
   the label's sentences.** Where 2.1 prints its codes in a column and the
   label prints each of them with its sentence, a code in a combination
-  ("H302+H332 - Gesundheitsschädlich …") included, the row goes, down to a
-  single code left of it; before, it stayed whenever 2.1 also named a code
+  ("H302+H332 - Gesundheitsschädlich …") and a code with text behind it
+  ("H373 (Blut)") included, the row goes, down to a single code left of it; before, it stayed whenever 2.1 also named a code
   the label does not carry (SDB-52). Only lines of codes alone go; no code
   list changes.
 
