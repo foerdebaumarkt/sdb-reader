@@ -42,8 +42,8 @@ STAGES: dict[str, tuple[tuple[str, ...], int, str]] = {
             "statements.py",
             "verification.py",
         ),
-        24,
-        "87feb9e3599a709e",
+        25,
+        "6e062da48f89c42f",
     ),
 }
 

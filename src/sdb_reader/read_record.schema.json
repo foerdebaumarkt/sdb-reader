@@ -935,6 +935,13 @@
             "null"
           ]
         },
+        "section_16_wordings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "For each code the statement texts name without a sentence, the sentence section 16 of the same sheet prints for it, as printed (SDB-222). Missing in a reading stored before."
+        },
         "codes_from_wording": {
           "type": "array",
           "items": {
@@ -1103,6 +1110,13 @@
                 "string",
                 "null"
               ]
+            },
+            "section_16_wordings": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "For each code the statement texts name without a sentence, the sentence section 16 of the same sheet prints for it, as printed (SDB-222). Missing in a reading stored before."
             },
             "codes_from_wording": {
               "type": "array",

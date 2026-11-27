@@ -29,7 +29,9 @@ from .statements import (
     OLD_REQUEST_SENTENCE,
     STATEMENT_LINE,
     base_code,
+    canonical_text,
     codes_from_wording,
+    codes_without_wording,
     euh_statements_by_wording,
     first_word_of,
     holds_a_wording_of,
@@ -38,6 +40,7 @@ from .statements import (
     lettered_code,
     open_end,
     precautionary_by_variants,
+    statement_code,
     statement_codes,
     variant_wordings_in_print_order,
     with_effects_joined,
@@ -2807,6 +2810,9 @@ def _read_labels(
     }
     hazard_statements.codes_from_wording = sorted(from_wording & on_label)
     _without_trailing_pictograms(hazard_statements)
+    hazard_statements.section_16_wordings = _section_16_wordings(
+        hazard_statements, sections.get(Section.OTHER, ""), furniture
+    )
     warnings.extend(Message(STATEMENT_TOO_LONG, {"codes": codes}) for codes in too_long)
     # What the label holds that nothing above read (SDB-165): a measure of
     # where rules are missing, never a reading.
@@ -4094,13 +4100,7 @@ def _with_wordings_apart(statements: list[str], passages: Sequence[str]) -> list
     of its codes has one, and otherwise takes the sheet's sentences from
     *passages*, all of them or none.
     """
-    worded = {
-        code
-        for statement in statements
-        if _has_a_sentence_of_its_own(statement)
-        and (leading := _LEADING_STATEMENT_CODES.match(statement))
-        for code in _listed(leading.group(1))
-    }
+    worded = _codes_with_a_sentence(statements)
     result: list[str] = []
     index = 0
     while index < len(statements):
@@ -4302,6 +4302,66 @@ def _split_statements(statement: str, pattern: re.Pattern[str]) -> list[str]:
     ]
 
 
+def _section_16_wordings(
+    label: HazardStatements, section_16: str, furniture: frozenset[str]
+) -> dict[str, str]:
+    """The sentence section 16 prints for each code the label's texts name
+    without one (SDB-222).
+
+    Section 16 is read as the label's texts are (SDB-27, SDB-51); the first
+    statement under exactly the code, a combination under exactly the
+    combination, counts if it is a sentence of its own (SDB-52). Reading
+    section 16 drops the letters of an effect behind H360 and H361 (SDB-53),
+    so for "H361d" only a statement whose sentence is the regulation's for
+    H361d counts, not that of H361f.
+    """
+    wanted = {
+        code
+        for text in (
+            label.hazard_text,
+            label.precautionary_text,
+            label.supplemental_text,
+        )
+        for code in codes_without_wording(text)
+    }
+    if not wanted or not section_16.strip():
+        return {}
+    printed: dict[str, str] = {}
+    for pattern in (
+        HAZARD_CODE_PATTERN,
+        PRECAUTION_CODE_PATTERN,
+        SUPPLEMENTAL_CODE_PATTERN,
+    ):
+        text = _extract_statement_text(section_16, pattern, furniture)
+        for line in (text or "").split("\n"):
+            statement = STATEMENT_LINE.match(line)
+            if statement is None:
+                continue
+            code = statement_code(statement)
+            wording = statement.group(4).strip()
+            if not wording or not _has_a_sentence_of_its_own(f"{code} {wording}"):
+                continue
+            for target in wanted - printed.keys():
+                if target == code or (
+                    target != base_code(target)
+                    and base_code(target) == base_code(code)
+                    and _is_the_regulations(target, wording)
+                ):
+                    printed[target] = wording
+    return {code: printed[code] for code in sorted(printed)}
+
+
+def _is_the_regulations(code: str, wording: str) -> bool:
+    """Whether *wording* is the regulation's for *code*, case and
+    punctuation aside."""
+    official = canonical_text(code)
+    return official is not None and _letters_only(official) == _letters_only(wording)
+
+
+def _letters_only(text: str) -> str:
+    return re.sub(r"[^\w]|_|\d", "", text.lower())
+
+
 def _statements_within(text: str | None, codes: set[str]) -> str | None:
     """Keep the statements of *text* whose every H-code is one of *codes*.
 
@@ -4315,7 +4375,41 @@ def _statements_within(text: str | None, codes: set[str]) -> str | None:
         for statement in text.split("\n")
         if set(HAZARD_CODE_PATTERN.findall(statement)) <= {base_code(c) for c in codes}
     ]
-    return "\n".join(kept) or None
+    return "\n".join(_without_worded_rows(kept)) or None
+
+
+def _without_worded_rows(statements: list[str]) -> list[str]:
+    """*statements* without the lines of codes alone each of which has its
+    sentence (SDB-52).
+
+    Once the codes the label does not carry are gone, what is left of a row
+    from 2.1's table ("H302" / "H314" / "H318" … over the label) may hold only
+    codes that have their sentence, "H302" in "H302+H332 - Gesundheitsschädlich
+    …", down to a single one.
+    """
+    worded = _codes_with_a_sentence(statements)
+    return [
+        statement
+        for statement in statements
+        if not _ONLY_CODES.match(statement)
+        or not all(code in worded for code in _codes_of(statement))
+    ]
+
+
+def _codes_with_a_sentence(statements: list[str]) -> set[str]:
+    """The codes of *statements* that have a sentence of their own (SDB-52).
+
+    A code has its sentence also as a part of a combination that has one:
+    "H302" in a row from 2.1 beside "H302+H332 - Gesundheitsschädlich …".
+    """
+    return {
+        code
+        for statement in statements
+        if _has_a_sentence_of_its_own(statement)
+        and (leading := _LEADING_STATEMENT_CODES.match(statement))
+        for listed in _listed(leading.group(1))
+        for code in (listed, *listed.split("+"))
+    }
 
 
 def _extract_statements_from_sections(

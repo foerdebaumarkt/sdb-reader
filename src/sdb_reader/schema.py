@@ -71,6 +71,9 @@ class HazardStatements:
     # The codes the label does not print and the parser assigned to the
     # sentences it prints (SDB-174); every one of them also stands in its list.
     codes_from_wording: list[str] = field(default_factory=list)
+    # For each code the statement texts name without a sentence, the sentence
+    # section 16 of the same sheet prints for it, as printed (SDB-222).
+    section_16_wordings: dict[str, str] = field(default_factory=dict)
     # Whether the label was looked at as drawn and every red diamond in it was
     # named (SDB-179): only then can a pictogram be said not to be printed.
     drawing_read: bool = False

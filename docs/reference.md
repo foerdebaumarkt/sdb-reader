@@ -180,6 +180,8 @@ See [Statements and pictograms](api/statements.md).
 
 .. autofunction:: as_printed
 
+.. autofunction:: with_section_16
+
 .. autofunction:: normalize_statements
 
 .. autofunction:: tidy_statements
