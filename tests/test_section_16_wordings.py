@@ -262,3 +262,16 @@ def test_a_single_code_left_of_a_row_goes_where_it_has_its_sentence() -> None:
     assert label.hazard_text == (
         "H314 - Verursacht schwere Verätzungen der Haut und schwere Augenschäden."
     )
+
+
+@pytest.mark.spec("SDB-52")
+def test_a_row_goes_where_its_code_has_text_behind_it() -> None:
+    label = _parsed(
+        "2.2 Kennzeichnungselemente\n"
+        "Signalwort: Achtung\n"
+        "Gefahrenhinweise:\n"
+        "H373 (Blut)\n",
+        "",
+        classification="Spezifische Zielorgan-Toxizität, Kategorie 2\nH373\n",
+    ).sheet.hazard_statements
+    assert label.hazard_text == "H373 (Blut)"

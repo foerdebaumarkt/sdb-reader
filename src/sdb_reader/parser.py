@@ -44,6 +44,7 @@ from .statements import (
     statement_codes,
     variant_wordings_in_print_order,
     with_effects_joined,
+    worded_codes,
     wording_bounds,
     wordings_apart,
     wordings_in_print_order,
@@ -4385,9 +4386,10 @@ def _without_worded_rows(statements: list[str]) -> list[str]:
     Once the codes the label does not carry are gone, what is left of a row
     from 2.1's table ("H302" / "H314" / "H318" … over the label) may hold only
     codes that have their sentence, "H302" in "H302+H332 - Gesundheitsschädlich
-    …", down to a single one.
+    …", down to a single one. A code with text behind it has its own as
+    section 16 is looked up (SDB-222): "H373" goes beside "H373 (Blut)".
     """
-    worded = _codes_with_a_sentence(statements)
+    worded = _codes_with_a_sentence(statements) | worded_codes("\n".join(statements))
     return [
         statement
         for statement in statements
